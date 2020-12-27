@@ -477,7 +477,6 @@ var RTCMultiConnection = function(roomid, forceOptions) {
             },
             send: function(data, remoteUserId) {
                 var that = this;
-
                 if (!isNull(data.size) && !isNull(data.type)) {
                     if (connection.enableFileSharing) {
                         self.shareFile(data, remoteUserId);
@@ -488,8 +487,7 @@ var RTCMultiConnection = function(roomid, forceOptions) {
                         data = JSON.stringify(data);
                     }
                 }
-
-                if (data.type !== 'text' && !(data instanceof ArrayBuffer) && !(data instanceof DataView)) {
+                if (data.type !== 'text' && !(data instanceof ArrayBuffer) && !(data instanceof DataView)) {  
                     TextSender.send({
                         text: data,
                         channel: this,
@@ -500,10 +498,12 @@ var RTCMultiConnection = function(roomid, forceOptions) {
                 }
 
                 if (data.type === 'text') {
+                    
                     data = JSON.stringify(data);
                 }
 
                 if (remoteUserId) {
+             
                     var remoteUser = connection.peers[remoteUserId];
                     if (remoteUser) {
                         if (!remoteUser.channels.length) {
@@ -3824,7 +3824,8 @@ var RTCMultiConnection = function(roomid, forceOptions) {
                 packetSize = connection.chunkSize || 1000,
                 textToTransfer = '',
                 isobject = false;
-
+            
+            
             if (!isString(initialText)) {
                 isobject = true;
                 initialText = JSON.stringify(initialText);
@@ -4944,6 +4945,9 @@ var RTCMultiConnection = function(roomid, forceOptions) {
         };
 
         connection.send = function(data, remoteUserId) {
+            //log
+            console.log(data)
+                
             connection.peers.send(data, remoteUserId);
         };
 

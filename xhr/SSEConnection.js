@@ -1,22 +1,29 @@
 // SSEConnection.js
 var sseDirPath = 'http://localhost:81/iihr/webrtc-xhr/SSEConnection/';
 
+isInitiator = true
+
 function SSEConnection(connection, connectCallback) {
     if (connection.socketURL && connection.socketURL !== '/') {
         sseDirPath = connection.socketURL;
     }
 
+    user = connection.userid
     // connection.trickleIce = false;
-    connection.socket = new EventSource(sseDirPath + 'SSE.php?me=' + connection.userid);
+    if (isInitiator) {
+        user = connection.sessionid
+        isInitiator = false
+    }
+    connection.socket = new EventSource(sseDirPath + 'SSE.php?me=' + user);
 
     var skipDuplicate = {};
     connection.socket.onmessage = function(e) {
-        console.log(e)
+       
         if (skipDuplicate[e.data]) {
             return;
         }
         skipDuplicate[e.data] = true;
-        
+       
         if (!e.data.length) return;
         var data = e.data;
         try {
@@ -24,9 +31,10 @@ function SSEConnection(connection, connectCallback) {
         } catch (e) {
             return;
         }
+       
         if (!data) return;
-
         if (data.remoteUserId) {
+       
             if (data.eventName === connection.socketMessageEvent) {
                 onMessagesCallback(data.data);
             }
@@ -46,7 +54,6 @@ function SSEConnection(connection, connectCallback) {
                     if (m.eventName === connection.socketMessageEvent) {
                         onMessagesCallback(m.data);
                     }
-                    //onMessagesCallback(m.data);
                 });
                 return;
             }
@@ -61,8 +68,9 @@ function SSEConnection(connection, connectCallback) {
     };
 
     connection.socket.emit = function(eventName, data, callback) {
-        console.log(eventName)
         if (!eventName || !data) return;
+        console.log(eventName)
+      
         if (eventName === 'changed-uuid' || eventName === 'check-presence') {
             return;
         }
@@ -77,7 +85,6 @@ function SSEConnection(connection, connectCallback) {
             hr.open('POST', sseDirPath + 'createRoom.php');
             hr.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {                  
-                        console.log(this.responseText);
                         callback(true, null);
                 }
               };
@@ -95,7 +102,15 @@ function SSEConnection(connection, connectCallback) {
             hr.addEventListener('load', function() {
                 if (connection.enableLogs) {
                     console.info('XMLHttpRequest', hr.response);
-                }
+                } 
+
+                // if (hr.response.isRoomExist) {
+                //     connection.socket.emit('add-participant', {
+                //       'remoteUserId': connection.userid,
+                //       'roomId': connection.sessionid
+
+                //     })
+                // }
                 callback(hr.response.isRoomExist, roomId);
             });
             hr.addEventListener('error', function() {
@@ -103,22 +118,23 @@ function SSEConnection(connection, connectCallback) {
             });
             hr.open('GET', sseDirPath + 'checkPresence.php?roomid=' + roomId);
             hr.send();
+        } 
+        
+        else if (eventName == "RTCMultiConnection-Message") {
+            var message = JSON.stringify({
+                eventName: eventName,
+                data: data
+            });
+            console.log(data)
+            var hr = new XMLHttpRequest();
+            hr.open('POST', sseDirPath + 'publish.php');
+            var formData = new FormData();
+            formData.append('data', message);
+            formData.append('sender', connection.userid);
+            formData.append('receiver', data.remoteUserId);
+            hr.send(formData);
         }
 
-        // var message = JSON.stringify({
-        //     eventName: eventName,
-        //     data: data,
-        //     message: "Hello Peer !"
-        // });
-
-        // var hr = new XMLHttpRequest();
-        // hr.open('POST', sseDirPath + 'publish.php');
-
-        // var formData = new FormData();
-        // formData.append('data', message);
-        // formData.append('sender', connection.userid);
-        // formData.append('receiver', data.remoteUserId);
-        // hr.send(formData);
         
         // if (callback) {
             
@@ -146,7 +162,8 @@ function SSEConnection(connection, connectCallback) {
     var mPeer = connection.multiPeersHandler;
 
     function onMessagesCallback(message) {
-        if (message.remoteUserId != connection.userid) return;
+        console.log(message)
+        //if (message.remoteUserId != connection.userid) return;
         if (connection.peers[message.sender] && connection.peers[message.sender].extra != message.message.extra) {
             connection.peers[message.sender].extra = message.message.extra;
             connection.onExtraDataUpdated({
@@ -155,23 +172,23 @@ function SSEConnection(connection, connectCallback) {
             });
         }
 
-        // if (message.message.streamSyncNeeded && connection.peers[message.sender]) {
-        //     var stream = connection.streamEvents[message.message.streamid];
-        //     if (!stream || !stream.stream) {
-        //         return;
-        //     }
+        if (message.message.streamSyncNeeded && connection.peers[message.sender]) {
+            var stream = connection.streamEvents[message.message.streamid];
+            if (!stream || !stream.stream) {
+                return;
+            }
 
-        //     var action = message.message.action;
+            var action = message.message.action;
 
-        //     if (action === 'ended' || action === 'stream-removed') {
-        //         connection.onstreamended(stream);
-        //         return;
-        //     }
+            if (action === 'ended' || action === 'stream-removed') {
+                connection.onstreamended(stream);
+                return;
+            }
 
-        //     var type = message.message.type != 'both' ? message.message.type : null;
-        //     stream.stream[action](type);
-        //     return;
-        // }
+            var type = message.message.type != 'both' ? message.message.type : null;
+            stream.stream[action](type);
+            return;
+        }
 
         if (message.message === 'connectWithAllParticipants') {
             if (connection.broadcasters.indexOf(message.sender) === -1) {
@@ -241,6 +258,10 @@ function SSEConnection(connection, connectCallback) {
         if (message.message.readyForOffer || message.message.addMeAsBroadcaster) {
             connection.addNewBroadcaster(message.sender);
         }
+        
+        console.log(message.sender)
+        
+        console.log(connection.userid)
 
         if (message.message.newParticipationRequest && message.sender !== connection.userid) {
             if (connection.peers[message.sender]) {
@@ -262,16 +283,16 @@ function SSEConnection(connection, connectCallback) {
                 dontGetRemoteStream: typeof message.message.isOneWay !== 'undefined' ? message.message.isOneWay : !!connection.session.oneway || connection.direction === 'one-way',
                 dontAttachLocalStream: !!message.message.dontGetRemoteStream,
                 connectionDescription: message,
-                successCallback: function() {
-                    // if its oneway----- todo: THIS SEEMS NOT IMPORTANT.
-                    if (typeof message.message.isOneWay !== 'undefined' ? message.message.isOneWay : !!connection.session.oneway || connection.direction === 'one-way') {
-                        connection.addNewBroadcaster(message.sender, userPreferences);
-                    }
+                // successCallback: function() {
+                //     // if its oneway----- todo: THIS SEEMS NOT IMPORTANT.
+                //     if (typeof message.message.isOneWay !== 'undefined' ? message.message.isOneWay : !!connection.session.oneway || connection.direction === 'one-way') {
+                //         connection.addNewBroadcaster(message.sender, userPreferences);
+                //     }
 
-                    if (!!connection.session.oneway || connection.direction === 'one-way' || isData(connection.session)) {
-                        connection.addNewBroadcaster(message.sender, userPreferences);
-                    }
-                }
+                //     if (!!connection.session.oneway || connection.direction === 'one-way' || isData(connection.session)) {
+                //         connection.addNewBroadcaster(message.sender, userPreferences);
+                //     }
+                // }
             };
 
             connection.onNewParticipant(message.sender, userPreferences);
