@@ -1,43 +1,52 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  <meta charset="UTF-8">
-  <title>VideoChat</title>
-  <!-- <link rel="stylesheet" href="./css/main.css">
+    <head>
+        <meta charset="UTF-8">
+        <title>VideoChat</title>
+        <!-- <link rel="stylesheet" href="./css/main.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script> -->
-</head>
-
-<body>
-  <div id="start">
-    <input id="code-input" placeholder="Enter your code" />
-    <button id="start-button" disabled>Start / Join</button>
-  </div>
-</body>
-<br><br>
-<div id="select-file-dialog" style="display: none;">
-  <div id="dialog-content">
-    <div id="select-file">
-      <div id="label">Select a file:</div>
-      <input type="file" id="select-file-input">
+    </head>
+    <body>
+        <div id="start">
+            <input id="code-input" placeholder="Enter your code">
+            <button id="start-button" disabled>Start / Join</button>
+        </div>
+    </body>
+    <br>
+    <br>
+    <div id="request" style="display: none;">
+        <h3>Data Length Preference:</h3>
+        <br>
+        <select id="preference">
+            <option value="FULL">FULL</option>
+            <option value="HALF">HALF</option>
+        </select>
+        <br><br>
+        <button id="request-button">Request Data</button>
     </div>
+
     <br><br>
-    <div id="dialog-footer">
-      <button id="ok-button" disabled>Send</button>
-      <!-- <button id="cancel-button" class="cancel-button">Cancel</button> -->
+    <div id="select-file-dialog" style="display: none;">
+        <div id="dialog-content">
+            <div id="select-file">
+                <div id="label">Select a file:</div>
+                <input type="file" id="select-file-input">
+            </div>
+            <br>
+            <br>
+            <div id="dialog-footer">
+                <button id="ok-button" disabled>Send</button>
+                <!-- <button id="cancel-button" class="cancel-button">Cancel</button> -->
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-
-<div id="receiver">
-    <h3>Received File Text: </h3><br>
-    <textarea id="recText" rows="50" cols="100"></textarea>
-</div>
-
-<!-- <script src="index.js"></script> -->
-
+    <div id="receiver">
+        <h3>Received File Text:</h3>
+        <br>
+        <textarea id="recText" rows="50" cols="100"></textarea>
+    </div>
+    <!-- <script src="index.js"></script> -->
 </html>
-
 <script>
   (function () {
   "use strict";
@@ -49,6 +58,7 @@
 
   const MAXIMUM_MESSAGE_SIZE = 65535;
   const END_OF_FILE_MESSAGE = 'EOF';
+  let DATA_PERCENTAGE = 'FULL'
   let code;
   let peerConnection;
   let signaling;
@@ -68,6 +78,7 @@
       peerConnection.onnegotiationneeded();
       addMessageHandler();
       document.getElementById('select-file-dialog').style.display = 'block';
+      document.getElementById('request').style.display = 'block';
 
     //   userMediaStream.getTracks()
     //     .forEach(track => senders.push(peerConnection.addTrack(track, userMediaStream)));
@@ -110,6 +121,11 @@
       channel.onmessage = async (event) => {
         const { data } = event;
         try {
+          if (data == "HALF" || data =="FULL") {
+            DATA_PERCENTAGE = data
+          }
+
+          else {
           if (data !== END_OF_FILE_MESSAGE) {
             let textContent = String.fromCharCode.apply(null, new Uint8Array(data))
             document.getElementById('recText').value += textContent;
@@ -135,6 +151,7 @@
             
             channel.close();
           }
+        }
         } 
         catch (err) {
           console.log('File transfer failed');
@@ -197,7 +214,7 @@
     });
   }
 
-  const shareFile = () => {
+  const shareFile = (config) => {
     if (file) {
       const channelLabel = file.name;
       const channel = peerConnection.createDataChannel(channelLabel);
@@ -210,7 +227,16 @@
         // for (let i = 0; i < arrayBuffer.byteLength; i += MAXIMUM_MESSAGE_SIZE) {
         //   channel.send(arrayBuffer.slice(i, i + MAXIMUM_MESSAGE_SIZE));
         // }
-        for (let i=0; i<textArray.length; i++) {
+
+        let len;
+        if (DATA_PERCENTAGE == "HALF") {
+            len = textArray.length / 2
+        } else {
+            len = textArray.length
+        }
+
+         
+        for (let i=0; i<len; i++) {
             let str = textArray[i]
             var buf = new ArrayBuffer(str.length);
             var bufView = new Uint8Array(buf);
@@ -219,7 +245,19 @@
             }
             channel.send(buf);
         }
-        // channel.send(END_OF_FILE_MESSAGE);
+        channel.send(END_OF_FILE_MESSAGE);
+      };
+
+      channel.onclose = () => {
+        //closeDialog();
+      };
+    } else if (config == 'request') {
+      const channelLabel = config;
+      const channel = peerConnection.createDataChannel(channelLabel);
+      channel.binaryType = 'arraybuffer';
+
+      channel.onopen = async () => {
+        channel.send(document.getElementById('preference').value);
       };
 
       channel.onclose = () => {
@@ -256,6 +294,11 @@
     }
   });
 
+  document.getElementById('request-button').addEventListener('click', async () => {
+    document.getElementById('recText').value = '';
+    shareFile('request');
+  });
+
   document.getElementById('select-file-input').addEventListener('change', (event) => {
     file = event.target.files[0];
     document.getElementById('ok-button').disabled = !file;
@@ -263,7 +306,7 @@
 
   document.getElementById('ok-button').addEventListener('click', () => {
     document.getElementById('')
-    shareFile();
+    shareFile('data');
   });
 })();
 </script>
