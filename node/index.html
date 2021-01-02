@@ -111,30 +111,32 @@
         const { data } = event;
         try {
           if (data !== END_OF_FILE_MESSAGE) {
-            receivedBuffers.push(data);
+            let textContent = String.fromCharCode.apply(null, new Uint8Array(data))
+            document.getElementById('recText').value += textContent;
           } else {
-            const arrayBuffer = receivedBuffers.reduce((acc, arrayBuffer) => {
-              const tmp = new Uint8Array(acc.byteLength + arrayBuffer.byteLength);
-              tmp.set(new Uint8Array(acc), 0);
-              tmp.set(new Uint8Array(arrayBuffer), acc.byteLength);
-              return tmp;
-            }, new Uint8Array());
-            const blob = new Blob([arrayBuffer]);
-            //downloadFile(blob, channel.label);
-            const reader = new FileReader();
+            // const arrayBuffer = receivedBuffers.reduce((acc, arrayBuffer) => {
+            //   const tmp = new Uint8Array(acc.byteLength + arrayBuffer.byteLength);
+            //   tmp.set(new Uint8Array(acc), 0);
+            //   tmp.set(new Uint8Array(arrayBuffer), acc.byteLength);
+            //   return tmp;
+            // }, new Uint8Array());
+            // const blob = new Blob([arrayBuffer]);
+            // //downloadFile(blob, channel.label);
+            // const reader = new FileReader();
 
-            // This fires after the blob has been read/loaded.
-            reader.addEventListener('loadend', (e) => {
-                const text = e.srcElement.result;
-                document.getElementById('recText').value = text;
-            });
+            // // This fires after the blob has been read/loaded.
+            // reader.addEventListener('loadend', (e) => {
+            //     const text = e.srcElement.result;
+            //     document.getElementById('recText').value += text;
+            // });
 
-            // Start reading the blob as text.
-            reader.readAsText(blob);
-
+            // // Start reading the blob as text.
+            // reader.readAsText(blob);
+            
             channel.close();
           }
-        } catch (err) {
+        } 
+        catch (err) {
           console.log('File transfer failed');
         }
       };
@@ -203,10 +205,21 @@
 
       channel.onopen = async () => {
         const arrayBuffer = await file.arrayBuffer();
-        for (let i = 0; i < arrayBuffer.byteLength; i += MAXIMUM_MESSAGE_SIZE) {
-          channel.send(arrayBuffer.slice(i, i + MAXIMUM_MESSAGE_SIZE));
+        let textContent = String.fromCharCode.apply(null, new Uint8Array(arrayBuffer))
+        let textArray = textContent.split("\n");
+        // for (let i = 0; i < arrayBuffer.byteLength; i += MAXIMUM_MESSAGE_SIZE) {
+        //   channel.send(arrayBuffer.slice(i, i + MAXIMUM_MESSAGE_SIZE));
+        // }
+        for (let i=0; i<textArray.length; i++) {
+            let str = textArray[i]
+            var buf = new ArrayBuffer(str.length);
+            var bufView = new Uint8Array(buf);
+            for (var j = 0, strLen = str.length; j < strLen; j++) {
+                bufView[j] = str.charCodeAt(j);
+            }
+            channel.send(buf);
         }
-        channel.send(END_OF_FILE_MESSAGE);
+        // channel.send(END_OF_FILE_MESSAGE);
       };
 
       channel.onclose = () => {
