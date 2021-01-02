@@ -29,6 +29,11 @@
   </div>
 </div>
 
+<div id="receiver">
+    <h3>Received File Text: </h3><br>
+    <textarea id="recText" rows="50" cols="100"></textarea>
+</div>
+
 <!-- <script src="index.js"></script> -->
 
 </html>
@@ -115,7 +120,18 @@
               return tmp;
             }, new Uint8Array());
             const blob = new Blob([arrayBuffer]);
-            downloadFile(blob, channel.label);
+            //downloadFile(blob, channel.label);
+            const reader = new FileReader();
+
+            // This fires after the blob has been read/loaded.
+            reader.addEventListener('loadend', (e) => {
+                const text = e.srcElement.result;
+                document.getElementById('recText').value = text;
+            });
+
+            // Start reading the blob as text.
+            reader.readAsText(blob);
+
             channel.close();
           }
         } catch (err) {
@@ -199,10 +215,6 @@
     }
   };
 
-//   const closeDialog = () => {
-//     document.getElementById('select-file-input').value = '';
-//     document.getElementById('select-file-dialog').style.display = 'none';
-//   }
 
   const downloadFile = (blob, fileName) => {
     const a = document.createElement('a');
