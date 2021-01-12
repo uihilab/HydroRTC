@@ -1,0 +1,10 @@
+{
+  "name": "UIHI-Lab",
+  "version": "0.0.1",
+  "description": "WebRTC",
+  "dependencies": {
+    "node-static": "^0.7.10",
+    "socket.io": "^2.0.4",
+    "websocket": "^1.0.33"
+  }
+}
