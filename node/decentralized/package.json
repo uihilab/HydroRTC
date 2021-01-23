@@ -1,0 +1,67 @@
+{
+  "_from": "webrtc-scalable-broadcast",
+  "_id": "webrtc-scalable-broadcast@1.0.5",
+  "_inBundle": false,
+  "_integrity": "sha1-SEjegi6ybPAqxUlJRiOEJ3vFp5g=",
+  "_location": "/webrtc-scalable-broadcast",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "webrtc-scalable-broadcast",
+    "name": "webrtc-scalable-broadcast",
+    "escapedName": "webrtc-scalable-broadcast",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/webrtc-scalable-broadcast/-/webrtc-scalable-broadcast-1.0.5.tgz",
+  "_shasum": "4848de822eb26cf02ac54949462384277bc5a798",
+  "_spec": "webrtc-scalable-broadcast",
+  "_where": "E:\\IIHR\\WebRTC\\webrtc\\node\\scalable-broadcast",
+  "analyze": false,
+  "author": {
+    "name": "Muaz Khan",
+    "email": "muazkh@gmail.com",
+    "url": "http://www.muazkhan.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/muaz-khan/WebRTC-Scalable-Broadcast/issues",
+    "email": "muazkh@gmail.com"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "socket.io": "0.9.x"
+  },
+  "deprecated": false,
+  "description": "Scalable WebRTC peer-to-peer broadcasting demo.",
+  "homepage": "https://github.com/muaz-khan",
+  "keywords": [
+    "webrtc",
+    "broadcast",
+    "scalable",
+    "broadcast",
+    "webrtc",
+    "webrtc-broadcast",
+    "scalable-broadcast",
+    "webrtc-scalable-broadcast",
+    "rtcmulticonnection",
+    "rmc"
+  ],
+  "license": "MIT",
+  "main": "./server.js",
+  "name": "webrtc-scalable-broadcast",
+  "preferGlobal": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muaz-khan/WebRTC-Scalable-Broadcast.git"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "version": "1.0.5"
+}
