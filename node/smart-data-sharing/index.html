@@ -98,9 +98,7 @@ var connection = initRTCMultiConnection();
 connection.getExternalIceServers = false;
 
 connection.onmessage = function(data) {
-    if (data !== END_OF_FILE_MESSAGE) {
-        document.getElementById('recText').value += data.data
-    }
+    document.getElementById('recText').value += data.data
 };
 
 connection.onopen = function(event) {
@@ -211,9 +209,7 @@ socket.on('start-broadcasting', function(typeOfStreams, file_data) {
     let i = 0
 
     setInterval((function fn() {
-        if (i >= len) {
-            connection.send(END_OF_FILE_MESSAGE)
-        } else {
+        if (i < len) {
             // appending data to client that is broadcasting
             document.getElementById('recText').value += textArray[i]
             connection.send(textArray[i]);
