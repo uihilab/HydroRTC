@@ -55,6 +55,6 @@ app = app.listen(process.env.PORT || 8888, process.env.IP || "0.0.0.0", function
           return
         }
         file_data = data
-        require('./smart-data-sharing.js')(app, file_data, server_id);
+        require('./large-scale-data-viz.js')(app, file_data, server_id);
       })
 });
