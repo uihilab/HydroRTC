@@ -247,15 +247,14 @@ socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
     // let broadcast_interval = 5000 // milliseconds
     // let i = 0
 
-    // setInterval((function fn() {
-    //     if (i < len) {
-    //         // appending data to client that is broadcasting
-    //         document.getElementById('recText').value += textArray[i]
-    //         connection.send(textArray[i]);
-    //         i+=1;
-    //     }
-    //     return fn;
-    //     })(), broadcast_interval);
+    });
+
+    socket.on(connection.userid + '-get-stream', function(stream) {
+
+        document.getElementById("ddp").disabled = false
+
+        messageHandler(stream)
+
     });
 
     function messageHandler(data) {

@@ -46,7 +46,8 @@ function Smart_Data_Sharing(app, file_data, server_id) {
                 };
 
             }
-            let firstChunk = file_data.split("\n")[0]
+            let data = file_data.split("\n")
+            let firstChunk = data[0]
             var broadcaster = getBroadcaster(user);
             if (broadcaster) {
                 listOfBroadcasts[user.broadcastid].broadcaster.numberOfViewers++;
@@ -64,15 +65,23 @@ function Smart_Data_Sharing(app, file_data, server_id) {
             console.log('User <', user.userid, '> has joined the broadcast ( ', user.broadcastid, ' ).');
             listOfBroadcasts[user.broadcastid].allusers[user.userid] = user;
 
+            
+            let i = 1
+            setInterval((function fn() {
+                if (i < data.length) {
+                    // appending data to client that is broadcasting
+                    socket.emit(user.userid+'-get-stream', data[i]);
+
+                    i+=1;
+                }
+                return fn;
+                })(), user.deliveryPriority*1000);
+
         });
+
 
         socket.on('message', function(message) {
             socket.broadcast.emit('message', message);
-        });
-
-        socket.on('set-delivery-priority', function(message) {
-            let userSocketId = listOfBroadcasts[message.broadcastid].allusers[message.userid].socketId 
-            socket.broadcast.to(userSocketId).emit('message', 'for your eyes only');
         });
 
         socket.on('disconnect', function() {
