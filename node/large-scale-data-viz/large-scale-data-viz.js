@@ -1,15 +1,3 @@
-// Muaz Khan   - www.MuazKhan.com
-// MIT License - www.WebRTC-Experiment.com/licence
-
-// WebRTC Scalable Broadcast:
-// this module simply initializes socket.io
-// and configures it in a way that
-// single broadcast can be relayed over unlimited users
-// without any bandwidth/CPU usage issues.
-// Everything happens peer-to-peer!
-
-// Ref. discussion: https://github.com/muaz-khan/WebRTC-Experiment/issues/2
-// Source Code: https://github.com/muaz-khan/WebRTC-Scalable-Broadcast
 
 module.exports = exports = Smart_Data_Sharing;
 
