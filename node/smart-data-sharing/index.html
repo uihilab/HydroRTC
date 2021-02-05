@@ -188,38 +188,6 @@ document.getElementById('open-or-join').onclick = function() {
 
 };
 
-// document.getElementById('start-streaming').onclick = function() {
-//     let ddp = document.getElementById('ddp').value
-//     socket.emit('set-delivery-priority', {
-//         broadcastid: broadcastid,
-//         userid: connection.userid,
-//         typeOfStreams: connection.session
-//     });
-// }
-
-// this event is emitted when a broadcast is already created.
-socket.on('join-broadcaster', function(broadcaster, typeOfStreams, first_chunk) {
-    connection.session = typeOfStreams;
-    connection.channel = connection.sessionid = broadcaster.userid;
-
-    connection.sdpConstraints.mandatory = {
-        OfferToReceiveVideo: !!connection.session.video,
-        OfferToReceiveAudio: !!connection.session.audio
-    };
-
-    connection.join({
-        sessionid: broadcaster.userid,
-        userid: broadcaster.userid,
-        extra: {},
-        session: connection.session
-    });
-
-    document.getElementById("ddp").disabled = false
-
-    messageHandler(first_chunk)
-
-});
-
 // this event is emitted when a broadcast is absent.
 socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
     // host i.e. sender should always use this!
@@ -251,7 +219,7 @@ socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
 
     socket.on(connection.userid + '-get-stream', function(stream) {
 
-        document.getElementById("ddp").disabled = false
+        document.getElementById("ddp").disabled = true
 
         messageHandler(stream)
 
