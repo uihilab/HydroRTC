@@ -4,6 +4,7 @@
 
 var fs = require("fs");
 var path = require('path');
+const { readdirSync } = require('fs')
 var server_id = "abcd1234"
 var file_data = ""
 var app = require('http').createServer(function (request, response) {
@@ -44,17 +45,65 @@ var app = require('http').createServer(function (request, response) {
     });
 });
 
+const getDirectories = source =>
+    readdirSync(source, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+    
 app = app.listen(process.env.PORT || 8888, process.env.IP || "0.0.0.0", function() {
     var addr = app.address();
-    console.log("Server listening at", addr.address + ":" + addr.port);
+    // reading images
+    imagesRoot = '../data/building_tiles/_alllayers/'
+    // getting all directories for images with with different resolutions
+    
+    let imageData = {}
 
-    // reading data file that will be shared
-    fs.readFile('./sensor-data.txt', 'utf8' , (err, data) => {
-        if (err) {
-          console.error(err)
-          return
-        }
-        file_data = data
-        require('./smart-data-sharing.js')(app, file_data, server_id);
-      })
+    let resolutions = getDirectories(imagesRoot)
+
+    resolutions.forEach(resolution=>{
+        let currDir = imagesRoot+resolution+"/"
+        let rows = getDirectories(currDir)
+        imageData[resolution] = {}
+        // will read first row for now
+        let count = 0
+        rows.forEach(row=>{
+            if (count < 1) {
+                filenames = fs.readdirSync(currDir+row+"/")  
+                imageData[resolution][row]=filenames
+            }
+            count++
+        })
+ 
+    })
+
+    Object.keys(imageData).forEach(function(resolution, index){
+        let currDir = imagesRoot+resolution+"/"
+        Object.keys(imageData[resolution]).forEach(function(row, index){
+            data = []
+            imageData[resolution][row].forEach(filename=>{
+                let contents = fs.readFileSync(currDir+row+"/" + filename, {encoding: 'base64'}) 
+                data.push(contents)
+            })
+            imageData[resolution][row]=data
+            
+        })
+    })
+
+    var dictstring = JSON.stringify(imageData);
+    fs.writeFile("imageData.json", dictstring, function(err, result) {
+        if(err) console.log('error', err);
+    });
+    console.log("Server listening at", addr.address + ":" + addr.port);
+    
+    require('./smart-data-sharing.js')(app, imageData, server_id);
+
+        // reading data file that will be shared
+    // fs.readFile('./sensor-data.txt', 'utf8' , (err, data) => {
+    //     if (err) {
+    //       console.error(err)
+    //       return
+    //     }
+    //     file_data = data
+    //     require('./smart-data-sharing.js')(app, file_data, server_id);
+    //   })
 });

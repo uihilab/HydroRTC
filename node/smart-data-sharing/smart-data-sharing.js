@@ -1,6 +1,6 @@
 module.exports = exports = Smart_Data_Sharing;
 
-function Smart_Data_Sharing(app, file_data, server_id) {
+function Smart_Data_Sharing(app, image_data, server_id) {
     
     var io = require('socket.io').listen(app, {
         log: false,
@@ -33,8 +33,8 @@ function Smart_Data_Sharing(app, file_data, server_id) {
                 };
 
             }
-            let data = file_data.split("\n")
-            let firstChunk = data[0]
+            // let data = file_data.split("\n")
+            // let firstChunk = data[0]
             
 
             socket.emit('start-broadcasting', listOfBroadcasts[user.broadcastid].typeOfStreams, firstChunk);
@@ -45,16 +45,16 @@ function Smart_Data_Sharing(app, file_data, server_id) {
             listOfBroadcasts[user.broadcastid].allusers[user.userid] = user;
 
             
-            let i = 1
-            setInterval((function fn() {
-                if (i < data.length) {
-                    // appending data to client that is broadcasting
-                    socket.emit(user.userid+'-get-stream', data[i]);
+            // let i = 1
+            // setInterval((function fn() {
+            //     if (i < data.length) {
+            //         // appending data to client that is broadcasting
+            //         socket.emit(user.userid+'-get-stream', data[i]);
 
-                    i+=1;
-                }
-                return fn;
-                })(), user.deliveryPriority*1000);
+            //         i+=1;
+            //     }
+            //     return fn;
+            //     })(), user.deliveryPriority*1000);
 
         });
 

@@ -33,19 +33,28 @@
 <title>Smart Data Distribution</title>
 <h1>Smart Data Distribution</h1>
 <hr>
-This project allows smart data distribution, server will distribute the data in chunks to its connected peers after configured interval.
+This project allows smart data distribution, server will distribute the data according to specified priority.
 <hr>
 <hr>
 <div id="files-container"></div>
 <div>
-    <label for="cars">Select data delivery priority (seconds):</label>
+    <!-- <label for="ddp">Select data delivery priority (seconds):</label>
     <select name="ddp" id="ddp">
         <option value="5" selected>5</option>
         <option value="10">10</option>
         <option value="15">15</option>
         <option value="20">20</option>
     </select>
-    <br>
+    <br> -->
+    <label for="resolution">Select image resolution:</label>
+    <select name="resolution" id="resolution">
+        <option value="L00" selected>50</option>
+        <option value="L01">25</option>
+        <option value="L02">10</option>
+        <option value="L03">5</option>
+        <option value="L04">5</option>
+    </select>
+    <br> 
     <hr>
     <input
     type="text"
@@ -56,10 +65,14 @@ This project allows smart data distribution, server will distribute the data in 
     <button id="open-or-join">Connect / Start Streaming</button>
     <!-- <button id="start-streaming">Start streaming</button> -->
 </div>
+<br>
+<hr>
 <div id="receiver">
     <h3>Received Data:</h3>
     <br>
-    <textarea id="recText" rows="50" cols="100" disabled></textarea>
+    <button id="next">Next</button><br>
+    <!-- <textarea id="recText" rows="50" cols="100" disabled></textarea> -->
+    
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/RTCMultiConnection.js"></script>
@@ -177,13 +190,15 @@ document.getElementById('open-or-join').onclick = function() {
         oneway: true
     };
 
-    let ddp = document.getElementById('ddp').value
+    // let ddp = document.getElementById('ddp').value
+    let res = document.getElementById('resolution').value
 
     socket.emit('join-broadcast', {
         broadcastid: broadcastid,
         userid: connection.userid,
         typeOfStreams: connection.session,
-        deliveryPriority: ddp
+        // deliveryPriority: ddp
+        resolution: res
     });
 
 };
