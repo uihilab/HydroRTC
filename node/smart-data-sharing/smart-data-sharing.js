@@ -36,14 +36,16 @@ function Smart_Data_Sharing(app, image_data, server_id) {
             // let data = file_data.split("\n")
             // let firstChunk = data[0]
             
-
-            socket.emit('start-broadcasting', listOfBroadcasts[user.broadcastid].typeOfStreams, firstChunk);
+            socket.emit('start-broadcasting', listOfBroadcasts[user.broadcastid].typeOfStreams);
             
             // socket.emit('start-broadcasting', listOfBroadcasts[user.broadcastid].typeOfStreams);
 
             console.log('User <', user.userid, '> has joined the broadcast ( ', user.broadcastid, ' ).');
             listOfBroadcasts[user.broadcastid].allusers[user.userid] = user;
-
+            
+            // base64 data
+            data = getImageData(user.resolution, user.dataIndex)
+            socket.emit(user.userid+'-get-stream', data);
             
             // let i = 1
             // setInterval((function fn() {
@@ -58,6 +60,26 @@ function Smart_Data_Sharing(app, image_data, server_id) {
 
         });
 
+        socket.on('get-data', function(user) {
+            
+            
+            // base64 data
+            data = getImageData(user.resolution, user.dataIndex)
+            socket.emit(user.userid+'-get-stream', data);
+            
+            
+        });
+
+        function getImageData(resolution, dataIndex) {
+            let row_no = Object.keys(image_data[resolution])[0]
+            if (dataIndex < image_data[resolution][row_no].length) {
+                return image_data[resolution][row_no][dataIndex]
+            }
+            else {
+                return -1
+            }
+
+        }
 
         // socket.on('message', function(message) {
         //     socket.broadcast.emit('message', message);

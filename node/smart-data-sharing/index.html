@@ -52,7 +52,7 @@ This project allows smart data distribution, server will distribute the data acc
         <option value="L01">25</option>
         <option value="L02">10</option>
         <option value="L03">5</option>
-        <option value="L04">5</option>
+        <option value="L04">1</option>
     </select>
     <br> 
     <hr>
@@ -70,8 +70,9 @@ This project allows smart data distribution, server will distribute the data acc
 <div id="receiver">
     <h3>Received Data:</h3>
     <br>
-    <button id="next">Next</button><br>
+    <button id="update" onClick="updateData()" disabled>Update Data</button><br><br>
     <!-- <textarea id="recText" rows="50" cols="100" disabled></textarea> -->
+    <img id="recImg" src="#" style="height: 200px; width:200px"/>
     
 </div>
 <script src="/socket.io/socket.io.js"></script>
@@ -80,6 +81,7 @@ This project allows smart data distribution, server will distribute the data acc
 var socket = io.connect();
 const END_OF_FILE_MESSAGE = 'EOF';
 var broadcastid;
+var currDataIndex = 0;
 // using single socket for RTCMultiConnection signaling
 var onMessageCallbacks = {};
 socket.on('message', function(data) {
@@ -198,13 +200,14 @@ document.getElementById('open-or-join').onclick = function() {
         userid: connection.userid,
         typeOfStreams: connection.session,
         // deliveryPriority: ddp
-        resolution: res
+        resolution: res,
+        dataIndex: currDataIndex
     });
 
 };
 
 // this event is emitted when a broadcast is absent.
-socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
+socket.on('start-broadcasting', function(typeOfStreams) {
     // host i.e. sender should always use this!
     connection.sdpConstraints.mandatory = {
         OfferToReceiveVideo: false,
@@ -221,9 +224,10 @@ socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
         connection.broadcastingConnection = null;
     }
 
-    document.getElementById("ddp").disabled = false
+    document.getElementById("update").disabled = false
+    // document.getElementById("ddp").disabled = false
 
-    messageHandler(first_chunk)
+    // messageHandler(first_chunk)
     // let textArray = file_data.split("\n");
     // let len = textArray.length;
  
@@ -234,14 +238,32 @@ socket.on('start-broadcasting', function(typeOfStreams, first_chunk) {
 
     socket.on(connection.userid + '-get-stream', function(stream) {
 
-        document.getElementById("ddp").disabled = true
+        // document.getElementById("ddp").disabled = true
 
         messageHandler(stream)
 
     });
 
+    function updateData() {
+        let res = document.getElementById('resolution').value
+        socket.emit('get-data', {
+            broadcastid: broadcastid,
+            userid: connection.userid,
+            typeOfStreams: connection.session,
+            // deliveryPriority: ddp
+            resolution: res,
+            dataIndex: currDataIndex
+        });
+    }
+
     function messageHandler(data) {
-        document.getElementById('recText').value += data
+        // document.getElementById('recText').value += data
+        //-1 for image not found by server
+        if (data != -1) {
+            document.getElementById('recImg').src="data:image/png;base64, "+data
+        }
+
+        console.log(data)
     }
 
 </script>
