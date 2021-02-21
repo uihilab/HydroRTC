@@ -1,0 +1,24 @@
+{
+  "name": "free-video-calls",
+  "version": "1.0.0",
+  "description": "A simple live chat application",
+  "dependencies": {
+    "express": "4.10.6",
+    "socket.io": "1.2.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "main": "server.js",
+  "devDependencies": {},
+  "keywords": [
+    "webrtc",
+    "video",
+    "chat"
+  ],
+  "author": "Sumit Majumdar",
+  "license": "MIT",
+  "engines": {
+    "node": "0.10.x"
+  }
+}
