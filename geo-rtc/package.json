@@ -1,0 +1,39 @@
+{
+  "name": "geo-rtc",
+  "version": "1.0.0",
+  "description": "Distributed data sharing and analysis",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uihilab/WebRTC.git"
+  },
+  "keywords": [
+    "Decentralized",
+    "data",
+    "distribution",
+    "Collaborative",
+    "data",
+    "exchange",
+    "Distributed",
+    "data",
+    "processing",
+    "Large",
+    "scale",
+    "peer",
+    "to",
+    "peer",
+    "data",
+    "sharing",
+    "WebRTC"
+  ],
+  "author": "UIHI Lab",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/uihilab/WebRTC/issues"
+  },
+  "homepage": "https://github.com/uihilab/WebRTC#readme"
+}
