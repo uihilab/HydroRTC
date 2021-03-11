@@ -2,7 +2,8 @@
 import http from 'http'
 
 class Server {
-    constructor(port) {
+
+    set runsOn(port) {
         this.port = port
     }
 
@@ -21,4 +22,5 @@ class Server {
     }
 }
 
-export {Server}
+const server = new Server()
+export {server}
