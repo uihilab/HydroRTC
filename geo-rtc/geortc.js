@@ -9,16 +9,14 @@ class GeoRTC {
 
     constructor(appName) {
         this.appName = appName
+        this.server = server
         this.configuration = configuration
         
     }
 
-    createServer(port) {
-        // Todo: check whether port is available or not
-        this.server = server
-        this.server.port = port
+    run() {
         this.server.prepareServer()
-        return this.server
+        this.server.runServer()
     }
 
     // in the configuration

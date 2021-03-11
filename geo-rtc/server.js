@@ -3,10 +3,6 @@ import http from 'http'
 
 class Server {
 
-    set runsOn(port) {
-        this.port = port
-    }
-
     prepareServer() {
         this.server = http.createServer(function (request, response) {
             response.writeHead(200)
@@ -15,7 +11,7 @@ class Server {
     }
 
     runServer() {
-        this.server = this.server.listen(this.port, function() {
+        this.server = this.server.listen(process.env.PORT || 8888, process.env.IP || "0.0.0.0", function() {
             var addr = this.address();
             console.log("Server listening at", addr.address + ":" + addr.port);
         })
