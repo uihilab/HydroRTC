@@ -8,8 +8,8 @@ class GeoRTC {
         this.server = server
     }
 
-    run() {
-        this.server.prepareServer()
+    run(hostname, port) {
+        this.server.prepareServer(hostname, port)
         this.server.runServer()
     }
     
@@ -23,9 +23,17 @@ class GeoRTCClient {
     static dataTypes = ['csv', 'xml', 'json', 'js', 'png']
 
     constructor(clientName) {
+        // TODO: ensure server is run before client
         this.clientName = clientName
         this.configuration = configuration
-        this.socket = io();
+        const socket = io.connect('http://'+server.getAddress(), {reconnect: true});
+        // client-side
+        socket.on("connect", () => {
+            console.log('Client (%s) Socket Connected with server: ', clientName);
+        });
+        socket.emit('join',{
+            'name': clientName
+        })
     }
 
     // in the configuration

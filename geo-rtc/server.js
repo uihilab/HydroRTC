@@ -4,27 +4,35 @@ import {createReadStream} from 'fs'
 import {Server} from 'socket.io'
 class GeoRTCServer {
 
-    prepareServer() {
+    constructor() {
+        this.hostname = ""
+        this.port = 0
+    }
+
+    prepareServer(hostname, port) {
+        this.hostname = hostname
+        this.port = port
         this.server = http.createServer(function (request, response) {
             response.writeHead(200)
             response.end("Request received.")
         })
 
-        this.io = new Server(this.server, {
-            log: false, origins: '*'
-        })
-        this.io.on("connection", function(socket){
-            socket.on('join', function(peer){
-                console.log("peer joined",peer)
-            })
-
-        })
     }
 
     runServer() {
-        this.server = this.server.listen(process.env.PORT || 8888, process.env.IP || "0.0.0.0", function() {
-            var addr = this.address();
+        // TODO: check if server can run on given port and hostname or not
+        this.server = this.server.listen(this.port, this.hostname, function() {
+            let addr = this.address();
             console.log("Server listening at", addr.address + ":" + addr.port);
+            const io = new Server(this, {
+            })
+    
+            io.on("connection", (socket) => {
+                console.log("connection")
+                socket.on('join', function(peer){
+                    console.log("peer joined: ",peer)
+                })
+            })
         })
     }
 
@@ -41,6 +49,10 @@ class GeoRTCServer {
         }).on('end', function() {
             console.log("end");
         });
+    }
+
+    getAddress() {
+        return this.hostname+":"+this.port
     }
 }
 

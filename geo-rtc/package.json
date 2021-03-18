@@ -31,8 +31,8 @@
     "WebRTC"
   ],
   "dependencies": {
-    "socket.io": "4.x",
-    "socket.io-client": "4.x"
+    "socket.io": "3.x",
+    "socket.io-client": "3.x"
   },
   "author": "UIHI Lab",
   "license": "ISC",
