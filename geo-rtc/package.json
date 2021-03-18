@@ -30,6 +30,10 @@
     "sharing",
     "WebRTC"
   ],
+  "dependencies": {
+    "socket.io": "4.x",
+    "socket.io-client": "4.x"
+  },
   "author": "UIHI Lab",
   "license": "ISC",
   "bugs": {

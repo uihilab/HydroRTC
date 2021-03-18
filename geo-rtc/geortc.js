@@ -1,22 +1,31 @@
 import {server} from './server.js'
 import {configuration} from './configuration.js'
+import {io} from 'socket.io-client'
 class GeoRTC {
+
+    constructor(appName) {
+        this.appName = appName
+        this.server = server
+    }
+
+    run() {
+        this.server.prepareServer()
+        this.server.runServer()
+    }
+    
+}
+
+class GeoRTCClient {
     
     static usecases = ['stream-data', 'smart-data-transmission', 'distributed-data-processing', 
                         'decentralized-data-distribution', 'collaborative-data-exchange']
 
     static dataTypes = ['csv', 'xml', 'json', 'js', 'png']
 
-    constructor(appName) {
-        this.appName = appName
-        this.server = server
+    constructor(clientName) {
+        this.clientName = clientName
         this.configuration = configuration
-        
-    }
-
-    run() {
-        this.server.prepareServer()
-        this.server.runServer()
+        this.socket = io();
     }
 
     // in the configuration
@@ -34,18 +43,22 @@ class GeoRTC {
     }
 
     getAvailableUsecases() {
-        return GeoRTC.usecases
+        return GeoRTCClient.usecases
     }
 
     getAvailableDataTypes() {
-        return GeoRTC.dataTypes
+        return GeoRTCClient.dataTypes
     }
 
-    streamData() {
-        // TODO: check if peer is eligible to stream data or not
-        this.server.streamData()
-    }
+    // streamData() {
+    //     // this.socket.emit('join', {
+            
+    //     // })
+    //     // TODO: check if peer is eligible to stream data or not
+    //     this.server.streamData()
+    // }
     
 }
 
-export {GeoRTC}
+const geoRtcServer = new GeoRTC('geortc')
+export {geoRtcServer, GeoRTCClient}

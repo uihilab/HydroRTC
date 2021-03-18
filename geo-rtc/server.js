@@ -1,13 +1,23 @@
 
 import http from 'http'
 import {createReadStream} from 'fs'
-
-class Server {
+import {Server} from 'socket.io'
+class GeoRTCServer {
 
     prepareServer() {
         this.server = http.createServer(function (request, response) {
             response.writeHead(200)
             response.end("Request received.")
+        })
+
+        this.io = new Server(this.server, {
+            log: false, origins: '*'
+        })
+        this.io.on("connection", function(socket){
+            socket.on('join', function(peer){
+                console.log("peer joined",peer)
+            })
+
         })
     }
 
@@ -34,5 +44,5 @@ class Server {
     }
 }
 
-const server = new Server()
+const server = new GeoRTCServer()
 export {server}
