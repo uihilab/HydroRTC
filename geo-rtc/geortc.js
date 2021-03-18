@@ -40,6 +40,11 @@ class GeoRTC {
     getAvailableDataTypes() {
         return GeoRTC.dataTypes
     }
+
+    streamData() {
+        // TODO: check if peer is eligible to stream data or not
+        this.server.streamData()
+    }
     
 }
 
