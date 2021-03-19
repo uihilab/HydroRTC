@@ -1,24 +1,24 @@
-class Configuration {
+var Configuration = function(){
 
-    constructor() {
-        this.usecases = []
-        this.receiveDataTypes = []
-        this.sendDataTypes = []
-    }
+    this.usecases = []
+    this.receiveDataTypes = []
+    this.sendDataTypes = []
 
-    setUsecases(usecases) {
+    
+
+    this.setUsecases = function(usecases) {
         this.usecases = usecases
     }
 
-    setReceiveDataTypes(receiveDataTypes) {
+    this.setReceiveDataTypes = function(receiveDataTypes) {
         this.receiveDataTypes = receiveDataTypes
     }
 
-    setSendDataTypes(sendDataTypes) {
+    this.setSendDataTypes = function(sendDataTypes) {
         this.sendDataTypes = sendDataTypes
     }
 
-    getJSON() {
+    this.getJSON = function(){
         return {
             'usecases' : this.usecases,
             'receiveDataTypes' : this.receiveDataTypes,
@@ -29,5 +29,4 @@ class Configuration {
 }
 
 
-const configuration = new Configuration()
-export {configuration}
+this.configuration = new Configuration()

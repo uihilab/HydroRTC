@@ -1,66 +1,51 @@
-import {server} from './server.js'
-import {configuration} from './configuration.js'
-import {io} from 'socket.io-client'
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
+const server = require('./server.js').server
+const configuration = require('./configuration.js').configuration
+const io = require('socket.io-client').io
 const events = require('events')
-class GeoRTC {
 
-    constructor(appName) {
-        this.appName = appName
-        this.server = server
-    }
+var GeoRTC = function(appName) {
+    
+    this.appName = appName
+    this.server = server
+    
 
-    run(hostname, port) {
+    this.run = function(hostname, port) {
         this.server.prepareServer(hostname, port)
         this.server.runServer()
     }
     
 }
 
-class GeoRTCClient {
+this.GeoRTCClient = function(clientName) {
     
-    static usecases = ['stream-data', 'smart-data-transmission', 'distributed-data-processing', 
+    let usecases = ['stream-data', 'smart-data-transmission', 'distributed-data-processing', 
                         'decentralized-data-distribution', 'collaborative-data-exchange']
 
-    static dataTypes = ['csv', 'xml', 'json', 'js', 'png']
-
-    constructor(clientName) {
-        // TODO: ensure server is run before client
-        this.clientName = clientName
-        this.configuration = configuration
-        this.streamEventHandler = new events.EventEmitter()
-
-        this.socket = io.connect('http://'+server.getAddress(), {reconnect: true});
-        this.socket.emit('join',{
-            'name': this.clientName
-        })
-        this.socketEventHandlers()
-    }
+    let dataTypes = ['csv', 'xml', 'json', 'js', 'png']
 
     // in the configuration
     // user can enable / disable usecases
     // and types of data they can send / receive
-    setConfiguration(usecases, receiveDataTypes, sendDataTypes) {
+    this.setConfiguration = function (usecases, receiveDataTypes, sendDataTypes) {
         // TODO: validate all inputs
         this.configuration.setUsecases(usecases)
         this.configuration.setReceiveDataTypes(receiveDataTypes)
         this.configuration.setSendDataTypes(sendDataTypes)
     }
 
-    getConfiguration() {
+    this.getConfiguration = function() {
         return this.configuration.getJSON()
     }
 
-    getAvailableUsecases() {
-        return GeoRTCClient.usecases
+    this.getAvailableUsecases = function() {
+        return usecases
     }
 
-    getAvailableDataTypes() {
-        return GeoRTCClient.dataTypes
+    this.getAvailableDataTypes = function() {
+        return dataTypes
     }
 
-    socketEventHandlers() {
+    this.socketEventHandlers = function() {
         this.socket.on("connect", () => {
             console.log('Client (%s) Socket Connected with server: ', this.clientName);
         });
@@ -70,7 +55,7 @@ class GeoRTCClient {
         })
     }
 
-    streamData() {
+    this.streamData = function() {
         if (!this.configuration.usecases.includes('stream-data')) {
             let socketId = this.socket.id
             this.socket.emit('stream-data', {
@@ -84,8 +69,19 @@ class GeoRTCClient {
             return null;
         }
     }
+
+    // init
+    // TODO: ensure server is run before client
+    this.clientName = clientName
+    this.configuration = configuration
+    this.streamEventHandler = new events.EventEmitter()
+    
+    this.socket = io();
+    this.socket.emit('join',{
+        'name': this.clientName
+    })
+    this.socketEventHandlers()
     
 }
 
-const geoRtcServer = new GeoRTC('geortc')
-export {geoRtcServer, GeoRTCClient}
+this.geoRtcServer = new GeoRTC('geortc')

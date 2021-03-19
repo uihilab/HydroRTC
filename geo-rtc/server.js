@@ -1,20 +1,58 @@
 
-import http from 'http'
-import {createReadStream} from 'fs'
-import {Server} from 'socket.io'
-class GeoRTCServer {
+const http = require('http')
+const createReadStream = require('fs').createReadStream
+const readFile = require('fs').readFile
+const exists = require('fs').exists
+const statSync = require('fs').statSync
+const Server = require('socket.io').Server
+const createRequire = require('module').createRequire;
+const path = require('path');
 
-    constructor() {
-        this.hostname = ""
-        this.port = 0
-    }
+var GeoRTCServer = function(){
 
-    prepareServer(hostname, port) {
+    this.hostname = ""
+    this.port = 0
+    
+
+    this.prepareServer = function(hostname, port) {
         this.hostname = hostname
         this.port = port
         this.server = http.createServer(function (request, response) {
-            response.writeHead(200)
-            response.end("Request received.")
+            var uri = require('url').parse(request.url).pathname,
+            filename = path.join(process.cwd(), uri);
+    
+            var isWin = !!process.platform.match(/^win/);
+        
+            if (statSync(filename).isDirectory()) {
+                if(!isWin) filename += '/index.html';
+                else filename += '\\index.html';
+            }
+        
+            exists(filename, function (exists) {
+                if (!exists) {
+                    response.writeHead(404, {
+                        "Content-Type": "text/plain"
+                    });
+                    response.write('404 Not Found: ' + filename + '\n');
+                    response.end();
+                    return;
+                }
+        
+                readFile(filename, 'binary', function (err, file) {
+                    if (err) {
+                        response.writeHead(500, {
+                            "Content-Type": "text/plain"
+                        });
+                        response.write(err + "\n");
+                        response.end();
+                        return;
+                    }
+        
+                    response.writeHead(200, { "Content-Type": "text/html"});
+                    response.write(file, 'binary');
+                    response.end();
+                });
+            });
         })
 
 
@@ -48,7 +86,7 @@ class GeoRTCServer {
    
     }
 
-    runServer() {
+    this.runServer = function() {
         // TODO: check if server can run on given port and hostname or not
         this.server = this.server.listen(this.port, this.hostname, function() {
             let addr = this.address();
@@ -58,10 +96,9 @@ class GeoRTCServer {
         })
     }
 
-    getAddress() {
+    this.getAddress = function() {
         return this.hostname+":"+this.port
     }
 }
 
-const server = new GeoRTCServer()
-export {server}
+this.server = new GeoRTCServer()
