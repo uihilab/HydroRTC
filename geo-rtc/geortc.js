@@ -1,6 +1,9 @@
 import {server} from './server.js'
 import {configuration} from './configuration.js'
 import {io} from 'socket.io-client'
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const events = require('events')
 class GeoRTC {
 
     constructor(appName) {
@@ -26,14 +29,13 @@ class GeoRTCClient {
         // TODO: ensure server is run before client
         this.clientName = clientName
         this.configuration = configuration
-        const socket = io.connect('http://'+server.getAddress(), {reconnect: true});
-        // client-side
-        socket.on("connect", () => {
-            console.log('Client (%s) Socket Connected with server: ', clientName);
-        });
-        socket.emit('join',{
-            'name': clientName
+        this.streamEventHandler = new events.EventEmitter()
+
+        this.socket = io.connect('http://'+server.getAddress(), {reconnect: true});
+        this.socket.emit('join',{
+            'name': this.clientName
         })
+        this.socketEventHandlers()
     }
 
     // in the configuration
@@ -58,13 +60,30 @@ class GeoRTCClient {
         return GeoRTCClient.dataTypes
     }
 
-    // streamData() {
-    //     // this.socket.emit('join', {
-            
-    //     // })
-    //     // TODO: check if peer is eligible to stream data or not
-    //     this.server.streamData()
-    // }
+    socketEventHandlers() {
+        this.socket.on("connect", () => {
+            console.log('Client (%s) Socket Connected with server: ', this.clientName);
+        });
+        this.socket.on('data-stream', (message)=>{
+            this.streamEventHandler.emit('data', {'data':message.data,
+                'status': message.status})
+        })
+    }
+
+    streamData() {
+        if (!this.configuration.usecases.includes('stream-data')) {
+            let socketId = this.socket.id
+            this.socket.emit('stream-data', {
+                name: this.clientName,
+                socketId: socketId
+            })
+
+            return this.streamEventHandler;
+        } else {
+            console.log('Client (%s) is not eligible to use stream-data usecase.', this.clientName)
+            return null;
+        }
+    }
     
 }
 
