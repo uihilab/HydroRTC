@@ -1,3 +1,3 @@
-import { GeoRTC } from 'geo-rtc'
+const geoRtcServer = require('geo-rtc').geoRtcServer;
 
-console.log(new GeoRTC().createServer("sda", "asdas"))
+geoRtcServer.run('localhost', 8888)

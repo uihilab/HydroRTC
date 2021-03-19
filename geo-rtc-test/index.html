@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <h1> GeoRTC Client </h1>
+    <p id ="text">
+
+    </p>
+</body>
+<script src="./build/geortcclient.js"></script>
+<script>
+    
+   let geoRtcClient = new GeoRTCClient('client-1')
+   // stream data usecase
+   let dataStream = geoRtcClient.streamData()
+   // null, if client is unable to use the usecase
+   if (dataStream != null) {
+       dataStream.on('data', (data)=>{
+           if (data.status == "incomplete") {
+               document.getElementById('text').innerHTML+=data.data
+           }
+       })
+   }
+</script>
+</html>

@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Distributed data sharing and analysis",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rimraf build",
+    "mkdirs": "mkdir build",
+    "browserify": "browserify geortcclient.js -o build/geortcclient.js"
   },
   "repository": {
     "type": "git",
