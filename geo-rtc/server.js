@@ -12,7 +12,6 @@ var GeoRTCServer = function(){
 
     this.hostname = ""
     this.port = 0
-    
 
     this.prepareServer = function(hostname, port) {
         this.hostname = hostname
@@ -53,8 +52,8 @@ var GeoRTCServer = function(){
                     response.end();
                 });
             });
-        })
 
+        })
 
         this.io = new Server(this.server, {})
         this.io.on("connection", (socket) => {
@@ -92,8 +91,8 @@ var GeoRTCServer = function(){
             let addr = this.address();
             console.log("Server listening at", addr.address + ":" + addr.port);
           
-            
         })
+
     }
 
     this.getAddress = function() {

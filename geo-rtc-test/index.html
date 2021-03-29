@@ -4,23 +4,69 @@
 </head>
 <body>
     <h1> GeoRTC Client </h1>
+    <input type="text" id="name">
+    <button id="stream-data">Stream Data</button>
+    <button id="send-data">Send Data</button>
+    <button id="request-data">Request Data</button>
     <p id ="text">
-
     </p>
+
 </body>
-<script src="./build/geortcclient.js"></script>
+<script src="./node_modules/geo-rtc/build/geortcclient.js"></script>
+<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 <script>
-    
-   let geoRtcClient = new GeoRTCClient('client-1')
-   // stream data usecase
-   let dataStream = geoRtcClient.streamData()
-   // null, if client is unable to use the usecase
-   if (dataStream != null) {
-       dataStream.on('data', (data)=>{
-           if (data.status == "incomplete") {
-               document.getElementById('text').innerHTML+=data.data
-           }
-       })
+
+   let geoRtcClient = null
+   
+   document.getElementById('stream-data').onclick = function(){
+        if (!geoRtcClient) {
+
+            geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
+        }
+        // stream data usecase
+        let dataStream = geoRtcClient.streamData()
+        // null, if client is unable to use the usecase
+        if (dataStream != null) {
+            dataStream.on('data', (data)=>{
+                if (data.status == "incomplete") {
+                    document.getElementById('text').innerHTML+=data.data
+                }
+            })
+        }
    }
+
+   
+   document.getElementById('request-data').onclick = function(){
+        if (!geoRtcClient) {
+
+            geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
+        }
+        // stream data usecase
+        let dataStream = geoRtcClient.requestDataFromPeer('Muneeb')
+        // null, if client is unable to use the usecase
+        console.log(dataStream)
+        if (dataStream != null) {
+            dataStream.on('data', (data)=>{
+                console.log('Received Data: ', data)
+            })
+        }
+   }
+   
+   document.getElementById('send-data').onclick = function(){
+        if (!geoRtcClient) {
+
+            geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
+        }
+        let dataStream = geoRtcClient.sendDataToPeer('Asad', 'hello')
+        console.log(dataStream)
+        // null, if client is unable to use the usecase
+        if (dataStream != null) {
+            dataStream.on('data', (data)=>{
+                console.log('Received Data: ', data)
+            })
+        }
+        
+   }
+
 </script>
 </html>

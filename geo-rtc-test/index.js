@@ -1,3 +1,5 @@
-const geoRtcServer = require('geo-rtc').geoRtcServer;
+const geoRtcServer = require('geo-rtc/geortcserver.js').geoRtcServer;
 
+// mechanism to allow the sample project to specify 
+// list of data that they can share
 geoRtcServer.run('localhost', 8888)
