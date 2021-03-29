@@ -1,20 +1,8 @@
-const server = require('./server.js').server
+// this file exports global objects for browser/client
+
 const configuration = require('./configuration.js').configuration
 const io = require('socket.io-client').io
 const events = require('events')
-
-var GeoRTC = function(appName) {
-    
-    this.appName = appName
-    this.server = server
-    
-
-    this.run = function(hostname, port) {
-        this.server.prepareServer(hostname, port)
-        this.server.runServer()
-    }
-    
-}
 
 this.GeoRTCClient = function(clientName) {
     
@@ -70,6 +58,16 @@ this.GeoRTCClient = function(clientName) {
         }
     }
 
+    // Collaborative Data Exchange
+    this.requestDataFromPeer = function(peerName) {
+
+    }
+
+    this.sendDataToPeer = function(peerName, data) {
+        
+    }
+
+
     // init
     // TODO: ensure server is run before client
     this.clientName = clientName
@@ -81,7 +79,12 @@ this.GeoRTCClient = function(clientName) {
         'name': this.clientName
     })
     this.socketEventHandlers()
-    
+
+    this.myConn = new Peer({
+        host: location.hostname,
+        port: 9000,
+        path: '/peer'
+    })
 }
 
-this.geoRtcServer = new GeoRTC('geortc')
+window.GeoRTCClient = this.GeoRTCClient

@@ -1,5 +1,5 @@
-this.geoRtcServer = require("./geortc.js").geoRtcServer
-this.GeoRTCClient = require("./geortc.js").GeoRTCClient
+// this.geoRtcServer = require("./build/geortc.js").geoRtcServer
+// this.GeoRTCClient = require("./build/geortc.js").GeoRTCClient
 
 //sample client code
 //server code
