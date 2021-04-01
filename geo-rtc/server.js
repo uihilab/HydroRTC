@@ -12,6 +12,7 @@ var GeoRTCServer = function(){
 
     this.hostname = ""
     this.port = 0
+    this.peers = []
 
     this.prepareServer = function(hostname, port) {
         this.hostname = hostname
@@ -56,8 +57,10 @@ var GeoRTCServer = function(){
         })
 
         this.io = new Server(this.server, {})
+        let outerObj = this
         this.io.on("connection", (socket) => {
             socket.on('join', function(peer){
+                outerObj.peers.push(peer)
                 console.log("peer (%s) joined: ",peer.name)
             })
 
@@ -78,6 +81,24 @@ var GeoRTCServer = function(){
                         'status': 'complete'
                     })
                 });
+                
+            })
+
+            socket.on('peers-list', (peer) => {
+                console.log("peer (%s) requested to get list of peers: ",peer.name)
+                let list = []
+                outerObj.peers.forEach(p=>{
+                    if (p.name != peer.name) {
+                        list.push(p)
+                    }
+                })
+
+                // broadcasting peers list to all connected peers
+
+                outerObj.io.emit('peers', {
+                    'data': list,
+                    'status': 'complete'
+                })
                 
             })
         })

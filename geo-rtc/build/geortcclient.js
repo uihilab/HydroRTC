@@ -2785,12 +2785,21 @@ this.GeoRTCClient = function (clientName) {
         this.clientName
       );
     });
+
     this.socket.on("data-stream", (message) => {
       this.streamEventHandler.emit("data", {
         data: message.data,
         status: message.status,
       });
     });
+
+    this.socket.on("peers", (message) => {
+      this.peersEventHandler.emit("data", {
+        data: message.data,
+        status: message.status,
+      });
+    });
+
   };
 
   this.streamData = function () {
@@ -2811,6 +2820,17 @@ this.GeoRTCClient = function (clientName) {
     }
   };
 
+  this.getListofPeers = function() {
+    let socketId = this.socket.id;
+      
+    this.socket.emit("peers-list", {
+      name: this.clientName,
+      socketId: socketId,
+    });
+
+    return this.peersEventHandler;
+  }
+
   // Collaborative Data Exchange
   this.requestDataFromPeer = function (peerName) {
     
@@ -2827,6 +2847,7 @@ this.GeoRTCClient = function (clientName) {
   this.configuration = configuration;
   this.streamEventHandler = new events.EventEmitter();
   this.dataExchangeEventHandler = new events.EventEmitter();
+  this.peersEventHandler = new events.EventEmitter();
 
   this.socket = io();
   this.socket.emit("join", {
