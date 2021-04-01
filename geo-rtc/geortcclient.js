@@ -55,10 +55,22 @@ this.GeoRTCClient = function (clientName) {
 
     this.socket.on("peers", (message) => {
       this.peersEventHandler.emit("data", {
+        // TODO: exclude this client from peers list
         data: message.data,
         status: message.status,
       });
     });
+
+    this.socket.on("connect-request", (message) => {
+      this.connectEventHandler.emit("data", {
+        requestor: message.requestor,
+        request: message.request,
+      });
+    });
+
+    // this.socket.on("peer-accepted-request", (message) => {
+    //   connectWithPeer(message.acceptedBy)
+    // });
 
   };
 
@@ -91,31 +103,60 @@ this.GeoRTCClient = function (clientName) {
     return this.peersEventHandler;
   }
 
-  // Collaborative Data Exchange
-  this.requestDataFromPeer = function (peerName) {
+  this.listenRequests = function() {
+    return this.connectEventHandler;
+  }
+
+  // --- Collaborative Data Exchange ---
+
+  this.requestDataFromPeer = function (peerName, request) {
     
+    this.socket.emit("request-peer", {
+      requestorName: this.clientName,
+      requestorSocketId: this.socket.id,
+      recieverPeerName: peerName,
+      request: request
+    });
+
+    return this.dataExchangeEventHandler;
   };
 
-  this.sendDataToPeer = function (peerName, data) {
-    join(peerName, data)
-    
+  this.connectPeer = function (peerName) {
+    connectWithPeer(peerName)
+    // this.socket.emit("request-accepted", {
+    //   acceptedBy: this.clientName,
+    //   requestor: peerName
+    // });
   };
+
+
+  this.sendDataToPeer = function (peerName, data) {
+    // TODO: send data only when peer to peer connection is established
+    this.peerConn.send(data);
+    console.log("Sent: " + data);
+  };
+
+  // --- Collaborative Data Exchange ---
 
   // init
   // TODO: ensure server is run before client
   this.clientName = clientName;
   this.configuration = configuration;
   this.streamEventHandler = new events.EventEmitter();
-  this.dataExchangeEventHandler = new events.EventEmitter();
   this.peersEventHandler = new events.EventEmitter();
+  this.connectEventHandler = new events.EventEmitter();
+  this.dataExchangeEventHandler = new events.EventEmitter();
 
   this.socket = io();
   this.socket.emit("join", {
-    name: this.clientName,
+    name: this.clientName
   });
+
   this.socketEventHandlers();
   this.lastId = null;
-  this.conn = null;
+  this.peerConn = null;
+
+  // --- Peer connections configuration ---
 
   // TODO: make properties configurable
   this.myConn = new Peer(this.clientName, { debug: 2 });
@@ -128,12 +169,12 @@ this.GeoRTCClient = function (clientName) {
       this.lastId = this.myConn.id;
     }
 
-    console.log("ID: " + this.myConn.id);
+    // console.log("ID: " + this.myConn.id);
   });
 
   this.myConn.on("connection", (c) => {
     // Allow only a single connection
-    if (this.conn && this.conn.open) {
+    if (this.peerConn && this.peerConn.open) {
       c.on("open", function () {
         c.send("Already connected to another client");
         setTimeout(function () {
@@ -143,8 +184,8 @@ this.GeoRTCClient = function (clientName) {
       return;
     }
 
-    this.conn = c;
-    console.log("Connected to: " + this.conn.peer);
+    this.peerConn = c;
+    console.log("Connected to: " + this.peerConn.peer);
     ready()
     
   });
@@ -159,7 +200,7 @@ this.GeoRTCClient = function (clientName) {
   });
 
   this.myConn.on("close", () => {
-    this.conn = null;
+    this.peerConn = null;
     console.log("Connection destroyed");
   });
 
@@ -172,12 +213,10 @@ this.GeoRTCClient = function (clientName) {
    * Defines callbacks to handle incoming data and connection events.
    */
   var ready = () => {
-    this.conn.on("data", function (data) {
-      console.log("Data recieved");
-      console.log(data);
-    });
-    this.conn.on("close",  () => {
-      this.conn = null;
+    this.peerConn.on("data", (data) => {
+      this.dataExchangeEventHandler.emit("data", {
+        data: data
+      });
     });
   }
 
@@ -187,32 +226,27 @@ this.GeoRTCClient = function (clientName) {
    * Sets up callbacks that handle any events related to the
    * connection and data received on it.
    */
-  var join = (remotePeerId, data) => {
+  var connectWithPeer = (remotePeerId) => {
     // Close old connection
-    if (this.conn) {
-      this.conn.close();
+    if (this.peerConn) {
+      this.peerConn.close();
     }
 
     // Create connection to destination peer specified in the input field
-    this.conn = this.myConn.connect(remotePeerId, {
+    this.peerConn = this.myConn.connect(remotePeerId, {
       reliable: true,
     });
 
-    this.conn.on("open", () => {
-      console.log("Connected to: " + this.conn.peer);
-      this.conn.send(data);
-      console.log("Sent: " + data);
+    this.peerConn.on("open", () => {
+      console.log("Connected to: " + this.peerConn.peer); 
+    });
 
-    //   if (command) this.conn.send('request');
+    this.peerConn.on("close", function () {
+      console.log("Connection closed");
     });
-    // Handle incoming data (messages only since this is the signal sender)
-    this.conn.on("data", function (data) {
-      console.log('Received: ' + data);
-    });
-    this.conn.on("close", function () {
-     console.log("Connection closed");
-    });
+  
   }
+
 };
 
 window.GeoRTCClient = this.GeoRTCClient;

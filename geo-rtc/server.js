@@ -60,6 +60,8 @@ var GeoRTCServer = function(){
         let outerObj = this
         this.io.on("connection", (socket) => {
             socket.on('join', function(peer){
+                peer["socketId"] = socket.id
+                // TODO: check for unique peer name
                 outerObj.peers.push(peer)
                 console.log("peer (%s) joined: ",peer.name)
             })
@@ -88,9 +90,7 @@ var GeoRTCServer = function(){
                 console.log("peer (%s) requested to get list of peers: ",peer.name)
                 let list = []
                 outerObj.peers.forEach(p=>{
-                    if (p.name != peer.name) {
-                        list.push(p)
-                    }
+                    list.push(p)
                 })
 
                 // broadcasting peers list to all connected peers
@@ -101,6 +101,37 @@ var GeoRTCServer = function(){
                 })
                 
             })
+
+            socket.on('request-peer', (data) => {
+                console.log("peer (%s) requested to connected with peer (%s): ", data.requestorName, data.recieverPeerName)
+                let receiverPeer;
+                outerObj.peers.forEach(p=>{
+                    if (p.name == data.recieverPeerName) {
+                        receiverPeer = p
+                    }
+                })
+
+                outerObj.io.to(receiverPeer.socketId).emit('connect-request', {
+                    requestor: data.requestorName,
+                    request: data.request
+                })
+                
+            })
+
+            // socket.on('request-accepted', (data) => {
+            //     console.log("peer (%s) accepted request of peer (%s): ", data.acceptedBy, data.requestor)
+            //     let receiverPeer;
+            //     outerObj.peers.forEach(p=>{
+            //         if (p.name == data.requestor) {
+            //             receiverPeer = p
+            //         }
+            //     })
+
+            //     outerObj.io.to(receiverPeer.socketId).emit('peer-accepted-request', {
+            //         acceptedBy: data.acceptedBy
+            //     })
+                
+            // })
         })
 
    
