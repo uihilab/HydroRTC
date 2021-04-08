@@ -4,7 +4,7 @@
 </head>
 <body>
     <h1> GeoRTC Client </h1>
-    <input type="text" id="name">
+    <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
     <br>
 
@@ -35,6 +35,8 @@
 
 </body>
 <script src="./node_modules/geo-rtc/build/geortcclient.js"></script>
+<!-- TODO: import it dynamically-->
+<!-- https://github.com/uihilab/instant-expert/blob/master/lib/components/Faq.js -->
 <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 <script>
 
@@ -46,31 +48,41 @@
         alert("Please, enter name to connect")
     } else {
         geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
-        // stream data usecase
-        let dataStream = geoRtcClient.getListofPeers()
-        // null, if client is unable to use the usecase
-        if (dataStream != null) {
 
-            dataStream.on('data', (data)=>{
-                let str = ""
-                document.getElementById("peers").innerHTML = "";
-                data.data.forEach(peer=>{
-                    str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
-                })
-                document.getElementById("peers").innerHTML = str;
-                document.getElementById( 'controls' ).style.display = 'block';
-            })
-        }
+        geoRtcClient.on('connect', (data) => {
+            console.log(data)
+            if (data.connected) {
+                console.log(data.message)
+            } else {
+                console.log(data.message)
+            }
+        })
 
-        let requestStream = geoRtcClient.listenRequests()
-        // null, if client is unable to use the usecase
-        if (requestStream != null) {
+        // // stream data usecase
+        // let dataStream = geoRtcClient.getListofPeers()
+        // // null, if client is unable to use the usecase
+        // if (dataStream != null) {
 
-            requestStream.on('data', (data)=>{
-                let request = data.requestor + " requested: " + data.request + ", "
-                document.getElementById("received-request").innerHTML += request;
-            })
-        }
+        //     dataStream.on('data', (data)=>{
+        //         let str = ""
+        //         document.getElementById("peers").innerHTML = "";
+        //         data.data.forEach(peer=>{
+        //             str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
+        //         })
+        //         document.getElementById("peers").innerHTML = str;
+        //         document.getElementById( 'controls' ).style.display = 'block';
+        //     })
+        // }
+
+        // let requestStream = geoRtcClient.listenRequests()
+        // // null, if client is unable to use the usecase
+        // if (requestStream != null) {
+
+        //     requestStream.on('data', (data)=>{
+        //         let request = data.requestor + " requested: " + data.request + ", "
+        //         document.getElementById("received-request").innerHTML += request;
+        //     })
+        // }
 
     }
    }

@@ -59,11 +59,28 @@ var GeoRTCServer = function(){
         this.io = new Server(this.server, {})
         let outerObj = this
         this.io.on("connection", (socket) => {
+
+    
             socket.on('join', function(peer){
                 peer["socketId"] = socket.id
                 // TODO: check for unique peer name
                 outerObj.peers.push(peer)
                 console.log("peer (%s) joined: ",peer.name)
+            })
+
+            socket.on('validate-username', (data) =>{
+                let found = false;
+                let username = data.name
+                for(let i = 0; i < outerObj.peers.length; i++) {
+                    if (outerObj.peers[i].name == username) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                socket.emit('valid-username', {
+                    'valid': !found
+                })
             })
 
             socket.on('stream-data', (peer) => {
@@ -117,6 +134,11 @@ var GeoRTCServer = function(){
                 })
                 
             })
+
+            socket.on('disconnect', function () {
+                console.log('Client disconnected..');
+             });
+             
 
             // socket.on('request-accepted', (data) => {
             //     console.log("peer (%s) accepted request of peer (%s): ", data.acceptedBy, data.requestor)

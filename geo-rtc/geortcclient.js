@@ -39,6 +39,32 @@ this.GeoRTCClient = function (clientName) {
   };
 
   this.socketEventHandlers = function () {
+
+    this.socket.on("valid-username", (data) => {
+      if (data.valid) {
+
+        this.socket.emit("join", {
+          name: this.clientName
+        });
+
+        this.objectCreationEvent.emit("connect", {
+          connected: true,
+          message: 'Connection is successfull'
+        });
+
+        //establish peerJS connection
+        initPeerJSConn()
+
+      } else {
+        this.socket.disconnect()
+        // in case username is either invalid or already exists
+        this.objectCreationEvent.emit("connect", {
+          connected: false,
+          message: 'Username is already taken'
+        });
+      }
+    });
+
     this.socket.on("connect", () => {
       console.log(
         "Client (%s) Socket Connected with server: ",
@@ -109,6 +135,8 @@ this.GeoRTCClient = function (clientName) {
 
   // --- Collaborative Data Exchange ---
 
+  // TODO: reject request / obsolete request after some interval
+  // TODO: Limit number of connected peers
   this.requestDataFromPeer = function (peerName, request) {
     
     this.socket.emit("request-peer", {
@@ -142,71 +170,77 @@ this.GeoRTCClient = function (clientName) {
   // TODO: ensure server is run before client
   this.clientName = clientName;
   this.configuration = configuration;
+  this.objectCreationEvent = new events.EventEmitter();
   this.streamEventHandler = new events.EventEmitter();
   this.peersEventHandler = new events.EventEmitter();
   this.connectEventHandler = new events.EventEmitter();
   this.dataExchangeEventHandler = new events.EventEmitter();
 
   this.socket = io();
-  this.socket.emit("join", {
+  this.socket.emit("validate-username", {
     name: this.clientName
   });
 
   this.socketEventHandlers();
   this.lastId = null;
   this.peerConn = null;
+  this.myConn = null
 
-  // --- Peer connections configuration ---
+  // --- PeerJS connections configuration ---
 
-  // TODO: make properties configurable
-  this.myConn = new Peer(this.clientName, { debug: 2 });
-  this.myConn.on("open", (id) => {
-    // Workaround for peer.reconnect deleting previous id
-    if (this.myConn.id === null) {
-      console.log("Received null id from peer open");
+  var initPeerJSConn = () => {
+    // TODO: make properties configurable
+    this.myConn = new Peer(this.clientName, { debug: 2 });
+    this.myConn.on("open", (id) => {
+      // Workaround for peer.reconnect deleting previous id
+      if (this.myConn.id === null) {
+        console.log("Received null id from peer open");
+        this.myConn.id = this.lastId;
+      } else {
+        this.lastId = this.myConn.id;
+      }
+
+      // console.log("ID: " + this.myConn.id);
+    });
+
+    this.myConn.on("connection", (c) => {
+      // Allow only a single connection
+
+      // TODO: extend it for 2a
+      if (this.peerConn && this.peerConn.open) {
+        c.on("open", function () {
+          c.send("Already connected to another client");
+          setTimeout(function () {
+            c.close();
+          }, 500);
+        });
+        return;
+      }
+
+      this.peerConn = c;
+      console.log("Connected to: " + this.peerConn.peer);
+      ready()
+      
+    });
+
+    this.myConn.on("disconnected", () => {
+      console.log("Connection lost. Please reconnect");
+
+      // Workaround for peer.reconnect deleting previous id
       this.myConn.id = this.lastId;
-    } else {
-      this.lastId = this.myConn.id;
-    }
+      this.myConn._lastServerId = this.lastId;
+      this.myConn.reconnect();
+    });
 
-    // console.log("ID: " + this.myConn.id);
-  });
+    this.myConn.on("close", () => {
+      this.peerConn = null;
+      console.log("Connection destroyed");
+    });
 
-  this.myConn.on("connection", (c) => {
-    // Allow only a single connection
-    if (this.peerConn && this.peerConn.open) {
-      c.on("open", function () {
-        c.send("Already connected to another client");
-        setTimeout(function () {
-          c.close();
-        }, 500);
-      });
-      return;
-    }
-
-    this.peerConn = c;
-    console.log("Connected to: " + this.peerConn.peer);
-    ready()
-    
-  });
-
-  this.myConn.on("disconnected", () => {
-    console.log("Connection lost. Please reconnect");
-
-    // Workaround for peer.reconnect deleting previous id
-    this.myConn.id = this.lastId;
-    this.myConn._lastServerId = this.lastId;
-    this.myConn.reconnect();
-  });
-
-  this.myConn.on("close", () => {
-    this.peerConn = null;
-    console.log("Connection destroyed");
-  });
-
-  this.myConn.on("error", function (err) {
-    console.log(err);
-  });
+    this.myConn.on("error", function (err) {
+      console.log(err);
+    });
+  }
 
   /**
    * Triggered once a connection has been achieved.
@@ -247,6 +281,7 @@ this.GeoRTCClient = function (clientName) {
   
   }
 
+  return this.objectCreationEvent
 };
 
 window.GeoRTCClient = this.GeoRTCClient;
