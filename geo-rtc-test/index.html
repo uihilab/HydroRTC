@@ -73,6 +73,16 @@
                     })
                 }
 
+                let requestStream = geoRtcClient.listenRequests()
+                // null, if client is unable to use the usecase
+                if (requestStream != null) {
+
+                    requestStream.on('data', (data)=>{
+                        let request = data.requestor + " requested: " + data.request + ", "
+                        document.getElementById("received-request").innerHTML += request;
+                    })
+                }
+
             } else {
 
                 console.log(data.message)
@@ -80,17 +90,6 @@
             }
         })
 
-
-
-        // let requestStream = geoRtcClient.listenRequests()
-        // // null, if client is unable to use the usecase
-        // if (requestStream != null) {
-
-        //     requestStream.on('data', (data)=>{
-        //         let request = data.requestor + " requested: " + data.request + ", "
-        //         document.getElementById("received-request").innerHTML += request;
-        //     })
-        // }
 
     }
    }
@@ -118,7 +117,7 @@
          // null, if client is unable to use the usecase
          if (dataStream != null) {
             dataStream.on('data', (data)=>{
-                let receivedData = "Peer Sent: " + data.data
+                let receivedData = data.sender +" Sent: " + data.data
                 document.getElementById('received-data').innerHTML+=receivedData
             })
         }        
@@ -138,7 +137,7 @@
         }
         let selectedPeer = document.getElementById('peers').value
         
-        geoRtcClient.sendDataToPeer(selectedPeer, 'hello')
+        geoRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
         
    }
 

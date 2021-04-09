@@ -139,16 +139,14 @@ var GeoRTCServer = function(){
                 
                 outerObj.peers.forEach(p=>{
                     
-                    if (p.name != peer.name) {
-                        list.push(p)
-                    }
-
+                    list.push(p)
+                   
                 })
 
                 // broadcasting peers list to all connected peers
 
                 outerObj.io.emit('peers', {
-                    'data': list,
+                    'peers': list,
                     'status': 'complete'
                 })
                 

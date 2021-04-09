@@ -2822,11 +2822,20 @@ this.GeoRTCClient = function (clientName) {
     });
 
     this.socket.on("peers", (message) => {
+
+      let otherPeers = []
+      message.peers.forEach(peer => {
+        if (peer.name != this.clientName) {
+          otherPeers.push(peer)
+        }
+      })
+
       this.peersEventHandler.emit("data", {
         // TODO: exclude this client from peers list
-        data: message.data,
+        data: otherPeers,
         status: message.status,
       });
+
     });
 
     this.socket.on("connect-request", (message) => {
@@ -2920,13 +2929,11 @@ this.GeoRTCClient = function (clientName) {
 
   this.sendDataToPeer = function (peerName, data) {
     // TODO: send data only when peer to peer connection is established
-    this.peerConn.send({'data':data, 'usecase':''});
-
+    this.peerConn.send({'data':data, 'usecase':'', 'sender': this.clientName});
   };
 
   this.sendStreamDataToPeer = (usecase) => {
     this.getStreamDataChunks().forEach(chunk => {
-      console.log(chunk)
       this.peerConn.send({
         'data': chunk,
         'usecase': usecase,
@@ -3027,7 +3034,7 @@ this.GeoRTCClient = function (clientName) {
    */
   var ready = () => {
     this.peerConn.on("data", (data) => {
-      console.log(data)
+     
       if (data.usecase == "decentralized") {
         
         this.streamEventHandler.emit("data", {
@@ -3037,9 +3044,11 @@ this.GeoRTCClient = function (clientName) {
 
       } else {
         this.dataExchangeEventHandler.emit("data", {
-          data: data,
+          data: data.data,
+          sender: data.sender
         });
       }
+
     });
   };
 
