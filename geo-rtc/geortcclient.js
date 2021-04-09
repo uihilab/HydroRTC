@@ -3,7 +3,16 @@
 const configuration = require("./configuration.js").configuration;
 const io = require("socket.io-client").io;
 const events = require("events");
+const $ = require('./lib/jquery.js').$
 // const Peer = require('peerjs')
+
+// Dynamically loading peerjs script
+$.when(
+  $.getScript( "https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js" ),
+  $.Deferred(function( deferred ){
+      $( deferred.resolve );
+  })
+).done(function(){})
 
 this.GeoRTCClient = function (clientName) {
   let usecases = [
