@@ -62,7 +62,10 @@ var GeoRTCServer = function(){
 
     
             socket.on('join', function(peer){
+
                 peer["socketId"] = socket.id
+                peer["has-stream-data"] = false
+                
                 // TODO: check for unique peer name
                 outerObj.peers.push(peer)
                 console.log("peer (%s) joined: ",peer.name)
@@ -84,30 +87,62 @@ var GeoRTCServer = function(){
             })
 
             socket.on('stream-data', (peer) => {
+
                 console.log("peer (%s) requested to stream data: ",peer.name)
+
                 // default chunk size is 65536
                 // to change the chunk size updated highWaterMark property
                 // https://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options
-                let readStream = createReadStream('./data/sensor-data.txt', {'encoding': 'utf8', 'highWaterMark': 16*1024})
-                readStream.on('data', function(chunk) {
-                    socket.emit('data-stream', {
-                        'data': chunk,
-                        'status': 'incomplete'
+
+                let streamDataPeer = outerObj.getPeerwithStreamData()
+
+                // if there is a peer with stream data
+                if (streamDataPeer) {
+                    // sending the request to that peer to send data to requesting peer
+                    outerObj.io.to(streamDataPeer.socketId).emit('connect-request', {
+                        requestor: peer.name,
+                        request: 'streamData',
+                        'usecase': 'decentralized'
                     })
-                }).on('end', function() {
-                    socket.emit('data-stream', {
-                        'data': "",
-                        'status': 'complete'
-                    })
-                });
-                
+
+                } else {
+
+                    let readStream = createReadStream('./data/sensor-data.txt', {'encoding': 'utf8', 'highWaterMark': 16*1024})
+
+                    readStream.on('data', function(chunk) {
+                        
+                        socket.emit('data-stream', {
+                            'data': chunk,
+                            'status': 'incomplete',
+                            "peer": null
+                        })
+
+                    }).on('end', function() {
+                        
+                        socket.emit('data-stream', {
+                            'data': "",
+                            'status': 'complete'
+                        })
+
+                        outerObj.updatePeerProperty(peer.name, "has-stream-data", true)
+         
+                    });
+                }   
             })
+            
 
             socket.on('peers-list', (peer) => {
-                console.log("peer (%s) requested to get list of peers: ",peer.name)
+
+                console.log("peer (%s) requested to get list of peers: ", peer.name)
+                
                 let list = []
+                
                 outerObj.peers.forEach(p=>{
-                    list.push(p)
+                    
+                    if (p.name != peer.name) {
+                        list.push(p)
+                    }
+
                 })
 
                 // broadcasting peers list to all connected peers
@@ -130,7 +165,8 @@ var GeoRTCServer = function(){
 
                 outerObj.io.to(receiverPeer.socketId).emit('connect-request', {
                     requestor: data.requestorName,
-                    request: data.request
+                    request: data.request,
+                    'usecase': 'collaborative'
                 })
                 
             })
@@ -157,6 +193,33 @@ var GeoRTCServer = function(){
         })
 
    
+    }
+
+    this.updatePeerProperty = (peerName, property, value) => {
+
+        for(let i = 0; i < this.peers.length; i++) {
+            if (this.peers[i].name == peerName) {
+                this.peers[i][property] = value
+            }
+        }
+
+        return null
+    }
+
+    this.getPeerwithStreamData = () => {
+
+        // get most recent peer
+
+        let totalPeers =  this.peers.length
+
+        for(let i = totalPeers - 1; i >= 0; i--) {
+
+            if (this.peers[i]["has-stream-data"]) {
+                return this.peers[i]
+            }
+        }
+
+        return null
     }
 
     this.runServer = function() {

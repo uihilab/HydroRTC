@@ -6,32 +6,34 @@
     <h1> GeoRTC Client </h1>
     <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
-    <br>
+    <br><br>
 
     <div id="controls" style="display: none;">
         <div>
             <label for="peers">List of Connected Peers: </label>
             <select id="peers"></select>
         </div>
+        <br><br>
         <button id="stream-data">Stream Data</button>
         <button id="send-data">Send Data</button>
         <button id="request-data">Request Data</button>
         <button id="accept-request">Accept Request</button>
     </div>
+    <br>
     <div>
-        <h2>Received Requests: </h2>
-        <p id="received-request"></p>
+        <div>
+            <h2>Received Requests: </h2>
+            <p id="received-request"></p>
+        </div>
+        <div>
+            <h2>Received Data From Peer: </h2>
+            <p id="received-data"></p>
+        </div>
+        <div>
+            <h2>Received Stream:</h2>
+            <p id ="text"></p>
+        </div>
     </div>
-    <div>
-        <h2>Received Data From Peer: </h2>
-        <p id="received-data"></p>
-    </div>
-    <div>
-        <h2>Received Stream:</h2>
-        <p id ="text"></p>
-    </div>
-
-
 
 </body>
 <script src="./node_modules/geo-rtc/build/geortcclient.js"></script>
@@ -45,34 +47,40 @@
    document.getElementById('connect').onclick = function() {
 
     if (document.getElementById('name').value.length == 0) {
+        
         alert("Please, enter name to connect")
-    } else {
-        geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
 
-        geoRtcClient.on('connect', (data) => {
-            console.log(data)
+    } else {
+
+        let clientConn = new GeoRTCClient(document.getElementById('name').value)
+
+        clientConn.on('connect', (data) => {
             if (data.connected) {
-                console.log(data.message)
+                geoRtcClient = data.obj
+                // stream data usecase
+                let dataStream = geoRtcClient.getPeers()
+                // null, if client is unable to use the usecase
+                if (dataStream != null) {
+
+                    dataStream.on('data', (data)=>{
+                        let str = ""
+                        document.getElementById("peers").innerHTML = "";
+                        data.data.forEach(peer=>{
+                            str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
+                        })
+                        document.getElementById("peers").innerHTML = str;
+                        document.getElementById( 'controls' ).style.display = 'block';
+                    })
+                }
+
             } else {
+
                 console.log(data.message)
+            
             }
         })
 
-        // // stream data usecase
-        // let dataStream = geoRtcClient.getListofPeers()
-        // // null, if client is unable to use the usecase
-        // if (dataStream != null) {
 
-        //     dataStream.on('data', (data)=>{
-        //         let str = ""
-        //         document.getElementById("peers").innerHTML = "";
-        //         data.data.forEach(peer=>{
-        //             str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
-        //         })
-        //         document.getElementById("peers").innerHTML = str;
-        //         document.getElementById( 'controls' ).style.display = 'block';
-        //     })
-        // }
 
         // let requestStream = geoRtcClient.listenRequests()
         // // null, if client is unable to use the usecase
@@ -90,7 +98,7 @@
    document.getElementById('stream-data').onclick = function(){
         
         // stream data usecase
-        let dataStream = geoRtcClient.streamData()
+        let dataStream = geoRtcClient.streamDataRequest()
         // null, if client is unable to use the usecase
         if (dataStream != null) {
             dataStream.on('data', (data)=>{

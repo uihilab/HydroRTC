@@ -2779,28 +2779,27 @@ this.GeoRTCClient = function (clientName) {
   };
 
   this.socketEventHandlers = function () {
-
     this.socket.on("valid-username", (data) => {
       if (data.valid) {
-
         this.socket.emit("join", {
-          name: this.clientName
+          name: this.clientName,
         });
 
         this.objectCreationEvent.emit("connect", {
           connected: true,
-          message: 'Connection is successfull'
+          message: "Connection is successfull",
+          obj: this,
         });
 
         //establish peerJS connection
-        initPeerJSConn()
-
+        initPeerJSConn();
       } else {
-        this.socket.disconnect()
+        this.socket.disconnect();
         // in case username is either invalid or already exists
         this.objectCreationEvent.emit("connect", {
           connected: false,
-          message: 'Username is already taken'
+          message: "Username is already taken",
+          obj: null,
         });
       }
     });
@@ -2813,10 +2812,13 @@ this.GeoRTCClient = function (clientName) {
     });
 
     this.socket.on("data-stream", (message) => {
+      
+      this.streamData += message.data
       this.streamEventHandler.emit("data", {
         data: message.data,
         status: message.status,
       });
+
     });
 
     this.socket.on("peers", (message) => {
@@ -2828,20 +2830,37 @@ this.GeoRTCClient = function (clientName) {
     });
 
     this.socket.on("connect-request", (message) => {
-      this.connectEventHandler.emit("data", {
-        requestor: message.requestor,
-        request: message.request,
-      });
+
+      if (message.usecase == 'decentralized') {
+        connectWithPeer(message.requestor).then(response =>{
+          if (response.status == "connected") {
+              this.sendStreamDataToPeer(message.usecase)
+          }
+        })
+
+      } else {
+        
+        this.connectEventHandler.emit("data", {
+          requestor: message.requestor,
+          request: message.request,
+        });
+
+      }
     });
 
     // this.socket.on("peer-accepted-request", (message) => {
     //   connectWithPeer(message.acceptedBy)
     // });
-
   };
 
-  this.streamData = function () {
+  this.streamDataRequest = function () {
+    // client can hold one stream data at time.
+    // new stream data will update the old request.
+
+    this.streamData = ''
+
     if (!this.configuration.usecases.includes("stream-data")) {
+
       let socketId = this.socket.id;
       this.socket.emit("stream-data", {
         name: this.clientName,
@@ -2849,60 +2868,79 @@ this.GeoRTCClient = function (clientName) {
       });
 
       return this.streamEventHandler;
+
     } else {
+
       console.log(
         "Client (%s) is not eligible to use stream-data usecase.",
         this.clientName
       );
+
       return null;
     }
   };
 
-  this.getListofPeers = function() {
+  this.getPeers = function () {
     let socketId = this.socket.id;
-      
+
     this.socket.emit("peers-list", {
       name: this.clientName,
       socketId: socketId,
     });
 
     return this.peersEventHandler;
-  }
+  };
 
-  this.listenRequests = function() {
+  this.listenRequests = function () {
     return this.connectEventHandler;
-  }
+  };
 
   // --- Collaborative Data Exchange ---
 
   // TODO: reject request / obsolete request after some interval
   // TODO: Limit number of connected peers
   this.requestDataFromPeer = function (peerName, request) {
-    
     this.socket.emit("request-peer", {
       requestorName: this.clientName,
       requestorSocketId: this.socket.id,
       recieverPeerName: peerName,
-      request: request
+      request: request,
     });
 
     return this.dataExchangeEventHandler;
   };
 
   this.connectPeer = function (peerName) {
-    connectWithPeer(peerName)
+    connectWithPeer(peerName);
     // this.socket.emit("request-accepted", {
     //   acceptedBy: this.clientName,
     //   requestor: peerName
     // });
   };
 
-
   this.sendDataToPeer = function (peerName, data) {
     // TODO: send data only when peer to peer connection is established
-    this.peerConn.send(data);
-    console.log("Sent: " + data);
+    this.peerConn.send({'data':data, 'usecase':''});
+
   };
+
+  this.sendStreamDataToPeer = (usecase) => {
+    this.getStreamDataChunks().forEach(chunk => {
+      console.log(chunk)
+      this.peerConn.send({
+        'data': chunk,
+        'usecase': usecase,
+        'status': 'incomplete'
+      });
+    })
+
+    this.peerConn.send({
+      'data': '',
+      'usecase': usecase,
+      'status': 'complete'
+    });
+    
+  }
 
   // --- Collaborative Data Exchange ---
 
@@ -2918,13 +2956,15 @@ this.GeoRTCClient = function (clientName) {
 
   this.socket = io();
   this.socket.emit("validate-username", {
-    name: this.clientName
+    name: this.clientName,
   });
 
   this.socketEventHandlers();
   this.lastId = null;
   this.peerConn = null;
-  this.myConn = null
+  this.myConn = null;
+  // this object will hold stream data once received
+  this.streamData = ""
 
   // --- PeerJS connections configuration ---
 
@@ -2959,8 +2999,7 @@ this.GeoRTCClient = function (clientName) {
 
       this.peerConn = c;
       console.log("Connected to: " + this.peerConn.peer);
-      ready()
-      
+      ready();
     });
 
     this.myConn.on("disconnected", () => {
@@ -2980,7 +3019,7 @@ this.GeoRTCClient = function (clientName) {
     this.myConn.on("error", function (err) {
       console.log(err);
     });
-  }
+  };
 
   /**
    * Triggered once a connection has been achieved.
@@ -2988,11 +3027,21 @@ this.GeoRTCClient = function (clientName) {
    */
   var ready = () => {
     this.peerConn.on("data", (data) => {
-      this.dataExchangeEventHandler.emit("data", {
-        data: data
-      });
+      console.log(data)
+      if (data.usecase == "decentralized") {
+        
+        this.streamEventHandler.emit("data", {
+          data: data.data,
+          status: data.status
+        });
+
+      } else {
+        this.dataExchangeEventHandler.emit("data", {
+          data: data,
+        });
+      }
     });
-  }
+  };
 
   /**
    * Create the connection between the two Peers.
@@ -3006,22 +3055,38 @@ this.GeoRTCClient = function (clientName) {
       this.peerConn.close();
     }
 
-    // Create connection to destination peer specified in the input field
-    this.peerConn = this.myConn.connect(remotePeerId, {
-      reliable: true,
-    });
+    let outerObj = this
+    return new Promise((resolve, reject) => {
+      // Create connection to destination peer specified in the input field
+      outerObj.peerConn = outerObj.myConn.connect(remotePeerId, {
+        reliable: true,
+      });
 
-    this.peerConn.on("open", () => {
-      console.log("Connected to: " + this.peerConn.peer); 
-    });
+      outerObj.peerConn.on("open", () => {
+        resolve({'status':'connected'})
+        console.log("Connected to: " + outerObj.peerConn.peer);
+      });
 
-    this.peerConn.on("close", function () {
-      console.log("Connection closed");
-    });
+      outerObj.peerConn.on("close", function () {
+        console.log("Connection closed");
+      });
+    })
+
+  };
+
+  this.getStreamDataChunks = () => {
+    // chunk size in bytes
+    let size = 1024
+    const numChunks = Math.ceil(this.streamData.length / size)
+    const chunks = new Array(numChunks)
+    for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+      chunks[i] = this.streamData.substr(o, size)
+    }
   
+    return chunks
   }
 
-  return this.objectCreationEvent
+  return this.objectCreationEvent;
 };
 
 window.GeoRTCClient = this.GeoRTCClient;
