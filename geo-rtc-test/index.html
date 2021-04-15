@@ -18,6 +18,23 @@
         <button id="send-data">Send Data</button>
         <button id="request-data">Request Data</button>
         <button id="accept-request">Accept Request</button>
+        <label for="frequency">Select Frequency (seconds) for smart data :</label>
+        <select id="frequency">
+            <option value="5" selected >5</option>
+            <option value="15">10</option>
+            <option value="20">20</option>
+        </select>
+        <button id="start-smart-data">Start Receiving Smart Data</button>
+        <label for="resolution">Select Resoultion (m) of images for smart data:</label>
+        <select id="resolution">
+            <option value="L00" selected >50</option>
+            <option value="L01">25</option>
+            <option value="L02">10</option>
+            <option value="L03">5</option>
+            <option value="L04">1</option>
+        </select>
+        <button id="update-priority">Update Data Priority</button>
+
     </div>
     <br>
     <div>
@@ -32,6 +49,10 @@
         <div>
             <h2>Received Stream:</h2>
             <p id ="text"></p>
+        </div>
+        <div>
+            <h2>Smart Data Transmission:</h2>
+            <p id="img"></p>
         </div>
     </div>
 
@@ -135,6 +156,31 @@
         let selectedPeer = document.getElementById('peers').value
         
         geoRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
+        
+   }
+
+   document.getElementById('start-smart-data').onclick = function(){
+        
+        let selectedPeer = document.getElementById('peers').value
+        let resolution = document.getElementById('resolution').value
+        let frequency = document.getElementById('frequency').value
+
+        smartDataHandler = geoRtcClient.receiveSmartData('./data/building_tiles/_alllayers', frequency, resolution)
+        // null, if client is unable to use the usecase
+        if (smartDataHandler != null) {
+            smartDataHandler.on('data', (data)=>{
+                let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename
+                document.getElementById('img').innerHTML+= filePath
+            })
+        }
+        
+   }
+
+   document.getElementById('update-priority').onclick = function() {
+        
+        let resolution = document.getElementById('resolution').value
+        let frequency = document.getElementById('frequency').value
+        geoRtcClient.updateSmartDataPriority(frequency, resolution)
         
    }
 

@@ -1,7 +1,9 @@
 
 const http = require('http')
+const fs = require('fs');
 const createReadStream = require('fs').createReadStream
 const readFile = require('fs').readFile
+const readdirSync = require('fs').readdirSync
 const exists = require('fs').exists
 const statSync = require('fs').statSync
 const Server = require('socket.io').Server
@@ -106,7 +108,7 @@ var GeoRTCServer = function(){
                     })
 
                 } else {
-
+                    // TODO: Let client of the library specify data path
                     let readStream = createReadStream('./data/sensor-data.txt', {'encoding': 'utf8', 'highWaterMark': 16*1024})
 
                     readStream.on('data', function(chunk) {
@@ -168,6 +170,50 @@ var GeoRTCServer = function(){
                 })
                 
             })
+
+            socket.on('start-smart-data-sharing', (peer) => {
+
+                console.log("peer (%s) requested to start smart data sharing: ",peer.name)
+
+                let dataPath = peer.dataPath
+                let requestedResolution = peer.resolution
+
+                // reading images from data path folder
+                
+                let imageData = {}
+
+                let resolutions = getDirectories(dataPath)
+
+                resolutions.forEach(resolution=>{
+                    let currDir = dataPath+"/"+resolution+"/"
+                    let rows = getDirectories(currDir)
+                    imageData[resolution] = {}
+                    // will read first row for now
+                    let count = 0
+                    rows.forEach(row=>{
+                        if (count < 1) {
+                            let filenames = fs.readdirSync(currDir+row+"/")  
+                            imageData[resolution][row]=filenames
+                        }
+                        count++
+                    })
+            
+                })
+
+
+                let firstRow = Object.keys(imageData[requestedResolution])[0]
+
+                outerObj.io.to(peer.socketId).emit('smart-data', {
+                    resolution: requestedResolution,
+                    rowNo: firstRow,
+                    filename: imageData[requestedResolution][firstRow][0],
+                    data: "",
+                    'usecase': 'smart-data'
+                })
+ 
+
+            })
+            
 
             socket.on('disconnect', function () {
                 console.log('Client disconnected..');
@@ -234,5 +280,11 @@ var GeoRTCServer = function(){
         return this.hostname+":"+this.port
     }
 }
+
+// --- utiltity functions ---
+const getDirectories = source =>
+    readdirSync(source, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
 
 this.server = new GeoRTCServer()

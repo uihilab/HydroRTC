@@ -107,6 +107,15 @@ this.GeoRTCClient = function (clientName) {
 
     });
 
+    this.socket.on("smart-data", (message) => {
+      this.smartDataEventHandler.emit("data", {
+        resolution: message.resolution,
+        rowNo: message.rowNo,
+        filename: message.filename,
+        data: ""
+      });
+    });
+
     this.socket.on("connect-request", (message) => {
 
       if (message.usecase == 'decentralized') {
@@ -220,6 +229,24 @@ this.GeoRTCClient = function (clientName) {
 
   // --- Collaborative Data Exchange ---
 
+  // --- Smart Data Sharing ---
+
+  this.receiveSmartData = (dataPath, frequency, resolution) => {
+    let socketId = this.socket.id;
+
+    this.socket.emit("start-smart-data-sharing", {
+      name: this.clientName,
+      socketId: socketId,
+      dataPath: dataPath,
+      frequency: frequency,
+      resolution: resolution
+    });
+
+    return this.smartDataEventHandler;
+  }
+
+  // --- Smart Data Sharing ---
+
   // init
   // TODO: ensure server is run before client
   this.clientName = clientName;
@@ -229,6 +256,7 @@ this.GeoRTCClient = function (clientName) {
   this.peersEventHandler = new events.EventEmitter();
   this.connectEventHandler = new events.EventEmitter();
   this.dataExchangeEventHandler = new events.EventEmitter();
+  this.smartDataEventHandler = new events.EventEmitter();
 
   this.socket = io();
   this.socket.emit("validate-username", {
