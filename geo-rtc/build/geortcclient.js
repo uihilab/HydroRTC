@@ -2985,6 +2985,17 @@ this.GeoRTCClient = function (clientName) {
     return this.smartDataEventHandler;
   }
 
+  this.updateSmartDataPriority = (frequency, resolution) => {
+    let socketId = this.socket.id;
+
+    this.socket.emit("update-smart-data-sharing", {
+      name: this.clientName,
+      socketId: socketId,
+      frequency: frequency,
+      resolution: resolution
+    });
+  }
+
   // --- Smart Data Sharing ---
 
   // init

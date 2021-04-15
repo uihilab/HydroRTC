@@ -15,6 +15,13 @@ var GeoRTCServer = function(){
     this.hostname = ""
     this.port = 0
     this.peers = []
+    this.smartDataSharing = {
+        "dataPath": "",
+        "resolution": "",
+        "frequency": "",
+        "data": {}
+    }
+    this.smartDataInterval = null
 
     this.prepareServer = function(hostname, port) {
         this.hostname = hostname
@@ -175,42 +182,44 @@ var GeoRTCServer = function(){
 
                 console.log("peer (%s) requested to start smart data sharing: ",peer.name)
 
-                let dataPath = peer.dataPath
-                let requestedResolution = peer.resolution
+                outerObj.smartDataSharing.dataPath = peer.dataPath
+                outerObj.smartDataSharing.resolution = peer.resolution
+                outerObj.smartDataSharing.frequency = peer.frequency
 
                 // reading images from data path folder
-                
-                let imageData = {}
 
-                let resolutions = getDirectories(dataPath)
-
+                let resolutions = getDirectories(outerObj.smartDataSharing.dataPath)
+        
                 resolutions.forEach(resolution=>{
-                    let currDir = dataPath+"/"+resolution+"/"
+                    let currDir = outerObj.smartDataSharing.dataPath+"/"+resolution+"/"
                     let rows = getDirectories(currDir)
-                    imageData[resolution] = {}
+                    outerObj.smartDataSharing.data[resolution] = {}
                     // will read first row for now
                     let count = 0
                     rows.forEach(row=>{
                         if (count < 1) {
                             let filenames = fs.readdirSync(currDir+row+"/")  
-                            imageData[resolution][row]=filenames
+                            outerObj.smartDataSharing.data[resolution][row]=filenames
                         }
                         count++
                     })
-            
-                })
+                    
+                })                
 
 
-                let firstRow = Object.keys(imageData[requestedResolution])[0]
-
-                outerObj.io.to(peer.socketId).emit('smart-data', {
-                    resolution: requestedResolution,
-                    rowNo: firstRow,
-                    filename: imageData[requestedResolution][firstRow][0],
-                    data: "",
-                    'usecase': 'smart-data'
-                })
+                outerObj.smartDataInterval = outerObj.getSmartDataIntervalCallback(peer)
  
+            })
+
+            socket.on('update-smart-data-sharing', (peer) => {
+
+                console.log("peer (%s) requested to update smart data configuration: ",peer.name)
+
+                outerObj.smartDataSharing.resolution = peer.resolution
+                outerObj.smartDataSharing.frequency = peer.frequency
+
+                clearInterval(this.smartDataInterval)
+                this.smartDataInterval = outerObj.getSmartDataIntervalCallback(peer)
 
             })
             
@@ -266,6 +275,21 @@ var GeoRTCServer = function(){
         return null
     }
 
+    this.getSmartDataIntervalCallback =  function(peer) {
+
+        return setInterval(() => {
+            let firstRow = Object.keys(this.smartDataSharing.data[this.smartDataSharing.resolution])[0]
+            this.io.to(peer.socketId).emit('smart-data', {
+                resolution: this.smartDataSharing.resolution,
+                rowNo: firstRow,
+                filename: this.smartDataSharing.data[this.smartDataSharing.resolution][firstRow][0],
+                data: "",
+                'usecase': 'smart-data'
+            })
+        }, parseInt(this.smartDataSharing.frequency)*1000)
+
+    }
+
     this.runServer = function() {
         // TODO: check if server can run on given port and hostname or not
         this.server = this.server.listen(this.port, this.hostname, function() {
@@ -286,5 +310,5 @@ const getDirectories = source =>
     readdirSync(source, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name)
-
+        
 this.server = new GeoRTCServer()

@@ -18,13 +18,14 @@
         <button id="send-data">Send Data</button>
         <button id="request-data">Request Data</button>
         <button id="accept-request">Accept Request</button>
+        <br><br>
+        <button id="start-smart-data">Start Receiving Smart Data</button>
         <label for="frequency">Select Frequency (seconds) for smart data :</label>
         <select id="frequency">
             <option value="5" selected >5</option>
             <option value="15">10</option>
             <option value="20">20</option>
         </select>
-        <button id="start-smart-data">Start Receiving Smart Data</button>
         <label for="resolution">Select Resoultion (m) of images for smart data:</label>
         <select id="resolution">
             <option value="L00" selected >50</option>
@@ -169,7 +170,7 @@
         // null, if client is unable to use the usecase
         if (smartDataHandler != null) {
             smartDataHandler.on('data', (data)=>{
-                let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename
+                let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
                 document.getElementById('img').innerHTML+= filePath
             })
         }
