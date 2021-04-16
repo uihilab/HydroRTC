@@ -10,6 +10,10 @@ var GeoRTC = function(appName) {
         this.server.prepareServer(hostname, port)
         this.server.runServer()
     }
+
+    this.setTasks = function(tasks) {
+        this.server.setTasks(tasks)
+    }
     
 }
 

@@ -35,6 +35,8 @@
             <option value="L04">1</option>
         </select>
         <button id="update-priority">Update Data Priority</button>
+        <br><br>
+        <button id="receive-task">Receive Task</button>
 
     </div>
     <br>
@@ -54,6 +56,10 @@
         <div>
             <h2>Smart Data Transmission:</h2>
             <p id="img"></p>
+        </div>
+        <div>
+            <h2>Received Tasks:</h2>
+            <p id="tasks"></p>
         </div>
     </div>
 
@@ -182,6 +188,23 @@
         let resolution = document.getElementById('resolution').value
         let frequency = document.getElementById('frequency').value
         geoRtcClient.updateSmartDataPriority(frequency, resolution)
+        
+   }
+
+   document.getElementById('receive-task').onclick = function() {
+        
+        let taskHandler = geoRtcClient.receiveTask(frequency, resolution)
+        // null, if client is unable to use the usecase
+        if (taskHandler != null) {
+            taskHandler.on('data', (data)=>{
+                let task = data.task + "<br>"
+
+                document.getElementById('tasks').innerHTML += task
+
+                
+                geoRtcClient.submitTaskResult(data.task, data.task+"-result")
+            })
+        }
         
    }
 

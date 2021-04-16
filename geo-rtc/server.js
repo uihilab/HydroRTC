@@ -22,6 +22,7 @@ var GeoRTCServer = function(){
         "data": {}
     }
     this.smartDataInterval = null
+    this.tasks = []
 
     this.prepareServer = function(hostname, port) {
         this.hostname = hostname
@@ -222,27 +223,41 @@ var GeoRTCServer = function(){
                 this.smartDataInterval = outerObj.getSmartDataIntervalCallback(peer)
 
             })
+
+            socket.on('get-task', (peer) => {
+
+                console.log("peer (%s) requested for a task: ", peer.name)
+
+                let peerNo = 0
+                
+                outerObj.peers.forEach(p=>{
+                    
+                    if (peer.name == p.name) {
+                        let taskNo = peerNo % this.tasks.length
+                        
+                        outerObj.io.to(p.socketId).emit('task', {
+                            task: this.tasks[taskNo],
+                            'usecase': 'distributed-data-analysis-and-processing'
+                        })
+                    }
+                   
+                    peerNo += 1
+                })
+
+            })
             
+            socket.on('task-result', (peer) => {
+
+                console.log("peer (%s) submitted result for a task (%s): ", (peer.name, peer.task))
+
+                console.log("Result: (%s)", peer.result)
+
+            })
 
             socket.on('disconnect', function () {
                 console.log('Client disconnected..');
              });
              
-
-            // socket.on('request-accepted', (data) => {
-            //     console.log("peer (%s) accepted request of peer (%s): ", data.acceptedBy, data.requestor)
-            //     let receiverPeer;
-            //     outerObj.peers.forEach(p=>{
-            //         if (p.name == data.requestor) {
-            //             receiverPeer = p
-            //         }
-            //     })
-
-            //     outerObj.io.to(receiverPeer.socketId).emit('peer-accepted-request', {
-            //         acceptedBy: data.acceptedBy
-            //     })
-                
-            // })
         })
 
    
@@ -298,6 +313,10 @@ var GeoRTCServer = function(){
           
         })
 
+    }
+
+    this.setTasks = function(tasks) {
+        this.tasks = tasks
     }
 
     this.getAddress = function() {

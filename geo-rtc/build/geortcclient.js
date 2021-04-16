@@ -2875,6 +2875,12 @@ this.GeoRTCClient = function (clientName) {
       }
     });
 
+    this.socket.on("task", (message) => {
+      this.taskDataEventHandler.emit("data", {
+        task: message.task
+      });
+    });
+
     // this.socket.on("peer-accepted-request", (message) => {
     //   connectWithPeer(message.acceptedBy)
     // });
@@ -2998,6 +3004,33 @@ this.GeoRTCClient = function (clientName) {
 
   // --- Smart Data Sharing ---
 
+  // --- Distributed Data Analysis and Processing ---
+
+  this.receiveTask = () => {
+    let socketId = this.socket.id;
+
+    this.socket.emit("get-task", {
+      name: this.clientName,
+      socketId: socketId,
+    });
+
+    return this.taskDataEventHandler;
+  }
+
+  this.submitTaskResult = (task, result) => {
+    let socketId = this.socket.id;
+
+    this.socket.emit("task-result", {
+      name: this.clientName,
+      socketId: socketId,
+      task: task,
+      result: result
+    });
+
+  }
+
+  // --- Distributed Data Analysis and Processing ---
+
   // init
   // TODO: ensure server is run before client
   this.clientName = clientName;
@@ -3008,6 +3041,7 @@ this.GeoRTCClient = function (clientName) {
   this.connectEventHandler = new events.EventEmitter();
   this.dataExchangeEventHandler = new events.EventEmitter();
   this.smartDataEventHandler = new events.EventEmitter();
+  this.taskDataEventHandler = new events.EventEmitter();
 
   this.socket = io();
   this.socket.emit("validate-username", {
