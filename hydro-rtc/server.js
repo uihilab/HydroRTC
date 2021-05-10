@@ -12,18 +12,25 @@ const path = require('path');
 
 var HydroRTCServer = function(){
 
+    // server properties
     this.hostname = ""
     this.port = 0
+    // list of connected peers
     this.peers = []
+    // smart data sharing properties
     this.smartDataSharing = {
         "dataPath": "",
         "resolution": "",
         "frequency": "",
         "data": {}
     }
+
+    // for sending smart data after configured interval
     this.smartDataInterval = null
+    // list of tasks, server has for the peers
     this.tasks = []
 
+    // configure server
     this.prepareServer = function(hostname, port) {
         this.hostname = hostname
         this.port = port
@@ -32,12 +39,14 @@ var HydroRTCServer = function(){
             filename = path.join(process.cwd(), uri);
     
             var isWin = !!process.platform.match(/^win/);
-        
+            // specifiying default home page of the library client application
+            // TODO: allow library client to specify name and location of homepage file
             if (statSync(filename).isDirectory()) {
                 if(!isWin) filename += '/index.html';
                 else filename += '\\index.html';
             }
         
+            // if home page exists then read its content and send back to client
             exists(filename, function (exists) {
                 if (!exists) {
                     response.writeHead(404, {
@@ -66,11 +75,15 @@ var HydroRTCServer = function(){
 
         })
 
+        // initializing Server Socket.IO
         this.io = new Server(this.server, {})
+
+        // accessing HydroRTCServer object
         let outerObj = this
+
+        // on receiving connection request from client
         this.io.on("connection", (socket) => {
 
-    
             socket.on('join', function(peer){
 
                 peer["socketId"] = socket.id
@@ -82,6 +95,7 @@ var HydroRTCServer = function(){
             })
 
             socket.on('validate-username', (data) =>{
+                // checks whether username is unique or not
                 let found = false;
                 let username = data.name
                 for(let i = 0; i < outerObj.peers.length; i++) {
@@ -165,12 +179,14 @@ var HydroRTCServer = function(){
             socket.on('request-peer', (data) => {
                 console.log("peer (%s) requested to connected with peer (%s): ", data.requestorName, data.recieverPeerName)
                 let receiverPeer;
+                // finding requested peer
                 outerObj.peers.forEach(p=>{
                     if (p.name == data.recieverPeerName) {
                         receiverPeer = p
                     }
                 })
 
+                // forwarding connection request to requested peer
                 outerObj.io.to(receiverPeer.socketId).emit('connect-request', {
                     requestor: data.requestorName,
                     request: data.request,
@@ -178,6 +194,7 @@ var HydroRTCServer = function(){
                 })
                 
             })
+
 
             socket.on('start-smart-data-sharing', (peer) => {
 
@@ -219,6 +236,7 @@ var HydroRTCServer = function(){
                 outerObj.smartDataSharing.resolution = peer.resolution
                 outerObj.smartDataSharing.frequency = peer.frequency
 
+                // clearing old smart data interval and creating new one based on updated properties
                 clearInterval(this.smartDataInterval)
                 this.smartDataInterval = outerObj.getSmartDataIntervalCallback(peer)
 
@@ -229,7 +247,9 @@ var HydroRTCServer = function(){
                 console.log("peer (%s) requested for a task: ", peer.name)
 
                 let peerNo = 0
-                
+
+                // Sending tasks to requestor peer
+                // Here, we can configure to send specific task to specific peer
                 outerObj.peers.forEach(p=>{
                     
                     if (peer.name == p.name) {
@@ -290,6 +310,7 @@ var HydroRTCServer = function(){
         return null
     }
 
+    // callback to send smart data stream after configured interval
     this.getSmartDataIntervalCallback =  function(peer) {
 
         return setInterval(() => {
