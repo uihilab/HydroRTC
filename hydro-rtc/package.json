@@ -1,10 +1,10 @@
 {
-  "name": "geo-rtc",
+  "name": "hydro-rtc",
   "version": "1.0.0",
   "description": "Distributed data sharing and analysis",
   "main": "index.js",
   "scripts": {
-    "build": "browserify geortcclient.js -o build/geortcclient.js"
+    "build": "browserify hydrortcclient.js -o build/hydrortcclient.js"
   },
   "repository": {
     "type": "git",

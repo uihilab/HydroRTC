@@ -2754,7 +2754,7 @@ $.when(
   })
 ).done(function(){})
 
-this.GeoRTCClient = function (clientName) {
+this.HydroRTCClient = function (clientName) {
   let usecases = [
     "stream-data",
     "smart-data-transmission",
@@ -3180,7 +3180,7 @@ this.GeoRTCClient = function (clientName) {
   return this.objectCreationEvent;
 };
 
-window.GeoRTCClient = this.GeoRTCClient;
+window.HydroRTCClient = this.HydroRTCClient;
 
 },{"./configuration.js":6,"./lib/jquery.js":8,"events":3,"socket.io-client":35}],8:[function(require,module,exports){
 const $ = require('./jquery.min.js')

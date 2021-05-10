@@ -14,7 +14,7 @@ $.when(
   })
 ).done(function(){})
 
-this.GeoRTCClient = function (clientName) {
+this.HydroRTCClient = function (clientName) {
   let usecases = [
     "stream-data",
     "smart-data-transmission",
@@ -440,4 +440,4 @@ this.GeoRTCClient = function (clientName) {
   return this.objectCreationEvent;
 };
 
-window.GeoRTCClient = this.GeoRTCClient;
+window.HydroRTCClient = this.HydroRTCClient;

@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <h1> GeoRTC Client </h1>
+    <h1> HydroRTC Client </h1>
     <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
     <br><br>
@@ -64,10 +64,10 @@
     </div>
 
 </body>
-<script src="./node_modules/geo-rtc/build/geortcclient.js"></script>
+<script src="./node_modules/hydro-rtc/build/hydrortcclient.js"></script>
 <script>
 
-   let geoRtcClient = null
+   let hydroRtcClient = null
    
    document.getElementById('connect').onclick = function() {
 
@@ -77,13 +77,13 @@
 
     } else {
 
-        let clientConn = new GeoRTCClient(document.getElementById('name').value)
+        let clientConn = new HydroRTCClient(document.getElementById('name').value)
 
         clientConn.on('connect', (data) => {
             if (data.connected) {
-                geoRtcClient = data.obj
+                hydroRtcClient = data.obj
                 // stream data usecase
-                let dataStream = geoRtcClient.getPeers()
+                let dataStream = hydroRtcClient.getPeers()
                 // null, if client is unable to use the usecase
                 if (dataStream != null) {
 
@@ -98,7 +98,7 @@
                     })
                 }
 
-                let requestStream = geoRtcClient.listenRequests()
+                let requestStream = hydroRtcClient.listenRequests()
                 // null, if client is unable to use the usecase
                 if (requestStream != null) {
 
@@ -122,7 +122,7 @@
    document.getElementById('stream-data').onclick = function(){
         
         // stream data usecase
-        let dataStream = geoRtcClient.streamDataRequest()
+        let dataStream = hydroRtcClient.streamDataRequest()
         // null, if client is unable to use the usecase
         if (dataStream != null) {
             dataStream.on('data', (data)=>{
@@ -138,7 +138,7 @@
         
         let selectedPeer = document.getElementById('peers').value
         // stream data usecase
-        let dataStream = geoRtcClient.requestDataFromPeer(selectedPeer, 'data')
+        let dataStream = hydroRtcClient.requestDataFromPeer(selectedPeer, 'data')
          // null, if client is unable to use the usecase
          if (dataStream != null) {
             dataStream.on('data', (data)=>{
@@ -151,18 +151,18 @@
    document.getElementById('accept-request').onclick = function(){
         let selectedPeer = document.getElementById('peers').value
         // stream data usecase
-        geoRtcClient.connectPeer(selectedPeer)
+        hydroRtcClient.connectPeer(selectedPeer)
    }
    
 
    document.getElementById('send-data').onclick = function(){
-        if (!geoRtcClient) {
+        if (!hydroRtcClient) {
 
-            geoRtcClient = new GeoRTCClient(document.getElementById('name').value)
+            hydroRtcClient = new HydroRTCClient(document.getElementById('name').value)
         }
         let selectedPeer = document.getElementById('peers').value
         
-        geoRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
+        hydroRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
         
    }
 
@@ -172,7 +172,7 @@
         let resolution = document.getElementById('resolution').value
         let frequency = document.getElementById('frequency').value
 
-        smartDataHandler = geoRtcClient.receiveSmartData('./data/building_tiles/_alllayers', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/building_tiles/_alllayers', frequency, resolution)
         // null, if client is unable to use the usecase
         if (smartDataHandler != null) {
             smartDataHandler.on('data', (data)=>{
@@ -187,13 +187,13 @@
         
         let resolution = document.getElementById('resolution').value
         let frequency = document.getElementById('frequency').value
-        geoRtcClient.updateSmartDataPriority(frequency, resolution)
+        hydroRtcClient.updateSmartDataPriority(frequency, resolution)
         
    }
 
    document.getElementById('receive-task').onclick = function() {
         
-        let taskHandler = geoRtcClient.receiveTask(frequency, resolution)
+        let taskHandler = hydroRtcClient.receiveTask(frequency, resolution)
         // null, if client is unable to use the usecase
         if (taskHandler != null) {
             taskHandler.on('data', (data)=>{
@@ -202,7 +202,7 @@
                 document.getElementById('tasks').innerHTML += task
 
                 
-                geoRtcClient.submitTaskResult(data.task, data.task+"-result")
+                hydroRtcClient.submitTaskResult(data.task, data.task+"-result")
             })
         }
         

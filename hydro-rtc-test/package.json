@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rimraf build",
     "mkdirs": "mkdir build",
-    "browserify": "browserify geortcclient.js -o build/geortcclient.js"
+    "browserify": "browserify hydrortcclient.js -o build/hydrortcclient.js"
   },
   "repository": {
     "type": "git",
@@ -14,6 +14,6 @@
   },
   "author": "UIHI Lab",
   "dependencies": {
-    "geo-rtc": "../geo-rtc"
+    "hydro-rtc": "../hydro-rtc"
   }
 }

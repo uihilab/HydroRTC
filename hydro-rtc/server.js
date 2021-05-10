@@ -10,7 +10,7 @@ const Server = require('socket.io').Server
 const createRequire = require('module').createRequire;
 const path = require('path');
 
-var GeoRTCServer = function(){
+var HydroRTCServer = function(){
 
     this.hostname = ""
     this.port = 0
@@ -330,4 +330,4 @@ const getDirectories = source =>
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name)
         
-this.server = new GeoRTCServer()
+this.server = new HydroRTCServer()

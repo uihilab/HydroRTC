@@ -1,6 +1,6 @@
 const server = require('./server.js').server
 
-var GeoRTC = function(appName) {
+var HydroRTC = function(appName) {
     
     this.appName = appName
     this.server = server
@@ -17,4 +17,4 @@ var GeoRTC = function(appName) {
     
 }
 
-this.geoRtcServer = new GeoRTC('geortc')
+this.hydroRtcServer = new HydroRTC('hydrortc')
