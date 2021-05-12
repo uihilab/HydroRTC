@@ -1,3 +1,7 @@
+This repository contains following two folders:
+1. <strong> [hydro-rtc](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc)</strong>: This folder contains all the HydroRTC library files and code.
+2.  <strong> [hydro-rtc-test](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc-test)</strong>: This is a demo application to demonstrate how HydroRTC library can be imported and used.
+
 # HydroRTC
 
 It is a library to facilitate applications in data sharing and analysis. This library has following features with possible usecases:
@@ -16,3 +20,12 @@ It is a library to facilitate applications in data sharing and analysis. This li
     - <strong>Hydrological analysis, flood forecasting/mapping:</strong> Sharing the results with peers
     - <strong>VR Multiplayer Synchronization:</strong> Data and function sync for remote peers in the same VR room (GeospatialVR)
  
+## Components
+HydroRTC library is divided into two major components:
+
+1. HydroRTC Client: Corresponding code for this component is in [hydrortcclient.js](https://github.com/uihilab/WebRTC/blob/main/hydro-rtc/hydrortcclient.js). This component gives access to the functions that are required by the client code of the application to utilize above list of features and usecases.
+2. HydroRTC Server: Corresponding code for this component is in [hydrortcserver.js](https://github.com/uihilab/WebRTC/blob/main/hydro-rtc/hydrortcserver.js). This component manages all the connected peers and performs all the functions that are necessary for the application to utilize above list of features and usecases.
+
+Both of the components communicate with each other using [Socket.IO library](https://socket.io/). HydroRTC Client uses [Client API](https://socket.io/docs/v3/client-api/index.html) while, HydroRTC uses [Server API](https://socket.io/docs/v3/server-api/index.html). In the following figure, Modules, Functions, and data contained inside these components can be seen.
+
+![image info](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Highlevel-component.png)
