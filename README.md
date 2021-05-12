@@ -55,7 +55,7 @@ Now, the library is ready for distribution.
 
 ## How to import this library
 
-In this section we will discuss how to import this library, [hydro-rtc-test](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc-test)</strong> is the demo application to demonstrated how to import this library. Please note, since the library is based on NodeJS server so, any application that will import this library will become a NodeJS application and all pre-requisited of NodeJS application will be applied.
+In this section we will discuss how to import this library, [hydro-rtc-test](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc-test)</strong> is the demo application that demonstrates how to import this library. Please note, since the library is based on NodeJS server so, any application that will import this library will become a NodeJS application and all pre-requisites of NodeJS application will be applied.
 
 1. In package.json file of the application please, list the hydro-rtc as dependency as demonstrated in [package.json](https://github.com/uihilab/WebRTC/blob/main/hydro-rtc-test/package.json). Please note, this is a package.json file of demo application and its in the same location where library code is placed once, the library is deployed the path of hydro-rtc dependency should be updated accordingly.
 2. Then, type the following command in the root folder of the application where package.json file is placed, to download the required dependencies.
