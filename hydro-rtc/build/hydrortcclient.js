@@ -2754,7 +2754,9 @@ $.when(
   })
 ).done(function(){})
 
+// HydroRTCClient object
 this.HydroRTCClient = function (clientName) {
+  // list of usecases that can be used by client
   let usecases = [
     "stream-data",
     "smart-data-transmission",
@@ -2763,6 +2765,7 @@ this.HydroRTCClient = function (clientName) {
     "collaborative-data-exchange",
   ];
 
+  // datatypes that can be shared and received by the client
   let dataTypes = ["csv", "xml", "json", "js", "png"];
 
   // in the configuration
@@ -2787,13 +2790,18 @@ this.HydroRTCClient = function (clientName) {
     return dataTypes;
   };
 
+  // defining all socket event handlers
   this.socketEventHandlers = function () {
+
     this.socket.on("valid-username", (data) => {
+      // if username is valid according to server
       if (data.valid) {
+        // then connect with server
         this.socket.emit("join", {
           name: this.clientName,
         });
 
+        // send connection successful information back to client
         this.objectCreationEvent.emit("connect", {
           connected: true,
           message: "Connection is successfull",
@@ -2802,7 +2810,9 @@ this.HydroRTCClient = function (clientName) {
 
         //establish peerJS connection
         initPeerJSConn();
+
       } else {
+        // otherwise, disconnect from server
         this.socket.disconnect();
         // in case username is either invalid or already exists
         this.objectCreationEvent.emit("connect", {
@@ -2820,9 +2830,11 @@ this.HydroRTCClient = function (clientName) {
       );
     });
 
+    // on receiving data stream from server
     this.socket.on("data-stream", (message) => {
       
       this.streamData += message.data
+      // sending stream data back to client
       this.streamEventHandler.emit("data", {
         data: message.data,
         status: message.status,
@@ -2830,15 +2842,18 @@ this.HydroRTCClient = function (clientName) {
 
     });
 
+    // on receiving peers list
     this.socket.on("peers", (message) => {
 
       let otherPeers = []
+      // collecting all peers except client
       message.peers.forEach(peer => {
         if (peer.name != this.clientName) {
           otherPeers.push(peer)
         }
       })
 
+      // sending peers list back to client
       this.peersEventHandler.emit("data", {
         // TODO: exclude this client from peers list
         data: otherPeers,
@@ -2847,7 +2862,9 @@ this.HydroRTCClient = function (clientName) {
 
     });
 
+    // on receiving smart data stream
     this.socket.on("smart-data", (message) => {
+      // sending stream data back to client
       this.smartDataEventHandler.emit("data", {
         resolution: message.resolution,
         rowNo: message.rowNo,
@@ -2856,9 +2873,12 @@ this.HydroRTCClient = function (clientName) {
       });
     });
 
+    // upon successful completion of connection request with peer 
     this.socket.on("connect-request", (message) => {
 
       if (message.usecase == 'decentralized') {
+        // if usecase is decentralized (this peer needs to send data to requestor peer)
+        // then send data to peer that requested for data stream
         connectWithPeer(message.requestor).then(response =>{
           if (response.status == "connected") {
               this.sendStreamDataToPeer(message.usecase)
@@ -2866,7 +2886,7 @@ this.HydroRTCClient = function (clientName) {
         })
 
       } else {
-        
+        // otherwise, get data from server (for peer that requested data)
         this.connectEventHandler.emit("data", {
           requestor: message.requestor,
           request: message.request,
@@ -2875,7 +2895,9 @@ this.HydroRTCClient = function (clientName) {
       }
     });
 
+    // on receiving task from server
     this.socket.on("task", (message) => {
+      // sending task back to client
       this.taskDataEventHandler.emit("data", {
         task: message.task
       });
@@ -2886,7 +2908,9 @@ this.HydroRTCClient = function (clientName) {
     // });
   };
 
+  // returns event handler for sending data stream
   this.streamDataRequest = function () {
+    
     // client can hold one stream data at time.
     // new stream data will update the old request.
 
@@ -2913,9 +2937,11 @@ this.HydroRTCClient = function (clientName) {
     }
   };
 
+  // returns event handler for sending list of peers that are connected with server
   this.getPeers = function () {
     let socketId = this.socket.id;
 
+    // emits event for server to get peers list
     this.socket.emit("peers-list", {
       name: this.clientName,
       socketId: socketId,
@@ -2924,15 +2950,20 @@ this.HydroRTCClient = function (clientName) {
     return this.peersEventHandler;
   };
 
+  // makes the client eligible to receive requests from other peer
+  // returns event handler to send information of peer who initiated the request
   this.listenRequests = function () {
     return this.connectEventHandler;
   };
 
-  // --- Collaborative Data Exchange ---
+  // --- Collaborative Data Exchange Start ---
 
   // TODO: reject request / obsolete request after some interval
   // TODO: Limit number of connected peers
+  // returns event handler to send data receieved from requested peer
   this.requestDataFromPeer = function (peerName, request) {
+    // sending requested peer information to server via socket event
+    // to receive data from that peer
     this.socket.emit("request-peer", {
       requestorName: this.clientName,
       requestorSocketId: this.socket.id,
@@ -2943,6 +2974,7 @@ this.HydroRTCClient = function (clientName) {
     return this.dataExchangeEventHandler;
   };
 
+  // connects client with given peer
   this.connectPeer = function (peerName) {
     connectWithPeer(peerName);
     // this.socket.emit("request-accepted", {
@@ -2951,6 +2983,7 @@ this.HydroRTCClient = function (clientName) {
     // });
   };
 
+  // client sends data to given peer
   this.sendDataToPeer = function (peerName, data) {
     // TODO: send data only when peer to peer connection is established
     this.peerConn.send({'data':data, 'usecase':'', 'sender': this.clientName});
@@ -2973,13 +3006,15 @@ this.HydroRTCClient = function (clientName) {
     
   }
 
-  // --- Collaborative Data Exchange ---
+  // --- Collaborative Data Exchange End ---
 
-  // --- Smart Data Sharing ---
+  // --- Smart Data Sharing Start ---
 
+  // return event handler to send data to client based on given parameters/priorities
   this.receiveSmartData = (dataPath, frequency, resolution) => {
     let socketId = this.socket.id;
 
+    // sending socket event to server for receiving smart data located in given datapath
     this.socket.emit("start-smart-data-sharing", {
       name: this.clientName,
       socketId: socketId,
@@ -2991,9 +3026,11 @@ this.HydroRTCClient = function (clientName) {
     return this.smartDataEventHandler;
   }
 
+  // update parameters / priorities for smart data sharing
   this.updateSmartDataPriority = (frequency, resolution) => {
     let socketId = this.socket.id;
 
+    // sending event for server to updata smart data sharing priorities
     this.socket.emit("update-smart-data-sharing", {
       name: this.clientName,
       socketId: socketId,
@@ -3002,7 +3039,7 @@ this.HydroRTCClient = function (clientName) {
     });
   }
 
-  // --- Smart Data Sharing ---
+  // --- Smart Data Sharing End ---
 
   // --- Distributed Data Analysis and Processing ---
 
@@ -3017,6 +3054,7 @@ this.HydroRTCClient = function (clientName) {
     return this.taskDataEventHandler;
   }
 
+  // submits results for given task to server
   this.submitTaskResult = (task, result) => {
     let socketId = this.socket.id;
 
@@ -3031,10 +3069,11 @@ this.HydroRTCClient = function (clientName) {
 
   // --- Distributed Data Analysis and Processing ---
 
-  // init
   // TODO: ensure server is run before client
+  // init
   this.clientName = clientName;
   this.configuration = configuration;
+  // Defining Event Handlers for sending to client
   this.objectCreationEvent = new events.EventEmitter();
   this.streamEventHandler = new events.EventEmitter();
   this.peersEventHandler = new events.EventEmitter();
@@ -3043,15 +3082,22 @@ this.HydroRTCClient = function (clientName) {
   this.smartDataEventHandler = new events.EventEmitter();
   this.taskDataEventHandler = new events.EventEmitter();
 
+  // initializing client socket
   this.socket = io();
+  // upon object creation, send validate username event to server
   this.socket.emit("validate-username", {
     name: this.clientName,
   });
 
+  // defining all socket event handlers
   this.socketEventHandlers();
+  // id of last connecter peer
   this.lastId = null;
+  // peer connection
   this.peerConn = null;
+  // client's own connection
   this.myConn = null;
+
   // this object will hold stream data once received
   this.streamData = ""
 
@@ -3073,9 +3119,9 @@ this.HydroRTCClient = function (clientName) {
     });
 
     this.myConn.on("connection", (c) => {
+
       // Allow only a single connection
 
-      // TODO: extend it for 2a
       if (this.peerConn && this.peerConn.open) {
         c.on("open", function () {
           c.send("Already connected to another client");
@@ -3165,6 +3211,7 @@ this.HydroRTCClient = function (clientName) {
 
   };
 
+  // function to get client's stream data for requestor peer
   this.getStreamDataChunks = () => {
     // chunk size in bytes
     let size = 1024
@@ -3177,6 +3224,7 @@ this.HydroRTCClient = function (clientName) {
     return chunks
   }
 
+  // event handler to send object creation status to client
   return this.objectCreationEvent;
 };
 
