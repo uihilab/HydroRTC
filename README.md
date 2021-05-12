@@ -28,7 +28,7 @@ HydroRTC library is divided into two major components:
 
 Both of the components communicate with each other using [Socket.IO library](https://socket.io/). HydroRTC Client uses [Client API](https://socket.io/docs/v3/client-api/index.html) while, HydroRTC uses [Server API](https://socket.io/docs/v3/server-api/index.html). In the following figure, Modules, Functions, and data contained inside these components can be seen.
 
-![image info](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Highlevel-component.png)
+![component](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Highlevel-component.png)
 
 ## How to setup library
 
@@ -69,3 +69,23 @@ npm install
 5. Now, the library is imported and this application can be run like any other NodeJS application.
 
 
+## Use case diagrams
+
+1. Streaming Data:
+
+![stream-data](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Stream-Data.png)
+
+2. Smart Data Tranmission:
+
+![smart-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Smart-Data-Sharing.png)
+3. Distributed Data Sharing:
+
+![distributed-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Distributed.png)
+
+4. Decentralized Data Distribution:
+
+![decentralized-data-distribution](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/decentralized.png)
+
+5. Collaborative Data Exchange:
+
+![collaborative-data-exchange](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/collaborative.png)
