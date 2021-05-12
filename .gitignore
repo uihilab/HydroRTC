@@ -50,4 +50,4 @@ package-lock.json
 .yarn-integrity
 
 #data
-*.png
+hydro-rtc-test/data/*
