@@ -214,7 +214,7 @@
         let frequency = document.getElementById('frequency').value
 
         // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/building_tiles/_alllayers', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/building_tiles/', frequency, resolution)
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk

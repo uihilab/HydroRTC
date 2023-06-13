@@ -1,11 +1,12 @@
 
 const http = require('http')
 const path = require('path');
-const { createReadStream, readFile, readdirSync, exists, statSync } = require('fs')
+const { createReadStream, readdirSync, statSync, promises: fsPromises} = require('fs')
 const { Server } = require('socket.io')
 
-var HydroRTCServer = function(){
+class HydroRTCServer {
 
+    constructor() {
     // server properties
     this.hostname = ""
     this.port = 0
@@ -22,13 +23,18 @@ var HydroRTCServer = function(){
     // for sending smart data after configured interval
     this.smartDataInterval = null
     // list of tasks, server has for the peers
-    this.tasks = []
+    this.tasks = [];
+
+    this.server = null;
+
+    this.io = null;
+}
 
     // configure server
-    this.prepareServer = function(hostname, port) {
+    prepareServer(hostname, port) {
         this.hostname = hostname
         this.port = port
-        this.server = http.createServer(function (request, response) {
+        this.server = http.createServer(async (request, response) => {
             var uri = require('url').parse(request.url).pathname,
             filename = path.join(process.cwd(), uri);
     
@@ -41,31 +47,23 @@ var HydroRTCServer = function(){
             }
         
             // if home page exists then read its content and send back to client
-            exists(filename, function (exists) {
-                if (!exists) {
-                    response.writeHead(404, {
-                        "Content-Type": "text/plain"
-                    });
-                    response.write('404 Not Found: ' + filename + '\n');
-                    response.end();
-                    return;
+            try {
+                const fileStats = await fsPromises.stat(filename);
+                if (!fileStats.isFile()) {
+                  throw new Error(`Not a file: ${filename}`);
                 }
-        
-                readFile(filename, 'binary', function (err, file) {
-                    if (err) {
-                        response.writeHead(500, {
-                            "Content-Type": "text/plain"
-                        });
-                        response.write(err + "\n");
-                        response.end();
-                        return;
-                    }
-        
-                    response.writeHead(200, { "Content-Type": "text/html"});
-                    response.write(file, 'binary');
-                    response.end();
+            
+                const fileContent = await fsPromises.readFile(filename, 'binary');
+                response.writeHead(200, { 'Content-Type': 'text/html' });
+                response.write(fileContent, 'binary');
+                response.end();
+              } catch (error) {
+                response.writeHead(404, {
+                  'Content-Type': 'text/plain',
                 });
-            });
+                response.write(`404 Not Found: ${filename}\n`);
+                response.end();
+              }
 
         })
 
@@ -277,7 +275,7 @@ var HydroRTCServer = function(){
    
     }
 
-    this.updatePeerProperty = (peerName, property, value) => {
+    updatePeerProperty(peerName, property, value) {
 
         for(let i = 0; i < this.peers.length; i++) {
             if (this.peers[i].name == peerName) {
@@ -288,7 +286,7 @@ var HydroRTCServer = function(){
         return null
     }
 
-    this.getPeerwithStreamData = () => {
+    getPeerwithStreamData() {
 
         // get most recent peer
 
@@ -305,7 +303,7 @@ var HydroRTCServer = function(){
     }
 
     // callback to send smart data stream after configured interval
-    this.getSmartDataIntervalCallback =  function(peer) {
+    getSmartDataIntervalCallback(peer) {
 
         return setInterval(() => {
             let firstRow = Object.keys(this.smartDataSharing.data[this.smartDataSharing.resolution])[0]
@@ -320,7 +318,7 @@ var HydroRTCServer = function(){
 
     }
 
-    this.runServer = function() {
+    runServer() {
         // TODO: check if server can run on given port and hostname or not
         this.server = this.server.listen(this.port, this.hostname, function() {
             let addr = this.address();
@@ -330,11 +328,11 @@ var HydroRTCServer = function(){
 
     }
 
-    this.setTasks = function(tasks) {
+    setTasks(tasks) {
         this.tasks = tasks
     }
 
-    this.getAddress = function() {
+    getAddress() {
         return this.hostname+":"+this.port
     }
 }

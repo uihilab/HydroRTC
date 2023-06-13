@@ -6,7 +6,8 @@ const events = require("events");
 const  { Peer } = require('peerjs')
 
 // HydroRTCClient object
-this.HydroRTCClient = function (clientName) {
+class HydroRTCClient {
+  constructor(clientName) {
   // list of usecases that can be used by client
   let usecases = [
     "stream-data",
@@ -16,7 +17,7 @@ this.HydroRTCClient = function (clientName) {
     "collaborative-data-exchange",
   ];
 
-  // datatypes that can be shared and received by the client
+  // datatypes that can be shared and received by the client. This will be expanded
   let dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts"];
 
   // in the configuration
@@ -83,7 +84,7 @@ this.HydroRTCClient = function (clientName) {
 
     // on receiving data stream from server
     this.socket.on("data-stream", (message) => {
-      
+      0
       this.streamData += message.data
       // sending stream data back to client
       this.streamEventHandler.emit("data", {
@@ -142,7 +143,6 @@ this.HydroRTCClient = function (clientName) {
           requestor: message.requestor,
           request: message.request,
         });
-
       }
     });
 
@@ -478,6 +478,7 @@ this.HydroRTCClient = function (clientName) {
 
   // event handler to send object creation status to client
   return this.objectCreationEvent;
+}
 };
 
-window.HydroRTCClient = this.HydroRTCClient;
+window.HydroRTCClient = HydroRTCClient;
