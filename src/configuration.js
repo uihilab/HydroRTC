@@ -4,20 +4,37 @@ class Configuration {
       this.receiveDataTypes = [];
       this.sendDataTypes = [];
     }
-  
+
+    /**
+     * 
+     * @param {*} usecases 
+     */  
     setUsecases(usecases) {
       this.usecases = usecases;
     }
   
+    /**
+     * 
+     * @param {*} receiveDataTypes 
+     */
     setReceiveDataTypes(receiveDataTypes) {
       this.receiveDataTypes = receiveDataTypes;
     }
+
+    /**
+     * 
+     * @param {*} sendDataTypes 
+     */
   
     setSendDataTypes(sendDataTypes) {
       this.sendDataTypes = sendDataTypes;
     }
-  
-    getJSON() {
+
+    /**
+     * 
+     * @returns 
+     */  
+    getConfig() {
       return {
         usecases: this.usecases,
         receiveDataTypes: this.receiveDataTypes,
@@ -26,5 +43,5 @@ class Configuration {
     }
   }
   
-  const configuration = new Configuration();
+this.configuration = new Configuration();
   
