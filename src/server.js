@@ -1,5 +1,6 @@
-const http = require("http");
-const path = require("path");
+const  { createServer }  = require("http");
+const { parse } = require("url");
+const  { join, sep } = require("path");
 const {
   createReadStream,
   readdirSync,
@@ -9,6 +10,9 @@ const {
 const { Server } = require("socket.io");
 
 class HydroRTCServer {
+  /**
+   * 
+   */
   constructor() {
     // server properties
     this.hostname = "";
@@ -33,22 +37,70 @@ class HydroRTCServer {
     this.io = null;
   }
 
-  // configure server
+  /**
+   * 
+   * @param {*} hostname 
+   * @param {*} port 
+   */
   prepareServer(hostname, port) {
     this.hostname = hostname;
     this.port = port;
-    this.server = http.createServer(async (request, response) => {
-      var uri = require("url").parse(request.url).pathname,
-        filename = path.join(process.cwd(), uri);
+    this.server = createServer(async (request, response) => {
+      var uri = parse(request.url).pathname,
+        filename = join(process.cwd(), uri);
 
-      var isWin = !!process.platform.match(/^win/);
+      //var isWin = !!process.platform.match(/^win/);
       // specifiying default home page of the library client application
       // TODO: allow library client to specify name and location of homepage file
-      if (statSync(filename).isDirectory()) {
-        if (!isWin) filename += "/index.html";
-        else filename += "\\index.html";
-      }
+      const defaultHomePage = sep === "/" ? "/index.html" : "\\index.html";
+      const filePath = statSync(filename).isDirectory()
+        ? filename + defaultHomePage
+        : filename;
 
+      await this.serveFile(response, filePath)
+    });
+
+    // initializing Server Socket.IO
+    this.io = new Server(this.server, {});
+
+    // on receiving connection request from client
+    this.io.on("connection", (socket) => {
+      //Join listener
+      socket.on("join", (peer) => this.joinServer(socket, peer));
+
+      //Validating user listener
+      socket.on("validate-username", (data) =>
+        this.validateUser(socket, data)
+      );
+
+      //Data stream listener
+      socket.on("stream-data", (peer) => this.streamData(socket, peer));
+
+      socket.on("peers-list", (peer) => this.getPeers(peer));
+
+      socket.on("request-peer", (data) => this.connectPeers(data));
+
+      socket.on("start-smart-data-sharing", (peer) => this.smartDataShare(peer));
+
+      socket.on("update-smart-data-sharing", (peer) => this.updateSmartDataShare(peer));
+
+      socket.on("get-task", (peer) => this.getTask(peer));
+
+      socket.on("task-result", (peer) => this.taskResult(peer));
+
+      socket.on("disconnect", function () {
+        console.log("Client disconnected...");
+      });
+    });
+  }
+
+  /**
+   * 
+   * @param {*} response 
+   * @param {*} filename 
+   */
+
+  async serveFile(response, filename) {
       // if home page exists then read its content and send back to client
       try {
         const fileStats = await fsPromises.stat(filename);
@@ -67,48 +119,13 @@ class HydroRTCServer {
         response.write(`404 Not Found: ${filename}\n`);
         response.end();
       }
-    });
-
-    // initializing Server Socket.IO
-    this.io = new Server(this.server, {});
-
-    // accessing HydroRTCServer object
-    let outerObj = this;
-
-    // on receiving connection request from client
-    this.io.on("connection", (socket) => {
-      //Join listener
-      socket.on("join", (peer) => outerObj.joinServer(socket, peer));
-
-      //Validating user listener
-      socket.on("validate-username", (data) =>
-        outerObj.validateUser(socket, data)
-      );
-
-      //Data stream listener
-      socket.on("stream-data", (peer) => outerObj.streamData(socket, peer));
-
-      socket.on("peers-list", (peer) => outerObj.getPeers(peer));
-
-      socket.on("request-peer", (data) => outerObj.connectPeers(data));
-
-      socket.on("start-smart-data-sharing", (peer) =>
-        outerObj.smartDataShare(peer)
-      );
-
-      socket.on("update-smart-data-sharing", (peer) =>
-        outerObj.updateSmartDataShare(peer)
-      );
-
-      socket.on("get-task", (peer) => outerObj.getTask(peer));
-
-      socket.on("task-result", (peer) => outerObj.taskResult(peer));
-
-      socket.on("disconnect", function () {
-        console.log("Client disconnected...");
-      });
-    });
   }
+
+  /**
+   * 
+   * @param {*} socket 
+   * @param {*} peer 
+   */
 
   joinServer(socket, peer) {
     peer["socketId"] = socket.id;
@@ -118,6 +135,12 @@ class HydroRTCServer {
     this.peers.push(peer);
     console.log("peer (%s) joined: ", peer.name);
   }
+
+  /**
+   * 
+   * @param {*} socket 
+   * @param {*} data 
+   */
 
   validateUser(socket, data) {
     // checks whether username is unique or not
@@ -134,6 +157,12 @@ class HydroRTCServer {
       valid: !found,
     });
   }
+
+  /**
+   * 
+   * @param {*} socket 
+   * @param {*} peer 
+   */
 
   streamData(socket, peer) {
     console.log("peer (%s) requested to stream data: ", peer.name);
@@ -180,6 +209,11 @@ class HydroRTCServer {
     }
   }
 
+  /**
+   * 
+   * @param {*} peer 
+   */
+
   getPeers(peer) {
     console.log("peer (%s) requested to get list of peers: ", peer.name);
 
@@ -196,6 +230,11 @@ class HydroRTCServer {
       status: "complete",
     });
   }
+
+  /**
+   * 
+   * @param {*} data 
+   */
 
   connectPeers(data) {
     console.log(
@@ -218,6 +257,11 @@ class HydroRTCServer {
       usecase: "collaborative",
     });
   }
+
+  /**
+   * 
+   * @param {*} peer 
+   */
 
   smartDataShare(peer) {
     console.log("peer (%s) requested to start smart data sharing: ", peer.name);
@@ -248,6 +292,11 @@ class HydroRTCServer {
     this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
   }
 
+  /**
+   * 
+   * @param {*} peer 
+   */
+
   updateSmartDataShare(peer) {
     console.log(
       "peer (%s) requested to update smart data configuration: ",
@@ -262,6 +311,11 @@ class HydroRTCServer {
     this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
   }
 
+  /**
+   * 
+   * @param {*} peer 
+   */
+
   taskResult(peer) {
     console.log(
       "peer (%s) submitted result for a task (%s): ",
@@ -271,6 +325,14 @@ class HydroRTCServer {
     console.log("Result: (%s)", peer.result);
   }
 
+  /**
+   * 
+   * @param {*} peerName 
+   * @param {*} property 
+   * @param {*} value 
+   * @returns 
+   */
+
   updatePeerProperty(peerName, property, value) {
     for (let i = 0; i < this.peers.length; i++) {
       if (this.peers[i].name == peerName) {
@@ -279,6 +341,11 @@ class HydroRTCServer {
     }
     return null;
   }
+
+  /**
+   * 
+   * @returns 
+   */
 
   getPeerwithStreamData() {
     // get most recent peer
@@ -293,6 +360,12 @@ class HydroRTCServer {
 
     return null;
   }
+
+  /**
+   * 
+   * @param {*} peer 
+   * @returns 
+   */
 
   // callback to send smart data stream after configured interval
   getSmartDataIntervalCallback(peer) {
@@ -312,6 +385,11 @@ class HydroRTCServer {
       });
     }, parseInt(this.smartDataSharing.frequency) * 1000);
   }
+
+  /**
+   * 
+   * @param {*} peer 
+   */
 
   getTask(peer) {
     console.log("peer (%s) requested for a task: ", peer.name);
@@ -333,6 +411,10 @@ class HydroRTCServer {
     });
   }
 
+  /**
+   * 
+   */
+
   runServer() {
     // TODO: check if server can run on given port and hostname or not
     this.server = this.server.listen(this.port, this.hostname, function () {
@@ -341,9 +423,19 @@ class HydroRTCServer {
     });
   }
 
+  /**
+   * 
+   * @param {*} tasks 
+   */
+
   setTasks(tasks) {
     this.tasks = tasks;
   }
+
+  /**
+   * 
+   * @returns 
+   */
 
   getAddress() {
     return this.hostname + ":" + this.port;
