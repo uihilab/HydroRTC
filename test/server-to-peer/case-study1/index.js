@@ -1,5 +1,5 @@
 // importing server from library
-const hydroRtcServer = require('hydro-rtc/hydrortcserver.js').hydroRtcServer;
+const  { hydroRtcServer } = require('./node_modules/hydro-rtc/hydrortcserver.js');
 
 hydroRtcServer.run('localhost', 8888)
 // configuring tasks, which will be distributed by servers

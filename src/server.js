@@ -42,9 +42,10 @@ class HydroRTCServer {
    * @param {*} hostname 
    * @param {*} port 
    */
-  prepareServer(hostname, port) {
+  prepareServer(hostname, port, homePage) {
     this.hostname = hostname;
     this.port = port;
+    const defaultHomePage = homePage || (sep === "/" ? "/index.html" : "\\index.html");
     this.server = createServer(async (request, response) => {
       var uri = parse(request.url).pathname,
         filename = join(process.cwd(), uri);
@@ -52,7 +53,6 @@ class HydroRTCServer {
       //var isWin = !!process.platform.match(/^win/);
       // specifiying default home page of the library client application
       // TODO: allow library client to specify name and location of homepage file
-      const defaultHomePage = sep === "/" ? "/index.html" : "\\index.html";
       const filePath = statSync(filename).isDirectory()
         ? filename + defaultHomePage
         : filename;
@@ -164,7 +164,7 @@ class HydroRTCServer {
    * @param {*} peer 
    */
 
-  streamData(socket, peer) {
+  streamData(socket, peer, filePath) {
     console.log("peer (%s) requested to stream data: ", peer.name);
 
     // default chunk size is 65536
@@ -182,8 +182,8 @@ class HydroRTCServer {
         usecase: "decentralized",
       });
     } else {
-      // TODO: Let client of the library specify data path
-      let readStream = createReadStream("./data/sensor-data.txt", {
+      // TODO: Let client of the library specify data path: "./data/sensor-data.txt"
+      let readStream = createReadStream(filePath, {
         encoding: "utf8",
         highWaterMark: 16 * 1024,
       });
