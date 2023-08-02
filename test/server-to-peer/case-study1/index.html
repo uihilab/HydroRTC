@@ -83,6 +83,7 @@
         <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->   
         <div>
             <h2>Smart Data Transmission:</h2>
+            <div id="image-container"></div>
             <p id="img"></p>
         </div>
         <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
@@ -214,13 +215,38 @@
         let frequency = document.getElementById('frequency').value
 
         // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/building_tiles/', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/trial/', frequency, resolution)
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk
             smartDataHandler.on('data', (data)=>{
+                console.log(data)
+                console.log(typeof data)
+                //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
+                let container = document.getElementById('image-container')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                document.getElementById('img').innerHTML+= filePath
+                container.innerHTML+=filePath
+
+                const binaryData = atob(data.data);
+                const arrayBuffer = new ArrayBuffer(binaryData.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                for (let i = 0; i < binaryData.length; i++) {
+                    uint8Array[i] = binaryData.charCodeAt(i)
+                }
+
+                const blob = new Blob([arrayBuffer], {type: 'image/jpeg'});
+
+                const reader = new FileReader();
+
+                reader.onload = (event) => {
+                    const dataURL = event.target.result;
+
+                    const imageElement = document.createElement('img')
+                    imageElement.src = dataURL;
+                    container.appendChild(imageElement);
+                };
+
+                reader.readAsDataURL(blob);
             })
         }
         

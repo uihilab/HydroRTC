@@ -2774,7 +2774,7 @@ class HydroRTCClient {
 
     // datatypes that can be shared and received by the client. This will be expanded
     //TODO: Handlers for different data types need to be tested
-    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts"];
+    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts", "jpeg", "jpg"];
 
     this.streamData = null;
 
@@ -2890,7 +2890,7 @@ class HydroRTCClient {
         resolution: message.resolution,
         rowNo: message.rowNo,
         filename: message.filename,
-        data: "",
+        data: message.data,
       });
     });
 
@@ -3105,7 +3105,14 @@ class HydroRTCClient {
    */
   initPeerJSConn() {
     // TODO: make properties configurable
-    this.myConn = new Peer(this.clientName, { debug: 2 });
+    this.myConn = new Peer(this.clientName, { 
+      debug: 2,
+      reconnect: {
+        exponentialBackoff: 1000,
+        maxRetries: 10
+      } 
+    
+    });
     this.myConn.on("open", (id) => {
       // Workaround for peer.reconnect deleting previous id
       if (this.myConn.id === null) {
@@ -3137,7 +3144,7 @@ class HydroRTCClient {
     });
 
     this.myConn.on("disconnected", () => {
-      console.log("Connection lost. Please reconnect");
+      console.log("Connection lost. Reconnecting...");
 
       // Workaround for peer.reconnect deleting previous id
       this.myConn.id = this.lastId;
@@ -3206,6 +3213,7 @@ class HydroRTCClient {
   // update parameters / priorities for smart data sharing
   updateSmartDataPriority(frequency, resolution) {
     let socketId = this.socket.id;
+    console.log(`User ${this.clientName} has updated the frequency from `)
 
     // sending event for server to updata smart data sharing priorities
     this.socket.emit("update-smart-data-sharing", {

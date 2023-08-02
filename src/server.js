@@ -1,17 +1,20 @@
-const  { createServer }  = require("http");
+const { createServer } = require("http");
 const { parse } = require("url");
-const  { join, sep } = require("path");
+const { join, sep } = require("path");
 const {
   createReadStream,
   readdirSync,
   statSync,
   promises: fsPromises,
+  readFileSync,
+  read,
 } = require("fs");
 const { Server } = require("socket.io");
+const { instrument } = require("@socket.io/admin-ui");
 
 class HydroRTCServer {
   /**
-   * 
+   *
    */
   constructor() {
     // server properties
@@ -38,14 +41,15 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} hostname 
-   * @param {*} port 
+   *
+   * @param {*} hostname
+   * @param {*} port
    */
   prepareServer(hostname, port, homePage) {
     this.hostname = hostname;
     this.port = port;
-    const defaultHomePage = homePage || (sep === "/" ? "/index.html" : "\\index.html");
+    const defaultHomePage =
+      homePage || (sep === "/" ? "/index.html" : "\\index.html");
     this.server = createServer(async (request, response) => {
       var uri = parse(request.url).pathname,
         filename = join(process.cwd(), uri);
@@ -57,11 +61,26 @@ class HydroRTCServer {
         ? filename + defaultHomePage
         : filename;
 
-      await this.serveFile(response, filePath)
+      await this.serveFile(response, filePath);
     });
 
     // initializing Server Socket.IO
-    this.io = new Server(this.server, {});
+    this.io = new Server(this.server, {
+      //Allows for listening of keeping track of events within the server space
+      cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true,
+      },
+    });
+    instrument(this.io, {
+      auth: false,
+      mode: "development",
+    });
+
+    /**
+     * Server-side event hanlders
+     * Any other events that are to added to the feature should be included in this space
+     */
 
     // on receiving connection request from client
     this.io.on("connection", (socket) => {
@@ -69,9 +88,7 @@ class HydroRTCServer {
       socket.on("join", (peer) => this.joinServer(socket, peer));
 
       //Validating user listener
-      socket.on("validate-username", (data) =>
-        this.validateUser(socket, data)
-      );
+      socket.on("validate-username", (data) => this.validateUser(socket, data));
 
       //Data stream listener
       socket.on("stream-data", (peer) => this.streamData(socket, peer));
@@ -80,51 +97,57 @@ class HydroRTCServer {
 
       socket.on("request-peer", (data) => this.connectPeers(data));
 
-      socket.on("start-smart-data-sharing", (peer) => this.smartDataShare(peer));
+      socket.on("start-smart-data-sharing", (peer) =>
+        this.smartDataShare(peer)
+      );
 
-      socket.on("update-smart-data-sharing", (peer) => this.updateSmartDataShare(peer));
+      socket.on("update-smart-data-sharing", (peer) =>
+        this.updateSmartDataShare(peer)
+      );
+
+      socket.on("peer-to-server", (peer) => this.uploadData(peer));
 
       socket.on("get-task", (peer) => this.getTask(peer));
 
       socket.on("task-result", (peer) => this.taskResult(peer));
 
-      socket.on("disconnect", function () {
-        console.log("Client disconnected...");
+      socket.on("disconnect", () => {
+        this.handleDisconnect(socket);
       });
     });
   }
 
   /**
-   * 
-   * @param {*} response 
-   * @param {*} filename 
+   * HTML file server
+   * @param {*} response
+   * @param {*} filename
    */
 
   async serveFile(response, filename) {
-      // if home page exists then read its content and send back to client
-      try {
-        const fileStats = await fsPromises.stat(filename);
-        if (!fileStats.isFile()) {
-          throw new Error(`Not a file: ${filename}`);
-        }
-
-        const fileContent = await fsPromises.readFile(filename, "binary");
-        response.writeHead(200, { "Content-Type": "text/html" });
-        response.write(fileContent, "binary");
-        response.end();
-      } catch (error) {
-        response.writeHead(404, {
-          "Content-Type": "text/plain",
-        });
-        response.write(`404 Not Found: ${filename}\n`);
-        response.end();
+    // if home page exists then read its content and send back to client
+    try {
+      const fileStats = await fsPromises.stat(filename);
+      if (!fileStats.isFile()) {
+        throw new Error(`Not a file: ${filename}`);
       }
+
+      const fileContent = await fsPromises.readFile(filename, "binary");
+      response.writeHead(200, { "Content-Type": "text/html" });
+      response.write(fileContent, "binary");
+      response.end();
+    } catch (error) {
+      response.writeHead(404, {
+        "Content-Type": "text/plain",
+      });
+      response.write(`404 Not Found: ${filename}\n`);
+      response.end();
+    }
   }
 
   /**
-   * 
-   * @param {*} socket 
-   * @param {*} peer 
+   *
+   * @param {*} socket
+   * @param {*} peer
    */
 
   joinServer(socket, peer) {
@@ -132,39 +155,42 @@ class HydroRTCServer {
     peer["has-stream-data"] = false;
 
     // TODO: check for unique peer name
+
+    this.peers = this.peers.filter(
+      (existingPeer) => existingPeer.name !== peer.name
+    );
     this.peers.push(peer);
     console.log("peer (%s) joined: ", peer.name);
   }
 
   /**
-   * 
-   * @param {*} socket 
-   * @param {*} data 
+   *
+   * @param {*} socket
+   * @param {*} data
    */
 
   validateUser(socket, data) {
     // checks whether username is unique or not
-    let found = false;
     let username = data.name;
-    for (let i = 0; i < this.peers.length; i++) {
-      if (this.peers[i].name == username) {
-        found = true;
-        break;
-      }
-    }
+
+    const isUsernameUnique = !this.peers.some((peer) => peer.name === username);
 
     socket.emit("valid-username", {
-      valid: !found,
+      valid: isUsernameUnique,
     });
+
+    if (!isUsernameUnique) {
+      socket.disconnect();
+    }
   }
 
   /**
-   * 
-   * @param {*} socket 
-   * @param {*} peer 
+   *
+   * @param {*} socket
+   * @param {*} peer
    */
 
-  streamData(socket, peer, filePath) {
+  streamData(socket, peer, filePath = "./data/sensor-data.txt") {
     console.log("peer (%s) requested to stream data: ", peer.name);
 
     // default chunk size is 65536
@@ -210,8 +236,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
+   *
+   * @param {*} peer
    */
 
   getPeers(peer) {
@@ -232,8 +258,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} data 
+   *
+   * @param {*} data
    */
 
   connectPeers(data) {
@@ -259,8 +285,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
+   *
+   * @param {*} peer
    */
 
   smartDataShare(peer) {
@@ -274,27 +300,36 @@ class HydroRTCServer {
 
     let resolutions = getDirectories(this.smartDataSharing.dataPath);
 
+    //single path found in the given directory
+    if (resolutions.length === 1) {
+      let files = getFiles(resolutions[0]);
+      let count = 0;
+      console.log(files);
+      this.smartDataSharing.data[this.smartDataSharing.resolution] = files;
+      this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
+      return;
+    }
+
     resolutions.forEach((resolution) => {
-      let currDir = this.smartDataSharing.dataPath + "/" + resolution + "/";
+      let currDir = this.smartDataSharing.dataPath + resolution + "/";
       let rows = getDirectories(currDir);
       this.smartDataSharing.data[resolution] = {};
       // will read first row for now
       let count = 0;
       rows.forEach((row) => {
         if (count < 1) {
-          let filenames = readdirSync(currDir + row + "/");
+          let filenames = getFiles(currDir + row + "/");
           this.smartDataSharing.data[resolution][row] = filenames;
         }
         count++;
       });
     });
-
     this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
   }
 
   /**
-   * 
-   * @param {*} peer 
+   *
+   * @param {*} peer
    */
 
   updateSmartDataShare(peer) {
@@ -312,8 +347,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
+   *
+   * @param {*} peer
    */
 
   taskResult(peer) {
@@ -326,11 +361,11 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peerName 
-   * @param {*} property 
-   * @param {*} value 
-   * @returns 
+   *
+   * @param {*} peerName
+   * @param {*} property
+   * @param {*} value
+   * @returns
    */
 
   updatePeerProperty(peerName, property, value) {
@@ -343,8 +378,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @returns 
+   *
+   * @returns
    */
 
   getPeerwithStreamData() {
@@ -362,33 +397,47 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
-   * @returns 
+   *
+   * @param {*} peer
+   * @returns
    */
 
   // callback to send smart data stream after configured interval
+  // this does not necesarilly has to be 
   getSmartDataIntervalCallback(peer) {
-    return setInterval(() => {
-      let firstRow = Object.keys(
-        this.smartDataSharing.data[this.smartDataSharing.resolution]
-      )[0];
-      this.io.to(peer.socketId).emit("smart-data", {
-        resolution: this.smartDataSharing.resolution,
-        rowNo: firstRow,
-        filename:
-          this.smartDataSharing.data[this.smartDataSharing.resolution][
-            firstRow
-          ][0],
-        data: "",
-        usecase: "smart-data",
-      });
-    }, parseInt(this.smartDataSharing.frequency) * 1000);
+    let count = 0;
+    let data = this.smartDataSharing.data[this.smartDataSharing.resolution];
+    
+    const emitFile = () => {
+      if (count < data.length) {
+        let filename = data[count];
+        let stgData = imageHandler(this.smartDataSharing.dataPath+filename);
+  
+        this.io.to(peer.socketId).emit("smart-data", {
+          resolution: this.smartDataSharing.resolution,
+          rowNo: count,
+          filename: filename,
+          data: stgData,
+          usecase: "smart-data",
+        });
+  
+        count++;
+  
+        if (count === data.length) {
+          clearInterval(intervalId); // Stop the interval if all emissions have been sent
+        }
+      }
+    };
+  
+    const intervalId = setInterval(emitFile, parseInt(this.smartDataSharing.frequency) * 1000);
+    emitFile(); // Emit the first file immediately
+  
+    return intervalId;
   }
-
+  
   /**
-   * 
-   * @param {*} peer 
+   *
+   * @param {*} peer
    */
 
   getTask(peer) {
@@ -412,7 +461,7 @@ class HydroRTCServer {
   }
 
   /**
-   * 
+   *
    */
 
   runServer() {
@@ -424,8 +473,8 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} tasks 
+   *
+   * @param {*} tasks
    */
 
   setTasks(tasks) {
@@ -433,19 +482,80 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @returns 
+   *
+   * @returns
    */
 
   getAddress() {
     return this.hostname + ":" + this.port;
   }
+
+  /**
+   *
+   * @param {*} socket
+   */
+  handleDisconnect(socket) {
+    const disconnectedPeer = this.getPeerBySocketId(socket.id);
+
+    if (disconnectedPeer) {
+      this.peers = this.peers.filter((peer) => peer.socketId !== socket.id);
+      console.log(`Peer disconnected: ${disconnectedPeer.name}`);
+    }
+  }
+
+  /**
+   *
+   * @param {*} socketId
+   * @returns
+   */
+  getPeerBySocketId(socketId) {
+    return this.peers.find((peer) => peer.socketId === socketId);
+  }
 }
 
-// --- utiltity functions ---
-const getDirectories = (source) =>
-  readdirSync(source, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name);
+// --- utility functions ---
+
+function getDirectories(source) {
+  try {
+    const dirents = readdirSync(source, {
+      withFileTypes: true,
+      recursive: true,
+    });
+    const directories = dirents
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
+    if (directories.length === 0) {
+      return [source];
+    }
+    return directories;
+  } catch (error) {
+    console.error("Error reading directories:", error);
+    throw error; // Propagate the error
+  }
+}
+
+function getFiles(source) {
+  try {
+    const dirents = readdirSync(source, { withFileTypes: true });
+    const files = dirents
+      .filter((dirent) => dirent.isFile())
+      .map((dirent) => dirent.name);
+    return files;
+  } catch (error) {
+    console.error("Error reading files:", error);
+    throw error; // Propagate the error
+  }
+}
+
+/**
+ * Function for handling different types of image files.
+ * Support t: jpg, tiff, tif, jpeg, png
+ * @param {*} file 
+ * @returns 
+ */
+function imageHandler(file) {
+  let fileStream = readFileSync(file, {encoding: 'base64'})
+  return fileStream
+}
 
 this.server = new HydroRTCServer();
