@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <h1> Case Study 1 - Stream Data Transmission</h1>
+    <h1> Case Study 2 - Smart Data Transmission </h1>
     <!-- Input to get client id-->
     <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
@@ -30,7 +30,6 @@
         <!-- Then second peer will send the data-->
         <button id="send-data">Send Data</button>
         <!-- Buttons for collaborative data exchange usecase-->
-        <button id="send-netcdf-data">Request netCDF Data</button>
         <br><br>
         <!-- Button for smart data sharing usecase-->
         <button id="start-smart-data">Start Receiving Smart Data</button>
@@ -172,12 +171,6 @@
         }
    }
 
-   document.getElementById('send-netcdf-data').onclick = function(){
-
-    let val = hydroRtcClient.getnetCDF('./data/')
-    console.log(val)
-   }
-
    
    document.getElementById('request-data').onclick = function(){
         // select peer from connected peers list to request data for collaborative data exchange
@@ -222,17 +215,18 @@
         let frequency = document.getElementById('frequency').value
 
         // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/trial/', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/jpeg/', frequency, resolution)
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk
             smartDataHandler.on('data', (data)=>{
-                console.log(data)
-                console.log(typeof data)
+                //console.log(data)
+                //console.log(typeof data)
                 //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
                 let container = document.getElementById('image-container')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                container.innerHTML+=filePath
+                container.innerHTML=''
+                container.innerHTML=filePath
 
                 const binaryData = atob(data.data);
                 const arrayBuffer = new ArrayBuffer(binaryData.length);

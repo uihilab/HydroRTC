@@ -7,10 +7,10 @@ const {
   statSync,
   promises: fsPromises,
   readFileSync,
-  read,
 } = require("fs");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
+const { NetCDFReader} = require("netcdfjs");
 
 class HydroRTCServer {
   /**
@@ -34,6 +34,16 @@ class HydroRTCServer {
     this.smartDataInterval = null;
     // list of tasks, server has for the peers
     this.tasks = [];
+
+    this.dataStreaming = {
+      dataPath: "",
+      data: {}
+    };
+
+    this.netCDF = {
+      dataPath: "",
+      data: {}
+    }
 
     this.server = null;
 
@@ -114,6 +124,10 @@ class HydroRTCServer {
       socket.on("disconnect", () => {
         this.handleDisconnect(socket);
       });
+
+      socket.on("netcdf-reader", (peer) => {
+        this.handlenetCDF(peer);
+      })
     });
   }
 
@@ -290,11 +304,12 @@ class HydroRTCServer {
    */
 
   smartDataShare(peer) {
-    console.log("peer (%s) requested to start smart data sharing: ", peer.name);
+    let {name, dataPath, resolution, frequency } = peer
+    console.log("peer (%s) requested to start smart data sharing: ", name);
 
-    this.smartDataSharing.dataPath = peer.dataPath;
-    this.smartDataSharing.resolution = peer.resolution;
-    this.smartDataSharing.frequency = peer.frequency;
+    this.smartDataSharing.dataPath = dataPath;
+    this.smartDataSharing.resolution = resolution;
+    this.smartDataSharing.frequency = frequency;
 
     // reading images from data path folder
 
@@ -511,6 +526,38 @@ class HydroRTCServer {
   getPeerBySocketId(socketId) {
     return this.peers.find((peer) => peer.socketId === socketId);
   }
+
+  /**
+   * 
+   * @param {*} peer 
+   * @returns 
+   */
+  handlenetCDF(peer) {
+    let {name, dataPath, socketId } = peer
+    
+    console.log(`peer ${name} requested ${dataPath} file from server.`);
+
+    this.netCDF.dataPath = dataPath;
+
+    // reading cdf files from current directory
+    //only 1 single CDF file to be read by now. Potential to just like the image handler
+
+    let resolutions = getDirectories(this.netCDF.dataPath);
+
+    //single path found in the given directory
+    if (resolutions.length === 1) {
+      let files = getFiles(resolutions[0]);
+      console.log(files);
+      let filename = files[0];
+      let stgData = netCFDHandler(this.netCDF.dataPath+filename);
+
+      this.io.to(socketId).emit("netcdf-data", {
+        filename: filename,
+        data: stgData,
+      });
+      return;
+    }
+  }
 }
 
 // --- utility functions ---
@@ -556,6 +603,17 @@ function getFiles(source) {
 function imageHandler(file) {
   let fileStream = readFileSync(file, {encoding: 'base64'})
   return fileStream
+}
+
+/**
+ * Function for handling netCDF files 3.*
+ * Consider that 
+ * @param {*} file 
+ * @returns 
+ */
+function netCFDHandler(file) {
+  let data = readFileSync(file);
+  return data
 }
 
 this.server = new HydroRTCServer();

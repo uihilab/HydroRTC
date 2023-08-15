@@ -3,97 +3,22 @@
 <head>
 </head>
 <body>
-    <h1> Case Study 1 - Stream Data Transmission</h1>
-    <!-- Input to get client id-->
-    <input type="text" placeholder="Enter username" id="name">
-    <button id="connect">Connect</button>
-    <!-- Input to get client id -->
-    <br><br>
-
-    <!-- Options for the client upon successful connection-->
-    <div id="controls" style="display: none;">
-        <!-- List of all other connected peers-->
-        <div>
-            <label for="peers">List of Connected Peers: </label>
-            <select id="peers"></select>
-        </div>
-        <!-- List of all other connected peers-->
-        <br><br>
-        <!-- Button for stream data usecase-->
-        <button id="stream-data">Stream Data</button>
-        <!-- Button for stream data usecase-->
-        <!-- Buttons for collaborative data exchange usecase-->
-        <!-- First one peer will request for data-->
-        <button id="request-data">Request Data</button>
-        <!-- Then second peer will accept the request for data-->
-        <button id="accept-request">Accept Request</button>
-        <!-- Then second peer will send the data-->
-        <button id="send-data">Send Data</button>
-        <!-- Buttons for collaborative data exchange usecase-->
-        <button id="send-netcdf-data">Request netCDF Data</button>
-        <br><br>
-        <!-- Button for smart data sharing usecase-->
-        <button id="start-smart-data">Start Receiving Smart Data</button>
-        <!-- Options for smart data sharing -->
-        <label for="frequency">Select Frequency (seconds) for smart data :</label>
-        <select id="frequency">
-            <option value="5" selected >5</option>
-            <option value="15">10</option>
-            <option value="20">20</option>
-        </select>
-        <label for="resolution">Select Resoultion (m) of images for smart data:</label>
-        <select id="resolution">
-            <option value="L00" selected >50</option>
-            <option value="L01">25</option>
-            <option value="L02">10</option>
-            <option value="L03">5</option>
-            <option value="L04">1</option>
-        </select>
-        <!-- Options for smart data sharing -->
-        <!-- Button to update options after starting streaming -->
-        <button id="update-priority">Update Data Priority</button>
-        <!-- Button to update options after starting streaming -->
-        <!-- Button for smart data sharing usecase-->
-        
-        <br><br>
-        <!-- Button to Get task / example for distributed data analysis and processing usecase -->
-        <button id="receive-task">Receive Task</button>
-        <!-- Button to Get task / example for distributed data analysis and processing usecase -->
+    <h1> Case Study 3 - P2P </h1>
+    <div class="name-container">
+        <h1>Enter your nametag</h1>
+        <input type="text" class="name-input" id="user-name" placeholder="Your name">
+        <button class="start-button" onclick="startChat()">Start Chat</button>
     </div>
-    <!-- Options for the client upon successful connection-->
-    <br>
-    <div>
-        <!-- Logging of all the receieved requests for collaborative data exchange usecase  -->
-        <div>
-            <h2>Received Requests: </h2>
-            <p id="received-request"></p>
+
+    <div class="chat-container" id="chat-container">
+        <div class="chat-header">Chat with Bot</div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">Hello! How can I assist you today?</div>
         </div>
-        <!-- Logging of all the receieved requests for collaborative data exchange usecase -->
-        <!-- Logging of all the receieved data from peer for collaborative data exchange usecase -->
-        <div>
-            <h2>Received Data From Peer: </h2>
-            <p id="received-data"></p>
+        <div class="chat-input">
+            <input type="text" class="input-box" id="user-input" placeholder="Type your message...">
+            <button class="send-button" onclick="sendMessage()">Send</button>
         </div>
-        <!-- Logging of all the receieved data from peer for collaborative data exchange usecase --> 
-        <!-- Logging of all the receieved data stream from server for stream data usecase -->   
-        <div>
-            <h2>Received Stream:</h2>
-            <p id ="text"></p>
-        </div>
-        <!-- Logging of all the receieved data stream from server for stream data usecase -->   
-        <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->   
-        <div>
-            <h2>Smart Data Transmission:</h2>
-            <div id="image-container"></div>
-            <p id="img"></p>
-        </div>
-        <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
-        <!-- Logging of all the receieved tasks from server for distributed data sharing and analysis usecase -->
-        <div>
-            <h2>Received Tasks:</h2>
-            <p id="tasks"></p>
-        </div>
-        <!-- Logging of all the receieved tasks from server for distributed data sharing and analysis usecase -->
     </div>
 
 </body>
@@ -172,12 +97,6 @@
         }
    }
 
-   document.getElementById('send-netcdf-data').onclick = function(){
-
-    let val = hydroRtcClient.getnetCDF('./data/')
-    console.log(val)
-   }
-
    
    document.getElementById('request-data').onclick = function(){
         // select peer from connected peers list to request data for collaborative data exchange
@@ -222,17 +141,18 @@
         let frequency = document.getElementById('frequency').value
 
         // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/trial/', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/jpeg/', frequency, resolution)
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk
             smartDataHandler.on('data', (data)=>{
-                console.log(data)
-                console.log(typeof data)
+                //console.log(data)
+                //console.log(typeof data)
                 //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
                 let container = document.getElementById('image-container')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                container.innerHTML+=filePath
+                container.innerHTML=''
+                container.innerHTML=filePath
 
                 const binaryData = atob(data.data);
                 const arrayBuffer = new ArrayBuffer(binaryData.length);
