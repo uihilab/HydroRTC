@@ -3173,8 +3173,8 @@ class HydroRTCClient {
       console.log("Connection lost. Reconnecting...");
 
       // Workaround for peer.reconnect deleting previous id
-      this.myConn.id = this.lastId;
-      this.myConn._lastServerId = this.lastId;
+      this.myConn._id = JSON.parse(this.lastId);
+      this.myConn._lastServerId = JSON.parse(this.lastId);
       this.myConn.reconnect();
     });
 
@@ -3184,6 +3184,8 @@ class HydroRTCClient {
     });
 
     this.myConn.on("error", function (err) {
+      console.log(this.myConn._id)
+      console.log(this.lastId)
       console.log(err);
     });
   }

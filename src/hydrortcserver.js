@@ -1,5 +1,9 @@
 const { server } = require('./server.js')
 
+/**
+ * @class HydroRTC
+ * @description Main class instatiator for the server implementation.
+ */
 class HydroRTC {
     constructor(appName, server) {
       this.appName = appName;
