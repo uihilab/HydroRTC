@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 </head>
+
 <body>
     <h1> Case Study 1 - Stream Data Transmission</h1>
     <!-- Input to get client id-->
@@ -30,20 +32,24 @@
         <!-- Then second peer will send the data-->
         <button id="send-data">Send Data</button>
         <!-- Buttons for collaborative data exchange usecase-->
-        <button id="send-netcdf-data">Request netCDF Data</button>
+        <button id="netcdf-data">Request netCDF Data</button>
+        <br><br>
+        <button id="hdf5-data">Request HDF5 Data</button>
+        <br><br>
+        <button id="tiff-data">Request TIFF Data</button>
         <br><br>
         <!-- Button for smart data sharing usecase-->
         <button id="start-smart-data">Start Receiving Smart Data</button>
         <!-- Options for smart data sharing -->
         <label for="frequency">Select Frequency (seconds) for smart data :</label>
         <select id="frequency">
-            <option value="5" selected >5</option>
+            <option value="5" selected>5</option>
             <option value="15">10</option>
             <option value="20">20</option>
         </select>
         <label for="resolution">Select Resoultion (m) of images for smart data:</label>
         <select id="resolution">
-            <option value="L00" selected >50</option>
+            <option value="L00" selected>50</option>
             <option value="L01">25</option>
             <option value="L02">10</option>
             <option value="L03">5</option>
@@ -54,7 +60,7 @@
         <button id="update-priority">Update Data Priority</button>
         <!-- Button to update options after starting streaming -->
         <!-- Button for smart data sharing usecase-->
-        
+
         <br><br>
         <!-- Button to Get task / example for distributed data analysis and processing usecase -->
         <button id="receive-task">Receive Task</button>
@@ -74,14 +80,14 @@
             <h2>Received Data From Peer: </h2>
             <p id="received-data"></p>
         </div>
-        <!-- Logging of all the receieved data from peer for collaborative data exchange usecase --> 
-        <!-- Logging of all the receieved data stream from server for stream data usecase -->   
+        <!-- Logging of all the receieved data from peer for collaborative data exchange usecase -->
+        <!-- Logging of all the receieved data stream from server for stream data usecase -->
         <div>
             <h2>Received Stream:</h2>
-            <p id ="text"></p>
+            <p id="text"></p>
         </div>
-        <!-- Logging of all the receieved data stream from server for stream data usecase -->   
-        <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->   
+        <!-- Logging of all the receieved data stream from server for stream data usecase -->
+        <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
         <div>
             <h2>Smart Data Transmission:</h2>
             <div id="image-container"></div>
@@ -100,108 +106,133 @@
 <script src="./node_modules/hydro-rtc/build/hydrortcclient.js"></script>
 <script>
 
-   let hydroRtcClient = null
-   
-   document.getElementById('connect').onclick = function() {
+    let hydroRtcClient = null
 
-    if (document.getElementById('name').value.length == 0) {
-        
-        alert("Please, enter name to connect")
+    document.getElementById('connect').onclick = function () {
 
-    } else {
+        if (document.getElementById('name').value.length == 0) {
 
-        let clientConn = new HydroRTCClient(document.getElementById('name').value)
+            alert("Please, enter name to connect")
 
-        clientConn.on('connect', (data) => {
-            // on successfull connection of client
-            if (data.connected) {
+        } else {
 
-                // saving client object
-                hydroRtcClient = data.obj
-                
-                // getting list of peers from the server
-                let dataStream = hydroRtcClient.getPeers()
-                // null, if client is unable to get the peers list
-                if (dataStream != null) {
+            let clientConn = new HydroRTCClient(document.getElementById('name').value)
 
-                    // on receiving peers list
-                    dataStream.on('data', (data)=>{
-                        let str = ""
-                        document.getElementById("peers").innerHTML = "";
-                        data.data.forEach(peer=>{
-                            str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
+            clientConn.on('connect', (data) => {
+                // on successfull connection of client
+                if (data.connected) {
+
+                    // saving client object
+                    hydroRtcClient = data.obj
+
+                    // getting list of peers from the server
+                    let dataStream = hydroRtcClient.getPeers()
+                    // null, if client is unable to get the peers list
+                    if (dataStream != null) {
+
+                        // on receiving peers list
+                        dataStream.on('data', (data) => {
+                            let str = ""
+                            document.getElementById("peers").innerHTML = "";
+                            data.data.forEach(peer => {
+                                str += "<option value='" + peer.name + "'>" + peer.name + "</option>"
+                            })
+                            document.getElementById("peers").innerHTML = str;
+                            document.getElementById('controls').style.display = 'block';
                         })
-                        document.getElementById("peers").innerHTML = str;
-                        document.getElementById( 'controls' ).style.display = 'block';
-                    })
-                }
-                
-                // Listen for requests to received data requests from other peer
-                // for collaborative data exchange
-                let requestStream = hydroRtcClient.listenRequests()
-                if (requestStream != null) {
-                    // on receiving request from peer
-                    requestStream.on('data', (data)=>{
-                        let request = data.requestor + " requested: " + data.request + ", "
-                        document.getElementById("received-request").innerHTML += request;
-                    })
-                }
+                    }
 
-            } else {
-                // error message
-                console.log(data.message)
-            
-            }
-        })
-    }
-   }
+                    // Listen for requests to received data requests from other peer
+                    // for collaborative data exchange
+                    let requestStream = hydroRtcClient.listenRequests()
+                    if (requestStream != null) {
+                        // on receiving request from peer
+                        requestStream.on('data', (data) => {
+                            let request = data.requestor + " requested: " + data.request + ", "
+                            document.getElementById("received-request").innerHTML += request;
+                        })
+                    }
 
-   document.getElementById('stream-data').onclick = function(){
-        
-        // stream data usecase
-        let dataStream = hydroRtcClient.streamDataRequest()
-        // null, if client is unable to use the usecase
-        if (dataStream != null) {
-            // on receiving data stream
-            dataStream.on('data', (data)=>{
-                // checking whether last data chunk is received or not
-                if (data.status == "incomplete") {
-                    document.getElementById('text').innerHTML+=data.data
+                } else {
+                    // error message
+                    console.log(data.message)
+
                 }
             })
         }
-   }
+    }
 
-   document.getElementById('send-netcdf-data').onclick = function(){
+    document.getElementById('stream-data').onclick = function () {
 
-    let val = hydroRtcClient.getnetCDF('./data/')
-    console.log(val)
-   }
+        // stream data usecase
+        let dataStream = hydroRtcClient.streamDataRequest("./data/sensor-data.txt")
+        // null, if client is unable to use the usecase
+        if (dataStream != null) {
+            // on receiving data stream
+            dataStream.on('data', (data) => {
+                // checking whether last data chunk is received or not
+                if (data.status == "incomplete") {
+                    document.getElementById('text').innerHTML += data.data
+                }
+            })
+        }
+    }
 
-   
-   document.getElementById('request-data').onclick = function(){
+    document.getElementById('netcdf-data').onclick = function () {
+
+        let dataStream = hydroRtcClient.getnetCDF('./data/netcdf/')
+        if (dataStream != null) {
+            dataStream.on('data', (data) => {
+                console.log(data)
+            })
+        }
+    }
+
+    document.getElementById('tiff-data').onclick = function () {
+
+        let dataStream = hydroRtcClient.getTIFF('./data/tiff/')
+        if (dataStream != null) {
+            dataStream.on('data', (data) => {
+                console.log(data)
+            })
+        }
+    }
+
+    document.getElementById('hdf5-data').onclick = function () {
+
+        let dataStream = hydroRtcClient.gethdf5('./data/hdf5/')
+        if (dataStream != null) {
+            dataStream.on('data', (data) => {
+                console.log(data)
+            })
+        }
+
+    }
+
+
+    document.getElementById('request-data').onclick = function () {
         // select peer from connected peers list to request data for collaborative data exchange
         let selectedPeer = document.getElementById('peers').value
-        
+
         let dataStream = hydroRtcClient.requestDataFromPeer(selectedPeer, 'data')
-         // null, if client is unable to send the request
-         if (dataStream != null) {
-            dataStream.on('data', (data)=>{
-                let receivedData = data.sender +" Sent: " + data.data
-                document.getElementById('received-data').innerHTML+=receivedData
+        // null, if client is unable to send the request
+        if (dataStream != null) {
+            dataStream.on('data', (data) => {
+                let receivedData = data.sender + " Sent: " + data.data
+                document.getElementById('received-data').innerHTML += receivedData
             })
-        }        
-   }
-   
-   document.getElementById('accept-request').onclick = function(){
+        }
+    }
+
+    document.getElementById('accept-request').onclick = function () {
         // select peer from connected peers list to accept the request from the requestor peer for collaborative data exchange
         let selectedPeer = document.getElementById('peers').value
         // connect with requestor peer
         hydroRtcClient.connectPeer(selectedPeer)
-   }
-   
+    }
 
-   document.getElementById('send-data').onclick = function(){
+
+    document.getElementById('send-data').onclick = function () {
 
         if (!hydroRtcClient) {
 
@@ -211,11 +242,11 @@
         // send data to selected peer (if request is received from that peer and this client has accepted this request)
         let selectedPeer = document.getElementById('peers').value
         hydroRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
-        
-   }
 
-   document.getElementById('start-smart-data').onclick = function(){
-        
+    }
+
+    document.getElementById('start-smart-data').onclick = function () {
+
         let selectedPeer = document.getElementById('peers').value
         // get delivery priorities values
         let resolution = document.getElementById('resolution').value
@@ -226,13 +257,13 @@
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk
-            smartDataHandler.on('data', (data)=>{
+            smartDataHandler.on('data', (data) => {
                 console.log(data)
                 console.log(typeof data)
                 //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
                 let container = document.getElementById('image-container')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                container.innerHTML+=filePath
+                container.innerHTML += filePath
 
                 const binaryData = atob(data.data);
                 const arrayBuffer = new ArrayBuffer(binaryData.length);
@@ -241,7 +272,7 @@
                     uint8Array[i] = binaryData.charCodeAt(i)
                 }
 
-                const blob = new Blob([arrayBuffer], {type: 'image/jpeg'});
+                const blob = new Blob([arrayBuffer], { type: 'image/jpeg' });
 
                 const reader = new FileReader();
 
@@ -256,26 +287,26 @@
                 reader.readAsDataURL(blob);
             })
         }
-        
-   }
 
-   document.getElementById('update-priority').onclick = function() {
-        
+    }
+
+    document.getElementById('update-priority').onclick = function () {
+
         let resolution = document.getElementById('resolution').value
         let frequency = document.getElementById('frequency').value
 
         hydroRtcClient.updateSmartDataPriority(frequency, resolution)
-        
-   }
 
-   document.getElementById('receive-task').onclick = function() {
-        
+    }
+
+    document.getElementById('receive-task').onclick = function () {
+
         // Get task from server for distributed data sharing and analysis usecase
         let taskHandler = hydroRtcClient.receiveTask(frequency, resolution)
         // null, if client is unable to use the usecase
         if (taskHandler != null) {
             // on receiving task
-            taskHandler.on('data', (data)=>{
+            taskHandler.on('data', (data) => {
                 let task = data.task + "<br>"
 
                 document.getElementById('tasks').innerHTML += task
@@ -283,11 +314,12 @@
                 // here you can check type of task received and perform the task accordingly
                 // for demo purpose (just appending 'result' string in front of task name as a result)
                 // sending task result back to server using following function
-                hydroRtcClient.submitTaskResult(data.task, data.task+"-result")
+                hydroRtcClient.submitTaskResult(data.task, data.task + "-result")
             })
         }
-        
-   }
+
+    }
 
 </script>
+
 </html>

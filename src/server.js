@@ -10,7 +10,14 @@ const {
 } = require("fs");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
-const { NetCDFReader} = require("netcdfjs");
+const { NetCDFReader } = require("netcdfjs");
+const { GRIB } = require("vgrib2");
+
+/**
+ * @class HydroRTCServer
+ * @description Server-side implementation for the HydroRTC system
+ * Works as a connection host intermediary for client class
+ */
 
 class HydroRTCServer {
   /**
@@ -35,12 +42,26 @@ class HydroRTCServer {
     // list of tasks, server has for the peers
     this.tasks = [];
 
+    //Image data streaming namespaces
+    //TODO: Generalize for the whole application
     this.dataStreaming = {
       dataPath: "",
       data: {}
     };
 
+    //netCDF file namespaces
     this.netCDF = {
+      dataPath: "",
+      data: {}
+    }
+
+    //HDF5 files namespaces
+    this.HDF5 = {
+      dataPath: "",
+      data: {}
+    }
+
+    this.tiff = {
       dataPath: "",
       data: {}
     }
@@ -88,7 +109,7 @@ class HydroRTCServer {
     });
 
     /**
-     * Server-side event hanlders
+     * Server-side event handlers
      * Any other events that are to added to the feature should be included in this space
      */
 
@@ -101,8 +122,9 @@ class HydroRTCServer {
       socket.on("validate-username", (data) => this.validateUser(socket, data));
 
       //Data stream listener
-      socket.on("stream-data", (peer) => this.streamData(socket, peer));
+      socket.on("stream-data", (data) => this.streamData(socket, data));
 
+      //Obtain all the peer list 
       socket.on("peers-list", (peer) => this.getPeers(peer));
 
       socket.on("request-peer", (data) => this.connectPeers(data));
@@ -115,7 +137,7 @@ class HydroRTCServer {
         this.updateSmartDataShare(peer)
       );
 
-      socket.on("peer-to-server", (peer) => this.uploadData(peer));
+      socket.on("peer-to-server", (data) => this.uploadData(data));
 
       socket.on("get-task", (peer) => this.getTask(peer));
 
@@ -125,8 +147,20 @@ class HydroRTCServer {
         this.handleDisconnect(socket);
       });
 
+      socket.on("data-request", (peer) => {
+        this.dataType(peer);
+      })
+
       socket.on("netcdf-reader", (peer) => {
         this.handlenetCDF(peer);
+      })
+
+      socket.on("hdf5-reader", (peer) => {
+        this.handleHDF5(peer)
+      })
+
+      socket.on("tiff-reader", (peer) => {
+        this.handleTIFF(peer)
       })
     });
   }
@@ -186,13 +220,14 @@ class HydroRTCServer {
   validateUser(socket, data) {
     // checks whether username is unique or not
     let username = data.name;
+    const isUsernameUnique = !this.userNameTaken(username)
 
-    const isUsernameUnique = !this.peers.some((peer) => peer.name === username);
-
+    //Emit the message for validating the given username
     socket.emit("valid-username", {
       valid: isUsernameUnique,
     });
 
+    //In case the user is already found in the server list
     if (!isUsernameUnique) {
       socket.disconnect();
     }
@@ -204,8 +239,10 @@ class HydroRTCServer {
    * @param {*} peer
    */
 
-  streamData(socket, peer, filePath = "./data/sensor-data.txt") {
-    console.log("peer (%s) requested to stream data: ", peer.name);
+  streamData(socket, data) {
+    let { name, filePath } = data
+    console.log(name, filePath)
+    console.log("peer (%s) requested to stream data: ", name);
 
     // default chunk size is 65536
     // to change the chunk size updated highWaterMark property
@@ -217,12 +254,11 @@ class HydroRTCServer {
     if (streamDataPeer) {
       // sending the request to that peer to send data to requesting peer
       this.io.to(streamDataPeer.socketId).emit("connect-request", {
-        requestor: peer.name,
+        requestor: name,
         request: "streamData",
         usecase: "decentralized",
       });
     } else {
-      // TODO: Let client of the library specify data path: "./data/sensor-data.txt"
       let readStream = createReadStream(filePath, {
         encoding: "utf8",
         highWaterMark: 16 * 1024,
@@ -244,7 +280,7 @@ class HydroRTCServer {
             status: "complete",
           });
 
-          stgObj.updatePeerProperty(peer.name, "has-stream-data", true);
+          stgObj.updatePeerProperty(name, "has-stream-data", true);
         });
     }
   }
@@ -277,6 +313,10 @@ class HydroRTCServer {
    */
 
   connectPeers(data) {
+    if (!data.recieverPeerName) {
+      console.log('Peer %s is not found in the server.', data.recieverPeerName)
+      return
+    }
     console.log(
       "peer (%s) requested to connected with peer (%s): ",
       data.requestorName,
@@ -304,8 +344,10 @@ class HydroRTCServer {
    */
 
   smartDataShare(peer) {
-    let {name, dataPath, resolution, frequency } = peer
+    let { name, dataPath, resolution, frequency } = peer
     console.log("peer (%s) requested to start smart data sharing: ", name);
+
+    this.smartDataSharing = {}
 
     this.smartDataSharing.dataPath = dataPath;
     this.smartDataSharing.resolution = resolution;
@@ -422,12 +464,13 @@ class HydroRTCServer {
   getSmartDataIntervalCallback(peer) {
     let count = 0;
     let data = this.smartDataSharing.data[this.smartDataSharing.resolution];
-    
+
     const emitFile = () => {
+      if (typeof data === 'undefined') { console.log(data); return }
       if (count < data.length) {
         let filename = data[count];
-        let stgData = imageHandler(this.smartDataSharing.dataPath+filename);
-  
+        let stgData = imageHandler(this.smartDataSharing.dataPath + filename);
+
         this.io.to(peer.socketId).emit("smart-data", {
           resolution: this.smartDataSharing.resolution,
           rowNo: count,
@@ -435,21 +478,21 @@ class HydroRTCServer {
           data: stgData,
           usecase: "smart-data",
         });
-  
+
         count++;
-  
+
         if (count === data.length) {
           clearInterval(intervalId); // Stop the interval if all emissions have been sent
         }
       }
     };
-  
+
     const intervalId = setInterval(emitFile, parseInt(this.smartDataSharing.frequency) * 1000);
     emitFile(); // Emit the first file immediately
-  
+
     return intervalId;
   }
-  
+
   /**
    *
    * @param {*} peer
@@ -533,9 +576,11 @@ class HydroRTCServer {
    * @returns 
    */
   handlenetCDF(peer) {
-    let {name, dataPath, socketId } = peer
-    
+    let { name, dataPath, socketId } = peer
+
     console.log(`peer ${name} requested ${dataPath} file from server.`);
+
+    this.netCDF = {}
 
     this.netCDF.dataPath = dataPath;
 
@@ -548,15 +593,143 @@ class HydroRTCServer {
     if (resolutions.length === 1) {
       let files = getFiles(resolutions[0]);
       console.log(files);
+      //Single file stream now
       let filename = files[0];
-      let stgData = netCFDHandler(this.netCDF.dataPath+filename);
+      largeFileHandler(this.netCDF.dataPath + filename).then(data => {
+        //This is where the data should be either streamed as it is or changed
+        let reader = new NetCDFReader(data);
+        let values = {
+          dimensions: reader.dimensions,
+          variables: reader.variables,
+          attributes: reader.globalAttributes
+        }
+        this.io.to(socketId).emit("netcdf-data", {
+          filename,
+          data: values
+        });
+        return;
+      });
+    }
+  }
 
-      this.io.to(socketId).emit("netcdf-data", {
-        filename: filename,
-        data: stgData,
+  /**
+   * 
+   * @param {*} peer 
+   */
+  handleHDF5(peer) {
+    //Workaround to run the async/await stuff on node outside a module
+    (async () => {
+      const hdf5wasm = await import('h5wasm');
+      await hdf5wasm.ready;
+
+      let { name, dataPath, socketId } = peer
+
+      this.HDF5 = {}
+
+      console.log(`peer ${name} requested hdf5 file from server.`);
+
+      this.HDF5.dataPath = dataPath;
+
+      // reading HDF5 files from current directory
+      //only 1 single HDF5 file to be read by now. Potential to just like the image handler
+
+      let resolutions = getDirectories(this.HDF5.dataPath);
+
+      //single path found in the given directory
+      //if (resolutions.length === 1) {
+        let files = getFiles(resolutions[0]);
+        console.log(files);
+        //Single file stream now
+        let filename = files[0];
+
+        let reader = new hdf5wasm.File(this.HDF5.dataPath + filename, 'r');
+
+        let f = reader.get(reader.keys()[0]).keys()
+
+        //TODO: modify this handler for multiple types of variables
+        let d = reader.get(`${reader.keys()[0]}/precipitationCal`)
+
+        console.log(d)
+
+        let data = {
+          metadata: d.metadata,
+          dataType: d.type,
+          shape: d.shape,
+          values: d.to_array()
+        }
+
+        this.io.to(socketId).emit("hdf5-data", {
+          filename,
+          data
+        });
+        return;
+      //}
+    })()
+  }
+
+  /**
+ * Handler for request of TIFF/GeoTIFF images
+ */
+  handleTIFF(peer) {
+    (async () => {
+      const GeoTiff = await import('geotiff');
+      const { fromUrl, fromUrls, fromArrayBuffer, fromBlob } = GeoTiff;
+
+      let { name, dataPath, socketId } = peer
+
+      this.tiff = {}
+
+      console.log(`peer ${name} requested hdf5 file from server.`);
+
+      this.tiff.dataPath = dataPath;
+
+      let resolutions = getDirectories(this.tiff.dataPath);
+
+      let files = getFiles(resolutions[0]);
+      console.log(files);
+      //Single file stream now
+      let filename = files[0];
+
+      console.log(this.tiff.dataPath + filename)
+
+      const res = await largeFileHandler(this.tiff.dataPath+ filename)
+      const arrayBuffer = res.buffer.slice(res.byteOffset, res.byteOffset + res.byteLength);
+      //const arrayBuffer = await res.arrayBuffer();
+      const TIFF = await fromArrayBuffer(arrayBuffer);
+      const image = await TIFF.getImage();
+
+      const width = image.getWidth();
+      const height = image.getHeight();
+      const tileWidth = image.getTileWidth();
+      const tileHeight = image.getTileHeight();
+      const samplesPerPixel = image.getSamplesPerPixel();
+
+      const origin = image.getOrigin();
+      const resolution = image.getResolution();
+      const bbox = image.getBoundingBox();
+
+      let data = {
+        sizes: { width, height, tileWidth, tileHeight },
+        resolution: { samplesPerPixel, origin, resolution, bbox },
+      }
+
+      this.io.to(socketId).emit("tiff-data", {
+        filename,
+        data
       });
       return;
-    }
+
+
+    })()
+  }
+
+  /**
+   * 
+   * @param {*} username 
+   * @returns 
+   */
+  userNameTaken(username) {
+    return this.peers.some((peer) => peer.name === username);
   }
 }
 
@@ -601,19 +774,50 @@ function getFiles(source) {
  * @returns 
  */
 function imageHandler(file) {
-  let fileStream = readFileSync(file, {encoding: 'base64'})
+
+  let fileStream = readFileSync(file, { encoding: 'base64' });
   return fileStream
+  //
 }
 
 /**
- * Function for handling netCDF files 3.*
- * Consider that 
- * @param {*} file 
- * @returns 
+ * Function for handling large files for streaming
+ * Returns stream of bytes that needs to be handled
+ * By the implemented file handler
+ * @param {String} file 
+ * @returns {Promise} memory saved and stored
  */
-function netCFDHandler(file) {
-  let data = readFileSync(file);
-  return data
+function largeFileHandler(file) {
+  //
+  return new Promise((resolve, reject) => {
+    const CHUNK_SIZE = 10000000;
+    const data = [];
+
+    //On the streamchunk 
+    var read = createReadStream(file, { highWaterMark: CHUNK_SIZE });
+    read.on('data', (chunk) => {
+      data.push(chunk)
+    })
+
+    //On finished stream
+    //Still need to change the way this handler is supposed to work
+    read.on('end', () => {
+      console.log(data.length)
+      //Buffer.concat(data.slice(window))
+      resolve(Buffer.concat(data))
+    })
+
+    //On an error on the request
+    read.on('error', (error) => {
+      reject(error)
+    })
+  })
 }
+
+function uploadData(data) {
+
+}
+
+
 
 this.server = new HydroRTCServer();

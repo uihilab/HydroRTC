@@ -2758,7 +2758,6 @@ const { configuration } = require("./configuration.js");
 const { io } = require("socket.io-client");
 const { EventEmitter } = require("events");
 const { Peer } = require("peerjs");
-const { NetCDFReader} = require("netcdfjs");
 
 // HydroRTCClient object
 class HydroRTCClient {
@@ -2775,7 +2774,7 @@ class HydroRTCClient {
 
     // datatypes that can be shared and received by the client. This will be expanded
     //TODO: Handlers for different data types need to be tested
-    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts", "jpeg", "jpg"];
+    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts", "jpeg", "jpg", "netcdf3x", "hdf5"];
 
     this.streamData = null;
 
@@ -2793,6 +2792,9 @@ class HydroRTCClient {
     this.smartDataEventHandler = new EventEmitter();
     this.taskDataEventHandler = new EventEmitter();
     this.netCDFEventHandler = new EventEmitter();
+    this.gribEventHandler = new EventEmitter();
+    this.hdf5EventHandler = new EventEmitter();
+    this.tiffEventHandler = new EventEmitter();
 
     // initializing client socket
     this.socket = io();
@@ -2801,7 +2803,7 @@ class HydroRTCClient {
       name: this.clientName,
     });
 
-    // defining all socket event handlers
+    // trigger all the event handlers so they are ready upon initialization
     this.socketEventHandlers();
     // id of last connecter peer
     this.lastId = null;
@@ -2824,20 +2826,7 @@ class HydroRTCClient {
     this.socket.on("valid-username", (data) => {
       // if username is valid according to server
       if (data.valid) {
-        // then connect with server
-        this.socket.emit("join", {
-          name: this.clientName,
-        });
-
-        // send connection successful information back to client
-        this.objectCreationEvent.emit("connect", {
-          connected: true,
-          message: "Connection is successfull",
-          obj: this,
-        });
-
-        //establish peerJS connection
-        this.initPeerJSConn();
+        this.initialPeerConnect()
       } else {
         // otherwise, disconnect from server
         this.socket.disconnect();
@@ -2859,7 +2848,6 @@ class HydroRTCClient {
 
     // on receiving data stream from server
     this.socket.on("data-stream", (message) => {
-      0;
       this.streamData += message.data;
       // sending stream data back to client
       this.streamEventHandler.emit("data", {
@@ -2897,14 +2885,26 @@ class HydroRTCClient {
       });
     });
 
-    this.socket.on("netcdf-data", (message) => {
-      let reader = new NetCDFReader(message.data)
-      console.log(message.data + 'from client implementation')
-      console.log(reader.dimensions)
-      console.log(reader.variables)
+    //TODO: Clients can read the NetCDF file from sever. Client implementation should also be added
+    this.socket.on("netcdf-data", ({ data, filename }) => {
       this.netCDFEventHandler.emit("data", {
-        data: message.data,
-        filename: message.filename
+        data,
+        filename
+      })
+    })
+
+    this.socket.on("hdf5-data", ({ data, filename }) => {
+      console.log(data)
+      this.hdf5EventHandler.emit("data", {
+        data,
+        filename
+      })
+    })
+
+    this.socket.on("tiff-data", ({ data, filename }) => {
+      this.tiffEventHandler.emit("data", {
+        data,
+        filename
       })
     })
 
@@ -2935,6 +2935,12 @@ class HydroRTCClient {
       });
     });
 
+    //User uploading data as binary files that are to be stored in the server
+    //using information provided by the user
+    this.socket.on("data-upload", (message) => {
+
+    })
+
     // this.socket.on("peer-accepted-request", (message) => {
     //   connectWithPeer(message.acceptedBy)
     // });
@@ -2946,7 +2952,8 @@ class HydroRTCClient {
    */
 
   // returns event handler for sending data stream
-  streamDataRequest() {
+  streamDataRequest(filePath) {
+    console.log(filePath)
     // client can hold one stream data at time.
     // new stream data will update the old request.
     this.streamData = "";
@@ -2955,7 +2962,8 @@ class HydroRTCClient {
       let socketId = this.socket.id;
       this.socket.emit("stream-data", {
         name: this.clientName,
-        socketId: socketId,
+        socketId,
+        filePath
       });
 
       return this.streamEventHandler;
@@ -3051,7 +3059,7 @@ class HydroRTCClient {
       requestorName: this.clientName,
       requestorSocketId: this.socket.id,
       recieverPeerName: peerName,
-      request: request,
+      request,
     });
 
     return this.dataExchangeEventHandler;
@@ -3131,21 +3139,17 @@ class HydroRTCClient {
    */
   initPeerJSConn() {
     // TODO: make properties configurable
-    this.myConn = new Peer(this.clientName, { 
-      debug: 2,
-      reconnect: {
-        exponentialBackoff: 1000,
-        maxRetries: 10
-      } 
-    
+    this.myConn = new Peer(this.clientName, {
+      debug: 3,
     });
     this.myConn.on("open", (id) => {
       // Workaround for peer.reconnect deleting previous id
       if (this.myConn.id === null) {
         console.log("Received null id from peer open");
-        this.myConn.id = JSON.parse(this.lastId);
+        this.myConn.id = this.lastId;
       } else {
-        this.lastId = JSON.stringify(this.myConn.id);
+        //Workaround for peer deleting peer id
+        this.lastId = id.split('').join('');
       }
 
       // console.log("ID: " + this.myConn.id);
@@ -3173,8 +3177,8 @@ class HydroRTCClient {
       console.log("Connection lost. Reconnecting...");
 
       // Workaround for peer.reconnect deleting previous id
-      this.myConn._id = JSON.parse(this.lastId);
-      this.myConn._lastServerId = JSON.parse(this.lastId);
+      //this.myConn.id = this.lastId;
+      //this.myConn.lastServerId = this.lastId;
       this.myConn.reconnect();
     });
 
@@ -3184,7 +3188,6 @@ class HydroRTCClient {
     });
 
     this.myConn.on("error", function (err) {
-      console.log(this.myConn._id)
       console.log(this.lastId)
       console.log(err);
     });
@@ -3197,7 +3200,7 @@ class HydroRTCClient {
    * connection and data received on it.
    */
   connectWithPeer(remotePeerId) {
-    // Close old connection
+    // Close old connection with any other existing peers
     if (this.peerConn) {
       this.peerConn.close();
     }
@@ -3238,6 +3241,31 @@ class HydroRTCClient {
     return this.smartDataEventHandler;
   }
 
+  getGrib(dataPath) {
+
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   */
+  gethdf5(dataPath) {
+    let socketId = this.socket.id;
+
+    this.socket.emit("hdf5-reader", {
+      name: this.clientName,
+      socketId: socketId,
+      dataPath: dataPath
+    })
+
+    return this.hdf5EventHandler
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   * @returns 
+   */
   getnetCDF(dataPath) {
     let socketId = this.socket.id;
 
@@ -3248,6 +3276,24 @@ class HydroRTCClient {
     });
 
     return this.netCDFEventHandler
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   * @returns 
+   */
+
+  getTIFF(dataPath) {
+    let socketId = this.socket.id;
+
+    this.socket.emit("tiff-reader", {
+      name: this.clientName,
+      socketId: socketId,
+      dataPath: dataPath
+    });
+
+    return this.tiffEventHandler
   }
 
   // update parameters / priorities for smart data sharing
@@ -3309,11 +3355,33 @@ class HydroRTCClient {
 
     return chunks;
   }
+
+  /**
+   * 
+   * @param {*} data 
+   */
+
+  initialPeerConnect() {
+    // then connect with server
+    this.socket.emit("join", {
+      name: this.clientName,
+    });
+
+    // send connection successful information back to client
+    this.objectCreationEvent.emit("connect", {
+      connected: true,
+      message: "Connection is successfull",
+      obj: this,
+    });
+
+    //establish peerJS connection
+    this.initPeerJSConn();
+  }
 }
 
 window.HydroRTCClient = HydroRTCClient;
 
-},{"./configuration.js":6,"events":3,"netcdfjs":35,"peerjs":40,"socket.io-client":43}],8:[function(require,module,exports){
+},{"./configuration.js":6,"events":3,"peerjs":36,"socket.io-client":39}],8:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -4347,7 +4415,7 @@ function clone(obj) {
 
 module.exports = Socket;
 
-},{"./transports/index":15,"component-emitter":10,"debug":23,"engine.io-parser":29,"parseqs":36,"parseuri":37}],14:[function(require,module,exports){
+},{"./transports/index":15,"component-emitter":10,"debug":23,"engine.io-parser":29,"parseqs":32,"parseuri":33}],14:[function(require,module,exports){
 const parser = require("engine.io-parser");
 const Emitter = require("component-emitter");
 const debug = require("debug")("engine.io-client:transport");
@@ -5267,7 +5335,7 @@ class Polling extends Transport {
 
 module.exports = Polling;
 
-},{"../transport":14,"debug":23,"engine.io-parser":29,"parseqs":36,"yeast":72}],19:[function(require,module,exports){
+},{"../transport":14,"debug":23,"engine.io-parser":29,"parseqs":32,"yeast":68}],19:[function(require,module,exports){
 const globalThis = require("../globalThis");
 
 module.exports = {
@@ -5549,7 +5617,7 @@ class WS extends Transport {
 module.exports = WS;
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../transport":14,"../util":21,"./websocket-constructor":19,"buffer":2,"debug":23,"engine.io-parser":29,"parseqs":36,"yeast":72}],21:[function(require,module,exports){
+},{"../transport":14,"../util":21,"./websocket-constructor":19,"buffer":2,"debug":23,"engine.io-parser":29,"parseqs":32,"yeast":68}],21:[function(require,module,exports){
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
     if (obj.hasOwnProperty(k)) {
@@ -6846,1399 +6914,6 @@ try {
 }
 
 },{}],32:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.IOBuffer = void 0;
-const text_1 = require("./text");
-const defaultByteLength = 1024 * 8;
-const hostBigEndian = (() => {
-    const array = new Uint8Array(4);
-    const view = new Uint32Array(array.buffer);
-    return !((view[0] = 1) & array[0]);
-})();
-const typedArrays = {
-    int8: globalThis.Int8Array,
-    uint8: globalThis.Uint8Array,
-    int16: globalThis.Int16Array,
-    uint16: globalThis.Uint16Array,
-    int32: globalThis.Int32Array,
-    uint32: globalThis.Uint32Array,
-    uint64: globalThis.BigUint64Array,
-    int64: globalThis.BigInt64Array,
-    float32: globalThis.Float32Array,
-    float64: globalThis.Float64Array,
-};
-class IOBuffer {
-    /**
-     * @param data - The data to construct the IOBuffer with.
-     * If data is a number, it will be the new buffer's length<br>
-     * If data is `undefined`, the buffer will be initialized with a default length of 8Kb<br>
-     * If data is an ArrayBuffer, SharedArrayBuffer, an ArrayBufferView (Typed Array), an IOBuffer instance,
-     * or a Node.js Buffer, a view will be created over the underlying ArrayBuffer.
-     * @param options
-     */
-    constructor(data = defaultByteLength, options = {}) {
-        let dataIsGiven = false;
-        if (typeof data === 'number') {
-            data = new ArrayBuffer(data);
-        }
-        else {
-            dataIsGiven = true;
-            this.lastWrittenByte = data.byteLength;
-        }
-        const offset = options.offset ? options.offset >>> 0 : 0;
-        const byteLength = data.byteLength - offset;
-        let dvOffset = offset;
-        if (ArrayBuffer.isView(data) || data instanceof IOBuffer) {
-            if (data.byteLength !== data.buffer.byteLength) {
-                dvOffset = data.byteOffset + offset;
-            }
-            data = data.buffer;
-        }
-        if (dataIsGiven) {
-            this.lastWrittenByte = byteLength;
-        }
-        else {
-            this.lastWrittenByte = 0;
-        }
-        this.buffer = data;
-        this.length = byteLength;
-        this.byteLength = byteLength;
-        this.byteOffset = dvOffset;
-        this.offset = 0;
-        this.littleEndian = true;
-        this._data = new DataView(this.buffer, dvOffset, byteLength);
-        this._mark = 0;
-        this._marks = [];
-    }
-    /**
-     * Checks if the memory allocated to the buffer is sufficient to store more
-     * bytes after the offset.
-     * @param byteLength - The needed memory in bytes.
-     * @returns `true` if there is sufficient space and `false` otherwise.
-     */
-    available(byteLength = 1) {
-        return this.offset + byteLength <= this.length;
-    }
-    /**
-     * Check if little-endian mode is used for reading and writing multi-byte
-     * values.
-     * @returns `true` if little-endian mode is used, `false` otherwise.
-     */
-    isLittleEndian() {
-        return this.littleEndian;
-    }
-    /**
-     * Set little-endian mode for reading and writing multi-byte values.
-     */
-    setLittleEndian() {
-        this.littleEndian = true;
-        return this;
-    }
-    /**
-     * Check if big-endian mode is used for reading and writing multi-byte values.
-     * @returns `true` if big-endian mode is used, `false` otherwise.
-     */
-    isBigEndian() {
-        return !this.littleEndian;
-    }
-    /**
-     * Switches to big-endian mode for reading and writing multi-byte values.
-     */
-    setBigEndian() {
-        this.littleEndian = false;
-        return this;
-    }
-    /**
-     * Move the pointer n bytes forward.
-     * @param n - Number of bytes to skip.
-     */
-    skip(n = 1) {
-        this.offset += n;
-        return this;
-    }
-    /**
-     * Move the pointer n bytes backward.
-     * @param n - Number of bytes to move back.
-     */
-    back(n = 1) {
-        this.offset -= n;
-        return this;
-    }
-    /**
-     * Move the pointer to the given offset.
-     * @param offset
-     */
-    seek(offset) {
-        this.offset = offset;
-        return this;
-    }
-    /**
-     * Store the current pointer offset.
-     * @see {@link IOBuffer#reset}
-     */
-    mark() {
-        this._mark = this.offset;
-        return this;
-    }
-    /**
-     * Move the pointer back to the last pointer offset set by mark.
-     * @see {@link IOBuffer#mark}
-     */
-    reset() {
-        this.offset = this._mark;
-        return this;
-    }
-    /**
-     * Push the current pointer offset to the mark stack.
-     * @see {@link IOBuffer#popMark}
-     */
-    pushMark() {
-        this._marks.push(this.offset);
-        return this;
-    }
-    /**
-     * Pop the last pointer offset from the mark stack, and set the current
-     * pointer offset to the popped value.
-     * @see {@link IOBuffer#pushMark}
-     */
-    popMark() {
-        const offset = this._marks.pop();
-        if (offset === undefined) {
-            throw new Error('Mark stack empty');
-        }
-        this.seek(offset);
-        return this;
-    }
-    /**
-     * Move the pointer offset back to 0.
-     */
-    rewind() {
-        this.offset = 0;
-        return this;
-    }
-    /**
-     * Make sure the buffer has sufficient memory to write a given byteLength at
-     * the current pointer offset.
-     * If the buffer's memory is insufficient, this method will create a new
-     * buffer (a copy) with a length that is twice (byteLength + current offset).
-     * @param byteLength
-     */
-    ensureAvailable(byteLength = 1) {
-        if (!this.available(byteLength)) {
-            const lengthNeeded = this.offset + byteLength;
-            const newLength = lengthNeeded * 2;
-            const newArray = new Uint8Array(newLength);
-            newArray.set(new Uint8Array(this.buffer));
-            this.buffer = newArray.buffer;
-            this.length = this.byteLength = newLength;
-            this._data = new DataView(this.buffer);
-        }
-        return this;
-    }
-    /**
-     * Read a byte and return false if the byte's value is 0, or true otherwise.
-     * Moves pointer forward by one byte.
-     */
-    readBoolean() {
-        return this.readUint8() !== 0;
-    }
-    /**
-     * Read a signed 8-bit integer and move pointer forward by 1 byte.
-     */
-    readInt8() {
-        return this._data.getInt8(this.offset++);
-    }
-    /**
-     * Read an unsigned 8-bit integer and move pointer forward by 1 byte.
-     */
-    readUint8() {
-        return this._data.getUint8(this.offset++);
-    }
-    /**
-     * Alias for {@link IOBuffer#readUint8}.
-     */
-    readByte() {
-        return this.readUint8();
-    }
-    /**
-     * Read `n` bytes and move pointer forward by `n` bytes.
-     */
-    readBytes(n = 1) {
-        return this.readArray(n, 'uint8');
-    }
-    /**
-     * Creates an array of corresponding to the type `type` and size `size`.
-     * For example type `uint8` will create a `Uint8Array`.
-     * @param size - size of the resulting array
-     * @param type - number type of elements to read
-     */
-    readArray(size, type) {
-        const bytes = typedArrays[type].BYTES_PER_ELEMENT * size;
-        const offset = this.byteOffset + this.offset;
-        const slice = this.buffer.slice(offset, offset + bytes);
-        if (this.littleEndian === hostBigEndian &&
-            type !== 'uint8' &&
-            type !== 'int8') {
-            const slice = new Uint8Array(this.buffer.slice(offset, offset + bytes));
-            slice.reverse();
-            const returnArray = new typedArrays[type](slice.buffer);
-            this.offset += bytes;
-            returnArray.reverse();
-            return returnArray;
-        }
-        const returnArray = new typedArrays[type](slice);
-        this.offset += bytes;
-        return returnArray;
-    }
-    /**
-     * Read a 16-bit signed integer and move pointer forward by 2 bytes.
-     */
-    readInt16() {
-        const value = this._data.getInt16(this.offset, this.littleEndian);
-        this.offset += 2;
-        return value;
-    }
-    /**
-     * Read a 16-bit unsigned integer and move pointer forward by 2 bytes.
-     */
-    readUint16() {
-        const value = this._data.getUint16(this.offset, this.littleEndian);
-        this.offset += 2;
-        return value;
-    }
-    /**
-     * Read a 32-bit signed integer and move pointer forward by 4 bytes.
-     */
-    readInt32() {
-        const value = this._data.getInt32(this.offset, this.littleEndian);
-        this.offset += 4;
-        return value;
-    }
-    /**
-     * Read a 32-bit unsigned integer and move pointer forward by 4 bytes.
-     */
-    readUint32() {
-        const value = this._data.getUint32(this.offset, this.littleEndian);
-        this.offset += 4;
-        return value;
-    }
-    /**
-     * Read a 32-bit floating number and move pointer forward by 4 bytes.
-     */
-    readFloat32() {
-        const value = this._data.getFloat32(this.offset, this.littleEndian);
-        this.offset += 4;
-        return value;
-    }
-    /**
-     * Read a 64-bit floating number and move pointer forward by 8 bytes.
-     */
-    readFloat64() {
-        const value = this._data.getFloat64(this.offset, this.littleEndian);
-        this.offset += 8;
-        return value;
-    }
-    /**
-     * Read a 64-bit signed integer number and move pointer forward by 8 bytes.
-     */
-    readBigInt64() {
-        const value = this._data.getBigInt64(this.offset, this.littleEndian);
-        this.offset += 8;
-        return value;
-    }
-    /**
-     * Read a 64-bit unsigned integer number and move pointer forward by 8 bytes.
-     */
-    readBigUint64() {
-        const value = this._data.getBigUint64(this.offset, this.littleEndian);
-        this.offset += 8;
-        return value;
-    }
-    /**
-     * Read a 1-byte ASCII character and move pointer forward by 1 byte.
-     */
-    readChar() {
-        return String.fromCharCode(this.readInt8());
-    }
-    /**
-     * Read `n` 1-byte ASCII characters and move pointer forward by `n` bytes.
-     */
-    readChars(n = 1) {
-        let result = '';
-        for (let i = 0; i < n; i++) {
-            result += this.readChar();
-        }
-        return result;
-    }
-    /**
-     * Read the next `n` bytes, return a UTF-8 decoded string and move pointer
-     * forward by `n` bytes.
-     */
-    readUtf8(n = 1) {
-        return (0, text_1.decode)(this.readBytes(n));
-    }
-    /**
-     * Read the next `n` bytes, return a string decoded with `encoding` and move pointer
-     * forward by `n` bytes.
-     * If no encoding is passed, the function is equivalent to @see {@link IOBuffer#readUtf8}
-     */
-    decodeText(n = 1, encoding = 'utf-8') {
-        return (0, text_1.decode)(this.readBytes(n), encoding);
-    }
-    /**
-     * Write 0xff if the passed value is truthy, 0x00 otherwise and move pointer
-     * forward by 1 byte.
-     */
-    writeBoolean(value) {
-        this.writeUint8(value ? 0xff : 0x00);
-        return this;
-    }
-    /**
-     * Write `value` as an 8-bit signed integer and move pointer forward by 1 byte.
-     */
-    writeInt8(value) {
-        this.ensureAvailable(1);
-        this._data.setInt8(this.offset++, value);
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as an 8-bit unsigned integer and move pointer forward by 1
-     * byte.
-     */
-    writeUint8(value) {
-        this.ensureAvailable(1);
-        this._data.setUint8(this.offset++, value);
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * An alias for {@link IOBuffer#writeUint8}.
-     */
-    writeByte(value) {
-        return this.writeUint8(value);
-    }
-    /**
-     * Write all elements of `bytes` as uint8 values and move pointer forward by
-     * `bytes.length` bytes.
-     */
-    writeBytes(bytes) {
-        this.ensureAvailable(bytes.length);
-        for (let i = 0; i < bytes.length; i++) {
-            this._data.setUint8(this.offset++, bytes[i]);
-        }
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 16-bit signed integer and move pointer forward by 2
-     * bytes.
-     */
-    writeInt16(value) {
-        this.ensureAvailable(2);
-        this._data.setInt16(this.offset, value, this.littleEndian);
-        this.offset += 2;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 16-bit unsigned integer and move pointer forward by 2
-     * bytes.
-     */
-    writeUint16(value) {
-        this.ensureAvailable(2);
-        this._data.setUint16(this.offset, value, this.littleEndian);
-        this.offset += 2;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 32-bit signed integer and move pointer forward by 4
-     * bytes.
-     */
-    writeInt32(value) {
-        this.ensureAvailable(4);
-        this._data.setInt32(this.offset, value, this.littleEndian);
-        this.offset += 4;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 32-bit unsigned integer and move pointer forward by 4
-     * bytes.
-     */
-    writeUint32(value) {
-        this.ensureAvailable(4);
-        this._data.setUint32(this.offset, value, this.littleEndian);
-        this.offset += 4;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 32-bit floating number and move pointer forward by 4
-     * bytes.
-     */
-    writeFloat32(value) {
-        this.ensureAvailable(4);
-        this._data.setFloat32(this.offset, value, this.littleEndian);
-        this.offset += 4;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 64-bit floating number and move pointer forward by 8
-     * bytes.
-     */
-    writeFloat64(value) {
-        this.ensureAvailable(8);
-        this._data.setFloat64(this.offset, value, this.littleEndian);
-        this.offset += 8;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 64-bit signed bigint and move pointer forward by 8
-     * bytes.
-     */
-    writeBigInt64(value) {
-        this.ensureAvailable(8);
-        this._data.setBigInt64(this.offset, value, this.littleEndian);
-        this.offset += 8;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write `value` as a 64-bit unsigned bigint and move pointer forward by 8
-     * bytes.
-     */
-    writeBigUint64(value) {
-        this.ensureAvailable(8);
-        this._data.setBigUint64(this.offset, value, this.littleEndian);
-        this.offset += 8;
-        this._updateLastWrittenByte();
-        return this;
-    }
-    /**
-     * Write the charCode of `str`'s first character as an 8-bit unsigned integer
-     * and move pointer forward by 1 byte.
-     */
-    writeChar(str) {
-        return this.writeUint8(str.charCodeAt(0));
-    }
-    /**
-     * Write the charCodes of all `str`'s characters as 8-bit unsigned integers
-     * and move pointer forward by `str.length` bytes.
-     */
-    writeChars(str) {
-        for (let i = 0; i < str.length; i++) {
-            this.writeUint8(str.charCodeAt(i));
-        }
-        return this;
-    }
-    /**
-     * UTF-8 encode and write `str` to the current pointer offset and move pointer
-     * forward according to the encoded length.
-     */
-    writeUtf8(str) {
-        return this.writeBytes((0, text_1.encode)(str));
-    }
-    /**
-     * Export a Uint8Array view of the internal buffer.
-     * The view starts at the byte offset and its length
-     * is calculated to stop at the last written byte or the original length.
-     */
-    toArray() {
-        return new Uint8Array(this.buffer, this.byteOffset, this.lastWrittenByte);
-    }
-    /**
-     * Update the last written byte offset
-     * @private
-     */
-    _updateLastWrittenByte() {
-        if (this.offset > this.lastWrittenByte) {
-            this.lastWrittenByte = this.offset;
-        }
-    }
-}
-exports.IOBuffer = IOBuffer;
-
-},{"./text":34}],33:[function(require,module,exports){
-"use strict";
-/*
- * Copyright 2017 Sam Thorogood. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-(function (scope) {
-    'use strict';
-    // fail early
-    if (scope['TextEncoder'] && scope['TextDecoder']) {
-        return false;
-    }
-    /**
-     * @constructor
-     * @param {string=} utfLabel
-     */
-    function FastTextEncoder(utfLabel = 'utf-8') {
-        if (utfLabel !== 'utf-8') {
-            throw new RangeError(`Failed to construct 'TextEncoder': The encoding label provided ('${utfLabel}') is invalid.`);
-        }
-    }
-    Object.defineProperty(FastTextEncoder.prototype, 'encoding', {
-        value: 'utf-8',
-    });
-    /**
-     * @param {string} string
-     * @param {{stream: boolean}=} options
-     * @return {!Uint8Array}
-     */
-    FastTextEncoder.prototype.encode = function (string, options = { stream: false }) {
-        if (options.stream) {
-            throw new Error(`Failed to encode: the 'stream' option is unsupported.`);
-        }
-        let pos = 0;
-        const len = string.length;
-        const out = [];
-        let at = 0; // output position
-        let tlen = Math.max(32, len + (len >> 1) + 7); // 1.5x size
-        let target = new Uint8Array((tlen >> 3) << 3); // ... but at 8 byte offset
-        while (pos < len) {
-            let value = string.charCodeAt(pos++);
-            if (value >= 0xd800 && value <= 0xdbff) {
-                // high surrogate
-                if (pos < len) {
-                    const extra = string.charCodeAt(pos);
-                    if ((extra & 0xfc00) === 0xdc00) {
-                        ++pos;
-                        value = ((value & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000;
-                    }
-                }
-                if (value >= 0xd800 && value <= 0xdbff) {
-                    continue; // drop lone surrogate
-                }
-            }
-            // expand the buffer if we couldn't write 4 bytes
-            if (at + 4 > target.length) {
-                tlen += 8; // minimum extra
-                tlen *= 1.0 + (pos / string.length) * 2; // take 2x the remaining
-                tlen = (tlen >> 3) << 3; // 8 byte offset
-                const update = new Uint8Array(tlen);
-                update.set(target);
-                target = update;
-            }
-            if ((value & 0xffffff80) === 0) {
-                // 1-byte
-                target[at++] = value; // ASCII
-                continue;
-            }
-            else if ((value & 0xfffff800) === 0) {
-                // 2-byte
-                target[at++] = ((value >> 6) & 0x1f) | 0xc0;
-            }
-            else if ((value & 0xffff0000) === 0) {
-                // 3-byte
-                target[at++] = ((value >> 12) & 0x0f) | 0xe0;
-                target[at++] = ((value >> 6) & 0x3f) | 0x80;
-            }
-            else if ((value & 0xffe00000) === 0) {
-                // 4-byte
-                target[at++] = ((value >> 18) & 0x07) | 0xf0;
-                target[at++] = ((value >> 12) & 0x3f) | 0x80;
-                target[at++] = ((value >> 6) & 0x3f) | 0x80;
-            }
-            else {
-                // FIXME: do we care
-                continue;
-            }
-            target[at++] = (value & 0x3f) | 0x80;
-        }
-        return target.slice(0, at);
-    };
-    /**
-     * @constructor
-     * @param {string=} utfLabel
-     * @param {{fatal: boolean}=} options
-     */
-    function FastTextDecoder(utfLabel = 'utf-8', options = { fatal: false }) {
-        if (utfLabel !== 'utf-8') {
-            throw new RangeError(`Failed to construct 'TextDecoder': The encoding label provided ('${utfLabel}') is invalid.`);
-        }
-        if (options.fatal) {
-            throw new Error(`Failed to construct 'TextDecoder': the 'fatal' option is unsupported.`);
-        }
-    }
-    Object.defineProperty(FastTextDecoder.prototype, 'encoding', {
-        value: 'utf-8',
-    });
-    Object.defineProperty(FastTextDecoder.prototype, 'fatal', { value: false });
-    Object.defineProperty(FastTextDecoder.prototype, 'ignoreBOM', {
-        value: false,
-    });
-    /**
-     * @param {(!ArrayBuffer|!ArrayBufferView)} buffer
-     * @param {{stream: boolean}=} options
-     */
-    FastTextDecoder.prototype.decode = function (buffer, options = { stream: false }) {
-        if (options['stream']) {
-            throw new Error(`Failed to decode: the 'stream' option is unsupported.`);
-        }
-        const bytes = new Uint8Array(buffer);
-        let pos = 0;
-        const len = bytes.length;
-        const out = [];
-        while (pos < len) {
-            const byte1 = bytes[pos++];
-            if (byte1 === 0) {
-                break; // NULL
-            }
-            if ((byte1 & 0x80) === 0) {
-                // 1-byte
-                out.push(byte1);
-            }
-            else if ((byte1 & 0xe0) === 0xc0) {
-                // 2-byte
-                const byte2 = bytes[pos++] & 0x3f;
-                out.push(((byte1 & 0x1f) << 6) | byte2);
-            }
-            else if ((byte1 & 0xf0) === 0xe0) {
-                const byte2 = bytes[pos++] & 0x3f;
-                const byte3 = bytes[pos++] & 0x3f;
-                out.push(((byte1 & 0x1f) << 12) | (byte2 << 6) | byte3);
-            }
-            else if ((byte1 & 0xf8) === 0xf0) {
-                const byte2 = bytes[pos++] & 0x3f;
-                const byte3 = bytes[pos++] & 0x3f;
-                const byte4 = bytes[pos++] & 0x3f;
-                // this can be > 0xffff, so possibly generate surrogates
-                let codepoint = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0c) | (byte3 << 0x06) | byte4;
-                if (codepoint > 0xffff) {
-                    // codepoint &= ~0x10000;
-                    codepoint -= 0x10000;
-                    out.push(((codepoint >>> 10) & 0x3ff) | 0xd800);
-                    codepoint = 0xdc00 | (codepoint & 0x3ff);
-                }
-                out.push(codepoint);
-            }
-            else {
-                // FIXME: we're ignoring this
-            }
-        }
-        return String.fromCharCode.apply(null, out);
-    };
-    scope['TextEncoder'] = FastTextEncoder;
-    scope['TextDecoder'] = FastTextDecoder;
-})(typeof window !== 'undefined'
-    ? window
-    : typeof self !== 'undefined'
-        ? self
-        : this);
-
-},{}],34:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.encode = exports.decode = void 0;
-// eslint-disable-next-line import/no-unassigned-import
-require("./text-encoding-polyfill");
-function decode(bytes, encoding = 'utf8') {
-    const decoder = new TextDecoder(encoding);
-    return decoder.decode(bytes);
-}
-exports.decode = decode;
-const encoder = new TextEncoder();
-function encode(str) {
-    return encoder.encode(str);
-}
-exports.encode = encode;
-
-},{"./text-encoding-polyfill":33}],35:[function(require,module,exports){
-'use strict';
-
-var iobuffer = require('iobuffer');
-
-/**
- * Throws a non-valid NetCDF exception if the statement it's true
- * @ignore
- * @param {boolean} statement - Throws if true
- * @param {string} reason - Reason to throw
- */
-function notNetcdf(statement, reason) {
-  if (statement) {
-    throw new TypeError(`Not a valid NetCDF v3.x file: ${reason}`);
-  }
-}
-
-/**
- * Moves 1, 2, or 3 bytes to next 4-byte boundary
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- */
-function padding(buffer) {
-  if (buffer.offset % 4 !== 0) {
-    buffer.skip(4 - (buffer.offset % 4));
-  }
-}
-
-/**
- * Reads the name
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @return {string} - Name
- */
-function readName(buffer) {
-  // Read name
-  let nameLength = buffer.readUint32();
-  let name = buffer.readChars(nameLength);
-
-  // validate name
-  // TODO
-
-  // Apply padding
-  padding(buffer);
-  return name;
-}
-
-const types = {
-  BYTE: 1,
-  CHAR: 2,
-  SHORT: 3,
-  INT: 4,
-  FLOAT: 5,
-  DOUBLE: 6,
-};
-
-/**
- * Parse a number into their respective type
- * @ignore
- * @param {number} type - integer that represents the type
- * @return {string} - parsed value of the type
- */
-function num2str(type) {
-  switch (Number(type)) {
-    case types.BYTE:
-      return "byte";
-    case types.CHAR:
-      return "char";
-    case types.SHORT:
-      return "short";
-    case types.INT:
-      return "int";
-    case types.FLOAT:
-      return "float";
-    case types.DOUBLE:
-      return "double";
-    /* istanbul ignore next */
-    default:
-      return "undefined";
-  }
-}
-
-/**
- * Parse a number type identifier to his size in bytes
- * @ignore
- * @param {number} type - integer that represents the type
- * @return {number} -size of the type
- */
-function num2bytes(type) {
-  switch (Number(type)) {
-    case types.BYTE:
-      return 1;
-    case types.CHAR:
-      return 1;
-    case types.SHORT:
-      return 2;
-    case types.INT:
-      return 4;
-    case types.FLOAT:
-      return 4;
-    case types.DOUBLE:
-      return 8;
-    /* istanbul ignore next */
-    default:
-      return -1;
-  }
-}
-
-/**
- * Reverse search of num2str
- * @ignore
- * @param {string} type - string that represents the type
- * @return {number} - parsed value of the type
- */
-function str2num(type) {
-  switch (String(type)) {
-    case "byte":
-      return types.BYTE;
-    case "char":
-      return types.CHAR;
-    case "short":
-      return types.SHORT;
-    case "int":
-      return types.INT;
-    case "float":
-      return types.FLOAT;
-    case "double":
-      return types.DOUBLE;
-    /* istanbul ignore next */
-    default:
-      return -1;
-  }
-}
-
-/**
- * Auxiliary function to read numeric data
- * @ignore
- * @param {number} size - Size of the element to read
- * @param {function} bufferReader - Function to read next value
- * @return {Array<number>|number}
- */
-function readNumber(size, bufferReader) {
-  if (size !== 1) {
-    let numbers = new Array(size);
-    for (let i = 0; i < size; i++) {
-      numbers[i] = bufferReader();
-    }
-    return numbers;
-  } else {
-    return bufferReader();
-  }
-}
-
-/**
- * Given a type and a size reads the next element
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @param {number} type - Type of the data to read
- * @param {number} size - Size of the element to read
- * @return {string|Array<number>|number}
- */
-function readType(buffer, type, size) {
-  switch (type) {
-    case types.BYTE:
-      return buffer.readBytes(size);
-    case types.CHAR:
-      return trimNull(buffer.readChars(size));
-    case types.SHORT:
-      return readNumber(size, buffer.readInt16.bind(buffer));
-    case types.INT:
-      return readNumber(size, buffer.readInt32.bind(buffer));
-    case types.FLOAT:
-      return readNumber(size, buffer.readFloat32.bind(buffer));
-    case types.DOUBLE:
-      return readNumber(size, buffer.readFloat64.bind(buffer));
-    /* istanbul ignore next */
-    default:
-      notNetcdf(true, `non valid type ${type}`);
-      return undefined;
-  }
-}
-
-/**
- * Removes null terminate value
- * @ignore
- * @param {string} value - String to trim
- * @return {string} - Trimmed string
- */
-function trimNull(value) {
-  if (value.charCodeAt(value.length - 1) === 0) {
-    return value.substring(0, value.length - 1);
-  }
-  return value;
-}
-
-// const STREAMING = 4294967295;
-
-/**
- * Read data for the given non-record variable
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @param {object} variable - Variable metadata
- * @return {Array} - Data of the element
- */
-function nonRecord(buffer, variable) {
-  // variable type
-  const type = str2num(variable.type);
-
-  // size of the data
-  let size = variable.size / num2bytes(type);
-
-  // iterates over the data
-  let data = new Array(size);
-  for (let i = 0; i < size; i++) {
-    data[i] = readType(buffer, type, 1);
-  }
-
-  return data;
-}
-
-/**
- * Read data for the given record variable
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @param {object} variable - Variable metadata
- * @param {object} recordDimension - Record dimension metadata
- * @return {Array} - Data of the element
- */
-function record(buffer, variable, recordDimension) {
-  // variable type
-  const type = str2num(variable.type);
-  const width = variable.size ? variable.size / num2bytes(type) : 1;
-
-  // size of the data
-  // TODO streaming data
-  let size = recordDimension.length;
-
-  // iterates over the data
-  let data = new Array(size);
-  const step = recordDimension.recordStep;
-
-  for (let i = 0; i < size; i++) {
-    let currentOffset = buffer.offset;
-    data[i] = readType(buffer, type, width);
-    buffer.seek(currentOffset + step);
-  }
-
-  return data;
-}
-
-// Grammar constants
-const ZERO = 0;
-const NC_DIMENSION = 10;
-const NC_VARIABLE = 11;
-const NC_ATTRIBUTE = 12;
-
-/**
- * Read the header of the file
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @param {number} version - Version of the file
- * @return {object} - Object with the fields:
- *  * `recordDimension`: Number with the length of record dimension
- *  * `dimensions`: List of dimensions
- *  * `globalAttributes`: List of global attributes
- *  * `variables`: List of variables
- */
-function header(buffer, version) {
-  // Length of record dimension
-  // sum of the varSize's of all the record variables.
-  let header = { recordDimension: { length: buffer.readUint32() } };
-
-  // Version
-  header.version = version;
-
-  // List of dimensions
-  let dimList = dimensionsList(buffer);
-  header.recordDimension.id = dimList.recordId; // id of the unlimited dimension
-  header.recordDimension.name = dimList.recordName; // name of the unlimited dimension
-  header.dimensions = dimList.dimensions;
-
-  // List of global attributes
-  header.globalAttributes = attributesList(buffer);
-
-  // List of variables
-  let variables = variablesList(buffer, dimList.recordId, version);
-  header.variables = variables.variables;
-  header.recordDimension.recordStep = variables.recordStep;
-
-  return header;
-}
-
-const NC_UNLIMITED = 0;
-
-/**
- * List of dimensions
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @return {object} - Ojbect containing the following properties:
- *  * `dimensions` that is an array of dimension object:
- *  * `name`: String with the name of the dimension
- *  * `size`: Number with the size of the dimension dimensions: dimensions
- *  * `recordId`: the id of the dimension that has unlimited size or undefined,
- *  * `recordName`: name of the dimension that has unlimited size
- */
-function dimensionsList(buffer) {
-  let recordId, recordName;
-  const dimList = buffer.readUint32();
-  let dimensions;
-  if (dimList === ZERO) {
-    notNetcdf(
-      buffer.readUint32() !== ZERO,
-      "wrong empty tag for list of dimensions"
-    );
-    return [];
-  } else {
-    notNetcdf(dimList !== NC_DIMENSION, "wrong tag for list of dimensions");
-
-    // Length of dimensions
-    const dimensionSize = buffer.readUint32();
-    dimensions = new Array(dimensionSize);
-    for (let dim = 0; dim < dimensionSize; dim++) {
-      // Read name
-      let name = readName(buffer);
-
-      // Read dimension size
-      const size = buffer.readUint32();
-      if (size === NC_UNLIMITED) {
-        // in netcdf 3 one field can be of size unlimmited
-        recordId = dim;
-        recordName = name;
-      }
-
-      dimensions[dim] = {
-        name,
-        size,
-      };
-    }
-  }
-  return {
-    dimensions,
-    recordId,
-    recordName,
-  };
-}
-
-/**
- * List of attributes
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @return {Array<object>} - List of attributes with:
- *  * `name`: String with the name of the attribute
- *  * `type`: String with the type of the attribute
- *  * `value`: A number or string with the value of the attribute
- */
-function attributesList(buffer) {
-  const gAttList = buffer.readUint32();
-  let attributes;
-  if (gAttList === ZERO) {
-    notNetcdf(
-      buffer.readUint32() !== ZERO,
-      "wrong empty tag for list of attributes"
-    );
-    return [];
-  } else {
-    notNetcdf(gAttList !== NC_ATTRIBUTE, "wrong tag for list of attributes");
-
-    // Length of attributes
-    const attributeSize = buffer.readUint32();
-    attributes = new Array(attributeSize);
-    for (let gAtt = 0; gAtt < attributeSize; gAtt++) {
-      // Read name
-      let name = readName(buffer);
-
-      // Read type
-      let type = buffer.readUint32();
-      notNetcdf(type < 1 || type > 6, `non valid type ${type}`);
-
-      // Read attribute
-      let size = buffer.readUint32();
-      let value = readType(buffer, type, size);
-
-      // Apply padding
-      padding(buffer);
-
-      attributes[gAtt] = {
-        name,
-        type: num2str(type),
-        value,
-      };
-    }
-  }
-  return attributes;
-}
-
-/**
- * List of variables
- * @ignore
- * @param {IOBuffer} buffer - Buffer for the file data
- * @param {number} recordId - Id of the unlimited dimension (also called record dimension)
- *                            This value may be undefined if there is no unlimited dimension
- * @param {number} version - Version of the file
- * @return {object} - Number of recordStep and list of variables with:
- *  * `name`: String with the name of the variable
- *  * `dimensions`: Array with the dimension IDs of the variable
- *  * `attributes`: Array with the attributes of the variable
- *  * `type`: String with the type of the variable
- *  * `size`: Number with the size of the variable
- *  * `offset`: Number with the offset where of the variable begins
- *  * `record`: True if is a record variable, false otherwise (unlimited size)
- */
-
-function variablesList(buffer, recordId, version) {
-  const varList = buffer.readUint32();
-  let recordStep = 0;
-  let variables;
-  if (varList === ZERO) {
-    notNetcdf(
-      buffer.readUint32() !== ZERO,
-      "wrong empty tag for list of variables"
-    );
-    return [];
-  } else {
-    notNetcdf(varList !== NC_VARIABLE, "wrong tag for list of variables");
-
-    // Length of variables
-    const variableSize = buffer.readUint32();
-    variables = new Array(variableSize);
-    for (let v = 0; v < variableSize; v++) {
-      // Read name
-      let name = readName(buffer);
-
-      // Read dimensionality of the variable
-      const dimensionality = buffer.readUint32();
-
-      // Index into the list of dimensions
-      let dimensionsIds = new Array(dimensionality);
-      for (let dim = 0; dim < dimensionality; dim++) {
-        dimensionsIds[dim] = buffer.readUint32();
-      }
-
-      // Read variables size
-      let attributes = attributesList(buffer);
-
-      // Read type
-      let type = buffer.readUint32();
-      notNetcdf(type < 1 && type > 6, `non valid type ${type}`);
-
-      // Read variable size
-      // The 32-bit varSize field is not large enough to contain the size of variables that require
-      // more than 2^32 - 4 bytes, so 2^32 - 1 is used in the varSize field for such variables.
-      const varSize = buffer.readUint32();
-
-      // Read offset
-      let offset = buffer.readUint32();
-      if (version === 2) {
-        notNetcdf(offset > 0, "offsets larger than 4GB not supported");
-        offset = buffer.readUint32();
-      }
-
-      let record = false;
-      // Count amount of record variables
-      if (typeof recordId !== "undefined" && dimensionsIds[0] === recordId) {
-        recordStep += varSize;
-        record = true;
-      }
-      variables[v] = {
-        name,
-        dimensions: dimensionsIds,
-        attributes,
-        type: num2str(type),
-        size: varSize,
-        offset,
-        record,
-      };
-    }
-  }
-
-  return {
-    variables,
-    recordStep,
-  };
-}
-
-function toString() {
-  let result = [];
-
-  result.push("DIMENSIONS");
-  for (let dimension of this.dimensions) {
-    result.push(`  ${dimension.name.padEnd(30)} = size: ${dimension.size}`);
-  }
-
-  result.push("");
-  result.push("GLOBAL ATTRIBUTES");
-  for (let attribute of this.globalAttributes) {
-    result.push(`  ${attribute.name.padEnd(30)} = ${attribute.value}`);
-  }
-
-  let variables = JSON.parse(JSON.stringify(this.variables));
-  result.push("");
-  result.push("VARIABLES:");
-  for (let variable of variables) {
-    variable.value = this.getDataVariable(variable);
-    let stringify = JSON.stringify(variable.value);
-    if (stringify.length > 50) stringify = stringify.substring(0, 50);
-    if (!isNaN(variable.value.length)) {
-      stringify += ` (length: ${variable.value.length})`;
-    }
-    result.push(`  ${variable.name.padEnd(30)} = ${stringify}`);
-  }
-  return result.join("\n");
-}
-
-/**
- * Reads a NetCDF v3.x file
- * https://www.unidata.ucar.edu/software/netcdf/docs/file_format_specifications.html
- * @param {ArrayBuffer} data - ArrayBuffer or any Typed Array (including Node.js' Buffer from v4) with the data
- * @constructor
- */
-class NetCDFReader {
-  constructor(data) {
-    const buffer = new iobuffer.IOBuffer(data);
-    buffer.setBigEndian();
-
-    // Validate that it's a NetCDF file
-    notNetcdf(buffer.readChars(3) !== "CDF", "should start with CDF");
-
-    // Check the NetCDF format
-    const version = buffer.readByte();
-    notNetcdf(version > 2, "unknown version");
-
-    // Read the header
-    this.header = header(buffer, version);
-    this.buffer = buffer;
-  }
-
-  /**
-   * @return {string} - Version for the NetCDF format
-   */
-  get version() {
-    if (this.header.version === 1) {
-      return "classic format";
-    } else {
-      return "64-bit offset format";
-    }
-  }
-
-  /**
-   * @return {object} - Metadata for the record dimension
-   *  * `length`: Number of elements in the record dimension
-   *  * `id`: Id number in the list of dimensions for the record dimension
-   *  * `name`: String with the name of the record dimension
-   *  * `recordStep`: Number with the record variables step size
-   */
-  get recordDimension() {
-    return this.header.recordDimension;
-  }
-
-  /**
-   * @return {Array<object>} - List of dimensions with:
-   *  * `name`: String with the name of the dimension
-   *  * `size`: Number with the size of the dimension
-   */
-  get dimensions() {
-    return this.header.dimensions;
-  }
-
-  /**
-   * @return {Array<object>} - List of global attributes with:
-   *  * `name`: String with the name of the attribute
-   *  * `type`: String with the type of the attribute
-   *  * `value`: A number or string with the value of the attribute
-   */
-  get globalAttributes() {
-    return this.header.globalAttributes;
-  }
-
-  /**
-   * Returns the value of an attribute
-   * @param {string} attributeName
-   * @return {string} Value of the attributeName or null
-   */
-  getAttribute(attributeName) {
-    const attribute = this.globalAttributes.find(
-      (val) => val.name === attributeName
-    );
-    if (attribute) return attribute.value;
-    return null;
-  }
-
-  /**
-   * Returns the value of a variable as a string
-   * @param {string} variableName
-   * @return {string} Value of the variable as a string or null
-   */
-  getDataVariableAsString(variableName) {
-    const variable = this.getDataVariable(variableName);
-    if (variable) return variable.join("");
-    return null;
-  }
-
-  /**
-   * @return {Array<object>} - List of variables with:
-   *  * `name`: String with the name of the variable
-   *  * `dimensions`: Array with the dimension IDs of the variable
-   *  * `attributes`: Array with the attributes of the variable
-   *  * `type`: String with the type of the variable
-   *  * `size`: Number with the size of the variable
-   *  * `offset`: Number with the offset where of the variable begins
-   *  * `record`: True if is a record variable, false otherwise
-   */
-  get variables() {
-    return this.header.variables;
-  }
-
-  toString() {
-    return toString.call(this);
-  }
-
-  /**
-   * Retrieves the data for a given variable
-   * @param {string|object} variableName - Name of the variable to search or variable object
-   * @return {Array} - List with the variable values
-   */
-  getDataVariable(variableName) {
-    let variable;
-    if (typeof variableName === "string") {
-      // search the variable
-      variable = this.header.variables.find((val) => {
-        return val.name === variableName;
-      });
-    } else {
-      variable = variableName;
-    }
-
-    // throws if variable not found
-    notNetcdf(variable === undefined, `variable not found: ${variableName}`);
-
-    // go to the offset position
-    this.buffer.seek(variable.offset);
-
-    if (variable.record) {
-      // record variable case
-      return record(this.buffer, variable, this.header.recordDimension);
-    } else {
-      // non-record variable case
-      return nonRecord(this.buffer, variable);
-    }
-  }
-
-  /**
-   * Check if a dataVariable exists
-   * @param {string} variableName - Name of the variable to find
-   * @return {boolean}
-   */
-  dataVariableExists(variableName) {
-    const variable = this.header.variables.find((val) => {
-      return val.name === variableName;
-    });
-    return variable !== undefined;
-  }
-
-  /**
-   * Check if an attribute exists
-   * @param {string} attributeName - Name of the attribute to find
-   * @return {boolean}
-   */
-  attributeExists(attributeName) {
-    const attribute = this.globalAttributes.find(
-      (val) => val.name === attributeName
-    );
-    return attribute !== undefined;
-  }
-}
-
-exports.NetCDFReader = NetCDFReader;
-
-},{"iobuffer":32}],36:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -8277,7 +6952,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -8347,7 +7022,7 @@ function queryKey(uri, query) {
     return data;
 }
 
-},{}],38:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var BufferBuilder = require('./bufferbuilder').BufferBuilder;
 var binaryFeatures = require('./bufferbuilder').binaryFeatures;
 
@@ -8871,7 +7546,7 @@ function utf8Length (str) {
   }
 }
 
-},{"./bufferbuilder":39}],39:[function(require,module,exports){
+},{"./bufferbuilder":35}],35:[function(require,module,exports){
 var binaryFeatures = {};
 binaryFeatures.useBlobBuilder = (function () {
   try {
@@ -8937,7 +7612,7 @@ BufferBuilder.prototype.getBuffer = function () {
 
 module.exports.BufferBuilder = BufferBuilder;
 
-},{}],40:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var $TdzfH$peerjsjsbinarypack = require("peerjs-js-binarypack");
 var $TdzfH$webrtcadapter = require("webrtc-adapter");
 var $TdzfH$eventemitter3 = require("eventemitter3");
@@ -11395,7 +10070,7 @@ var $f1d1a6b5c376b066$export$2e2bcd8739ae039 = $976f9b679211b81e$exports.Peer;
 
 
 
-},{"eventemitter3":30,"peerjs-js-binarypack":38,"webrtc-adapter":57}],41:[function(require,module,exports){
+},{"eventemitter3":30,"peerjs-js-binarypack":34,"webrtc-adapter":53}],37:[function(require,module,exports){
 /*
  *  Copyright (c) 2017 The WebRTC project authors. All Rights Reserved.
  *
@@ -13254,7 +11929,7 @@ module.exports = function(window, edgeVersion) {
   return RTCPeerConnection;
 };
 
-},{"sdp":42}],42:[function(require,module,exports){
+},{"sdp":38}],38:[function(require,module,exports){
 /* eslint-env node */
 'use strict';
 
@@ -14081,7 +12756,7 @@ if (typeof module === 'object') {
   module.exports = SDPUtils;
 }
 
-},{}],43:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = exports.io = exports.Manager = exports.protocol = void 0;
@@ -14153,7 +12828,7 @@ exports.connect = lookup;
 var manager_2 = require("./manager");
 Object.defineProperty(exports, "Manager", { enumerable: true, get: function () { return manager_2.Manager; } });
 
-},{"./manager":44,"./socket":46,"./url":47,"debug":48,"socket.io-parser":52}],44:[function(require,module,exports){
+},{"./manager":40,"./socket":42,"./url":43,"debug":44,"socket.io-parser":48}],40:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Manager = void 0;
@@ -14524,7 +13199,7 @@ class Manager extends Emitter {
 }
 exports.Manager = Manager;
 
-},{"./on":45,"./socket":46,"backo2":8,"component-emitter":10,"debug":48,"engine.io-client":12,"socket.io-parser":52}],45:[function(require,module,exports){
+},{"./on":41,"./socket":42,"backo2":8,"component-emitter":10,"debug":44,"engine.io-client":12,"socket.io-parser":48}],41:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.on = void 0;
@@ -14536,7 +13211,7 @@ function on(obj, ev, fn) {
 }
 exports.on = on;
 
-},{}],46:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Socket = void 0;
@@ -14999,7 +13674,7 @@ class Socket extends Emitter {
 }
 exports.Socket = Socket;
 
-},{"./on":45,"component-emitter":10,"debug":48,"socket.io-parser":52}],47:[function(require,module,exports){
+},{"./on":41,"component-emitter":10,"debug":44,"socket.io-parser":48}],43:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.url = void 0;
@@ -15067,13 +13742,13 @@ function url(uri, path = "", loc) {
 }
 exports.url = url;
 
-},{"debug":48,"parseuri":37}],48:[function(require,module,exports){
+},{"debug":44,"parseuri":33}],44:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"./common":49,"_process":5,"dup":23}],49:[function(require,module,exports){
+},{"./common":45,"_process":5,"dup":23}],45:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24,"ms":50}],50:[function(require,module,exports){
+},{"dup":24,"ms":46}],46:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],51:[function(require,module,exports){
+},{"dup":25}],47:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reconstructPacket = exports.deconstructPacket = void 0;
@@ -15163,7 +13838,7 @@ function _reconstructPacket(data, buffers) {
     return data;
 }
 
-},{"./is-binary":53}],52:[function(require,module,exports){
+},{"./is-binary":49}],48:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
@@ -15448,7 +14123,7 @@ class BinaryReconstructor {
     }
 }
 
-},{"./binary":51,"./is-binary":53,"component-emitter":10,"debug":54}],53:[function(require,module,exports){
+},{"./binary":47,"./is-binary":49,"component-emitter":10,"debug":50}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.hasBinary = exports.isBinary = void 0;
@@ -15505,13 +14180,13 @@ function hasBinary(obj, toJSON) {
 }
 exports.hasBinary = hasBinary;
 
-},{}],54:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"./common":55,"_process":5,"dup":23}],55:[function(require,module,exports){
+},{"./common":51,"_process":5,"dup":23}],51:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24,"ms":56}],56:[function(require,module,exports){
+},{"dup":24,"ms":52}],52:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],57:[function(require,module,exports){
+},{"dup":25}],53:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -15532,7 +14207,7 @@ var _adapter_factory = require('./adapter_factory.js');
 var adapter = (0, _adapter_factory.adapterFactory)({ window: typeof window === 'undefined' ? undefined : window });
 exports.default = adapter;
 
-},{"./adapter_factory.js":58}],58:[function(require,module,exports){
+},{"./adapter_factory.js":54}],54:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15715,7 +14390,7 @@ function adapterFactory() {
 
 // Browser shims.
 
-},{"./chrome/chrome_shim":59,"./common_shim":62,"./edge/edge_shim":63,"./firefox/firefox_shim":67,"./safari/safari_shim":70,"./utils":71}],59:[function(require,module,exports){
+},{"./chrome/chrome_shim":55,"./common_shim":58,"./edge/edge_shim":59,"./firefox/firefox_shim":63,"./safari/safari_shim":66,"./utils":67}],55:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -16464,7 +15139,7 @@ function fixNegotiationNeeded(window, browserDetails) {
   });
 }
 
-},{"../utils.js":71,"./getdisplaymedia":60,"./getusermedia":61}],60:[function(require,module,exports){
+},{"../utils.js":67,"./getdisplaymedia":56,"./getusermedia":57}],56:[function(require,module,exports){
 /*
  *  Copyright (c) 2018 The adapter.js project authors. All Rights Reserved.
  *
@@ -16515,7 +15190,7 @@ function shimGetDisplayMedia(window, getSourceId) {
   };
 }
 
-},{}],61:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -16720,7 +15395,7 @@ function shimGetUserMedia(window, browserDetails) {
   }
 }
 
-},{"../utils.js":71}],62:[function(require,module,exports){
+},{"../utils.js":67}],58:[function(require,module,exports){
 /*
  *  Copyright (c) 2017 The WebRTC project authors. All Rights Reserved.
  *
@@ -17108,7 +15783,7 @@ function shimAddIceCandidateNullOrEmpty(window, browserDetails) {
   };
 }
 
-},{"./utils":71,"sdp":42}],63:[function(require,module,exports){
+},{"./utils":67,"sdp":38}],59:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -17226,7 +15901,7 @@ function shimReplaceTrack(window) {
   }
 }
 
-},{"../utils":71,"./filtericeservers":64,"./getdisplaymedia":65,"./getusermedia":66,"rtcpeerconnection-shim":41}],64:[function(require,module,exports){
+},{"../utils":67,"./filtericeservers":60,"./getdisplaymedia":61,"./getusermedia":62,"rtcpeerconnection-shim":37}],60:[function(require,module,exports){
 /*
  *  Copyright (c) 2018 The WebRTC project authors. All Rights Reserved.
  *
@@ -17287,7 +15962,7 @@ function filterIceServers(iceServers, edgeVersion) {
   });
 }
 
-},{"../utils":71}],65:[function(require,module,exports){
+},{"../utils":67}],61:[function(require,module,exports){
 /*
  *  Copyright (c) 2018 The adapter.js project authors. All Rights Reserved.
  *
@@ -17315,7 +15990,7 @@ function shimGetDisplayMedia(window) {
   window.navigator.mediaDevices.getDisplayMedia = window.navigator.getDisplayMedia.bind(window.navigator);
 }
 
-},{}],66:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -17353,7 +16028,7 @@ function shimGetUserMedia(window) {
   };
 }
 
-},{}],67:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -17688,7 +16363,7 @@ function shimCreateAnswer(window) {
   };
 }
 
-},{"../utils":71,"./getdisplaymedia":68,"./getusermedia":69}],68:[function(require,module,exports){
+},{"../utils":67,"./getdisplaymedia":64,"./getusermedia":65}],64:[function(require,module,exports){
 /*
  *  Copyright (c) 2018 The adapter.js project authors. All Rights Reserved.
  *
@@ -17727,7 +16402,7 @@ function shimGetDisplayMedia(window, preferredMediaSource) {
   };
 }
 
-},{}],69:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -17804,7 +16479,7 @@ function shimGetUserMedia(window, browserDetails) {
   }
 }
 
-},{"../utils":71}],70:[function(require,module,exports){
+},{"../utils":67}],66:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -18173,7 +16848,7 @@ function shimAudioContext(window) {
   window.AudioContext = window.webkitAudioContext;
 }
 
-},{"../utils":71}],71:[function(require,module,exports){
+},{"../utils":67}],67:[function(require,module,exports){
 /*
  *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
  *
@@ -18448,7 +17123,7 @@ function filterStats(result, track, outbound) {
   return filteredResult;
 }
 
-},{}],72:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')

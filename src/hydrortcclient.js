@@ -4,7 +4,6 @@ const { configuration } = require("./configuration.js");
 const { io } = require("socket.io-client");
 const { EventEmitter } = require("events");
 const { Peer } = require("peerjs");
-const { NetCDFReader} = require("netcdfjs");
 
 // HydroRTCClient object
 class HydroRTCClient {
@@ -21,7 +20,7 @@ class HydroRTCClient {
 
     // datatypes that can be shared and received by the client. This will be expanded
     //TODO: Handlers for different data types need to be tested
-    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts", "jpeg", "jpg"];
+    this.dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts", "jpeg", "jpg", "netcdf3x", "hdf5"];
 
     this.streamData = null;
 
@@ -39,6 +38,9 @@ class HydroRTCClient {
     this.smartDataEventHandler = new EventEmitter();
     this.taskDataEventHandler = new EventEmitter();
     this.netCDFEventHandler = new EventEmitter();
+    this.gribEventHandler = new EventEmitter();
+    this.hdf5EventHandler = new EventEmitter();
+    this.tiffEventHandler = new EventEmitter();
 
     // initializing client socket
     this.socket = io();
@@ -47,7 +49,7 @@ class HydroRTCClient {
       name: this.clientName,
     });
 
-    // defining all socket event handlers
+    // trigger all the event handlers so they are ready upon initialization
     this.socketEventHandlers();
     // id of last connecter peer
     this.lastId = null;
@@ -70,20 +72,7 @@ class HydroRTCClient {
     this.socket.on("valid-username", (data) => {
       // if username is valid according to server
       if (data.valid) {
-        // then connect with server
-        this.socket.emit("join", {
-          name: this.clientName,
-        });
-
-        // send connection successful information back to client
-        this.objectCreationEvent.emit("connect", {
-          connected: true,
-          message: "Connection is successfull",
-          obj: this,
-        });
-
-        //establish peerJS connection
-        this.initPeerJSConn();
+        this.initialPeerConnect()
       } else {
         // otherwise, disconnect from server
         this.socket.disconnect();
@@ -105,7 +94,6 @@ class HydroRTCClient {
 
     // on receiving data stream from server
     this.socket.on("data-stream", (message) => {
-      0;
       this.streamData += message.data;
       // sending stream data back to client
       this.streamEventHandler.emit("data", {
@@ -143,14 +131,26 @@ class HydroRTCClient {
       });
     });
 
-    this.socket.on("netcdf-data", (message) => {
-      let reader = new NetCDFReader(message.data)
-      console.log(message.data + 'from client implementation')
-      console.log(reader.dimensions)
-      console.log(reader.variables)
+    //TODO: Clients can read the NetCDF file from sever. Client implementation should also be added
+    this.socket.on("netcdf-data", ({ data, filename }) => {
       this.netCDFEventHandler.emit("data", {
-        data: message.data,
-        filename: message.filename
+        data,
+        filename
+      })
+    })
+
+    this.socket.on("hdf5-data", ({ data, filename }) => {
+      console.log(data)
+      this.hdf5EventHandler.emit("data", {
+        data,
+        filename
+      })
+    })
+
+    this.socket.on("tiff-data", ({ data, filename }) => {
+      this.tiffEventHandler.emit("data", {
+        data,
+        filename
       })
     })
 
@@ -181,6 +181,12 @@ class HydroRTCClient {
       });
     });
 
+    //User uploading data as binary files that are to be stored in the server
+    //using information provided by the user
+    this.socket.on("data-upload", (message) => {
+
+    })
+
     // this.socket.on("peer-accepted-request", (message) => {
     //   connectWithPeer(message.acceptedBy)
     // });
@@ -192,7 +198,8 @@ class HydroRTCClient {
    */
 
   // returns event handler for sending data stream
-  streamDataRequest() {
+  streamDataRequest(filePath) {
+    console.log(filePath)
     // client can hold one stream data at time.
     // new stream data will update the old request.
     this.streamData = "";
@@ -201,7 +208,8 @@ class HydroRTCClient {
       let socketId = this.socket.id;
       this.socket.emit("stream-data", {
         name: this.clientName,
-        socketId: socketId,
+        socketId,
+        filePath
       });
 
       return this.streamEventHandler;
@@ -297,7 +305,7 @@ class HydroRTCClient {
       requestorName: this.clientName,
       requestorSocketId: this.socket.id,
       recieverPeerName: peerName,
-      request: request,
+      request,
     });
 
     return this.dataExchangeEventHandler;
@@ -377,21 +385,17 @@ class HydroRTCClient {
    */
   initPeerJSConn() {
     // TODO: make properties configurable
-    this.myConn = new Peer(this.clientName, { 
-      debug: 2,
-      reconnect: {
-        exponentialBackoff: 1000,
-        maxRetries: 10
-      } 
-    
+    this.myConn = new Peer(this.clientName, {
+      debug: 3,
     });
     this.myConn.on("open", (id) => {
       // Workaround for peer.reconnect deleting previous id
       if (this.myConn.id === null) {
         console.log("Received null id from peer open");
-        this.myConn.id = JSON.parse(this.lastId);
+        this.myConn.id = this.lastId;
       } else {
-        this.lastId = JSON.stringify(this.myConn.id);
+        //Workaround for peer deleting peer id
+        this.lastId = id.split('').join('');
       }
 
       // console.log("ID: " + this.myConn.id);
@@ -419,8 +423,8 @@ class HydroRTCClient {
       console.log("Connection lost. Reconnecting...");
 
       // Workaround for peer.reconnect deleting previous id
-      this.myConn._id = JSON.parse(this.lastId);
-      this.myConn._lastServerId = JSON.parse(this.lastId);
+      //this.myConn.id = this.lastId;
+      //this.myConn.lastServerId = this.lastId;
       this.myConn.reconnect();
     });
 
@@ -430,7 +434,6 @@ class HydroRTCClient {
     });
 
     this.myConn.on("error", function (err) {
-      console.log(this.myConn._id)
       console.log(this.lastId)
       console.log(err);
     });
@@ -443,7 +446,7 @@ class HydroRTCClient {
    * connection and data received on it.
    */
   connectWithPeer(remotePeerId) {
-    // Close old connection
+    // Close old connection with any other existing peers
     if (this.peerConn) {
       this.peerConn.close();
     }
@@ -484,6 +487,31 @@ class HydroRTCClient {
     return this.smartDataEventHandler;
   }
 
+  getGrib(dataPath) {
+
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   */
+  gethdf5(dataPath) {
+    let socketId = this.socket.id;
+
+    this.socket.emit("hdf5-reader", {
+      name: this.clientName,
+      socketId: socketId,
+      dataPath: dataPath
+    })
+
+    return this.hdf5EventHandler
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   * @returns 
+   */
   getnetCDF(dataPath) {
     let socketId = this.socket.id;
 
@@ -494,6 +522,24 @@ class HydroRTCClient {
     });
 
     return this.netCDFEventHandler
+  }
+
+  /**
+   * 
+   * @param {*} dataPath 
+   * @returns 
+   */
+
+  getTIFF(dataPath) {
+    let socketId = this.socket.id;
+
+    this.socket.emit("tiff-reader", {
+      name: this.clientName,
+      socketId: socketId,
+      dataPath: dataPath
+    });
+
+    return this.tiffEventHandler
   }
 
   // update parameters / priorities for smart data sharing
@@ -554,6 +600,28 @@ class HydroRTCClient {
     }
 
     return chunks;
+  }
+
+  /**
+   * 
+   * @param {*} data 
+   */
+
+  initialPeerConnect() {
+    // then connect with server
+    this.socket.emit("join", {
+      name: this.clientName,
+    });
+
+    // send connection successful information back to client
+    this.objectCreationEvent.emit("connect", {
+      connected: true,
+      message: "Connection is successfull",
+      obj: this,
+    });
+
+    //establish peerJS connection
+    this.initPeerJSConn();
   }
 }
 

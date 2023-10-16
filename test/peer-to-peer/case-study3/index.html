@@ -1,213 +1,103 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peer-to-Peer Chat</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <h1> Case Study 3 - P2P </h1>
-    <div class="name-container">
-        <h1>Enter your nametag</h1>
-        <input type="text" class="name-input" id="user-name" placeholder="Your name">
-        <button class="start-button" onclick="startChat()">Start Chat</button>
+    <div id="login-container">
+        <h2>Enter your username:</h2>
+        <input type="text" id="username" placeholder="Username">
+        <button id="connect">Join Chat</button>
     </div>
 
-    <div class="chat-container" id="chat-container">
-        <div class="chat-header">Chat with Bot</div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="message bot-message">Hello! How can I assist you today?</div>
+    <div id="chat-container" style="display: none;">
+        <div id="users-list">
+            <h2>Users Online</h2>
+            <ul>
+            </ul>
         </div>
-        <div class="chat-input">
-            <input type="text" class="input-box" id="user-input" placeholder="Type your message...">
-            <button class="send-button" onclick="sendMessage()">Send</button>
-        </div>
+        <div id="messages"></div>
+        <input type="file" id="fileInput">
+        <button onclick="sendFile()">Send File</button>
+        <textarea id="messageInput" placeholder="Type your message..."></textarea>
+        <button onclick="scrollToLatestMessage()">Send</button>
     </div>
 
 </body>
 <script src="./node_modules/hydro-rtc/build/hydrortcclient.js"></script>
 <script>
 
-   let hydroRtcClient = null
-   
-   document.getElementById('connect').onclick = function() {
+    let hydroRtcClient = null
 
-    if (document.getElementById('name').value.length == 0) {
-        
-        alert("Please, enter name to connect")
+    document.getElementById('connect').onclick = function () {
 
-    } else {
+        if (document.getElementById('username').value.length == 0) {
 
-        let clientConn = new HydroRTCClient(document.getElementById('name').value)
+            alert("Please, enter name to connect")
 
-        clientConn.on('connect', (data) => {
-            // on successfull connection of client
-            if (data.connected) {
 
-                // saving client object
-                hydroRtcClient = data.obj
-                
-                // getting list of peers from the server
-                let dataStream = hydroRtcClient.getPeers()
-                // null, if client is unable to get the peers list
-                if (dataStream != null) {
+        } else {
 
-                    // on receiving peers list
-                    dataStream.on('data', (data)=>{
-                        let str = ""
-                        document.getElementById("peers").innerHTML = "";
-                        data.data.forEach(peer=>{
-                            str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
+            let clientConn = new HydroRTCClient(document.getElementById('username').value)
+
+            clientConn.on('connect', (data) => {
+                // on successfull connection of client
+                if (data.connected) {
+
+                    // saving client object
+                    hydroRtcClient = data.obj
+
+                    // getting list of peers from the server
+                    let dataStream = hydroRtcClient.getPeers()
+                    // null, if client is unable to get the peers list
+                    if (dataStream != null) {
+
+                        // on receiving peers list
+                        dataStream.on('data', (data) => {
+                            let userlist = document.getElementById("users-list");
+                            let userlistElem = userlist.querySelector('ul');
+                            userlistElem.innerHTML = '';
+
+                            data.data.forEach(peer => {
+                                const listItem = document.createElement('li')
+                                listItem.textContent = peer.name
+                                userlistElem.appendChild(listItem)
+                            })
+                            document.getElementById("chat-container").style.display = 'block';
+                            document.getElementById("login-container").style.display = 'none';
                         })
-                        document.getElementById("peers").innerHTML = str;
-                        document.getElementById( 'controls' ).style.display = 'block';
-                    })
-                }
-                
-                // Listen for requests to received data requests from other peer
-                // for collaborative data exchange
-                let requestStream = hydroRtcClient.listenRequests()
-                if (requestStream != null) {
-                    // on receiving request from peer
-                    requestStream.on('data', (data)=>{
-                        let request = data.requestor + " requested: " + data.request + ", "
-                        document.getElementById("received-request").innerHTML += request;
-                    })
-                }
+                    }
 
-            } else {
-                // error message
-                console.log(data.message)
-            
-            }
-        })
+                    // Listen for requests to received data requests from other peer
+                    // for collaborative data exchange
+                    let requestStream = hydroRtcClient.listenRequests()
+                    if (requestStream != null) {
+                        // on receiving request from peer
+                        requestStream.on('data', (data) => {
+                            let request = data.requestor + " requested: " + data.request + ", "
+                            document.getElementById//("received-request").innerHTML += request;
+                        })
+                    }
+
+                } else {
+                    // error message
+                    console.log(data.message)
+
+                }
+            })
+        }
     }
-   }
 
-   document.getElementById('stream-data').onclick = function(){
-        
-        // stream data usecase
-        let dataStream = hydroRtcClient.streamDataRequest()
-        // null, if client is unable to use the usecase
-        if (dataStream != null) {
-            // on receiving data stream
-            dataStream.on('data', (data)=>{
-                // checking whether last data chunk is received or not
-                if (data.status == "incomplete") {
-                    document.getElementById('text').innerHTML+=data.data
-                }
-            })
-        }
-   }
-
-   
-   document.getElementById('request-data').onclick = function(){
-        // select peer from connected peers list to request data for collaborative data exchange
-        let selectedPeer = document.getElementById('peers').value
-        
-        let dataStream = hydroRtcClient.requestDataFromPeer(selectedPeer, 'data')
-         // null, if client is unable to send the request
-         if (dataStream != null) {
-            dataStream.on('data', (data)=>{
-                let receivedData = data.sender +" Sent: " + data.data
-                document.getElementById('received-data').innerHTML+=receivedData
-            })
-        }        
-   }
-   
-   document.getElementById('accept-request').onclick = function(){
-        // select peer from connected peers list to accept the request from the requestor peer for collaborative data exchange
-        let selectedPeer = document.getElementById('peers').value
-        // connect with requestor peer
-        hydroRtcClient.connectPeer(selectedPeer)
-   }
-   
-
-   document.getElementById('send-data').onclick = function(){
-
-        if (!hydroRtcClient) {
-
-            hydroRtcClient = new HydroRTCClient(document.getElementById('name').value)
-        }
-
-        // send data to selected peer (if request is received from that peer and this client has accepted this request)
-        let selectedPeer = document.getElementById('peers').value
-        hydroRtcClient.sendDataToPeer(selectedPeer, 'hello how ya doin ?')
-        
-   }
-
-   document.getElementById('start-smart-data').onclick = function(){
-        
-        let selectedPeer = document.getElementById('peers').value
-        // get delivery priorities values
-        let resolution = document.getElementById('resolution').value
-        let frequency = document.getElementById('frequency').value
-
-        // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/jpeg/', frequency, resolution)
-        // null, if client is unable to receive the smart data
-        if (smartDataHandler != null) {
-            // on receiving smart data chunk
-            smartDataHandler.on('data', (data)=>{
-                //console.log(data)
-                //console.log(typeof data)
-                //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
-                let container = document.getElementById('image-container')
-                let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                container.innerHTML=''
-                container.innerHTML=filePath
-
-                const binaryData = atob(data.data);
-                const arrayBuffer = new ArrayBuffer(binaryData.length);
-                const uint8Array = new Uint8Array(arrayBuffer);
-                for (let i = 0; i < binaryData.length; i++) {
-                    uint8Array[i] = binaryData.charCodeAt(i)
-                }
-
-                const blob = new Blob([arrayBuffer], {type: 'image/jpeg'});
-
-                const reader = new FileReader();
-
-                reader.onload = (event) => {
-                    const dataURL = event.target.result;
-
-                    const imageElement = document.createElement('img')
-                    imageElement.src = dataURL;
-                    container.appendChild(imageElement);
-                };
-
-                reader.readAsDataURL(blob);
-            })
-        }
-        
-   }
-
-   document.getElementById('update-priority').onclick = function() {
-        
-        let resolution = document.getElementById('resolution').value
-        let frequency = document.getElementById('frequency').value
-
-        hydroRtcClient.updateSmartDataPriority(frequency, resolution)
-        
-   }
-
-   document.getElementById('receive-task').onclick = function() {
-        
-        // Get task from server for distributed data sharing and analysis usecase
-        let taskHandler = hydroRtcClient.receiveTask(frequency, resolution)
-        // null, if client is unable to use the usecase
-        if (taskHandler != null) {
-            // on receiving task
-            taskHandler.on('data', (data)=>{
-                let task = data.task + "<br>"
-
-                document.getElementById('tasks').innerHTML += task
-
-                // here you can check type of task received and perform the task accordingly
-                // for demo purpose (just appending 'result' string in front of task name as a result)
-                // sending task result back to server using following function
-                hydroRtcClient.submitTaskResult(data.task, data.task+"-result")
-            })
-        }
-        
-   }
-
+    function scrollToLatestMessage() {
+                        const messagesContainer = document.getElementById('messages');
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
 </script>
+
 </html>
