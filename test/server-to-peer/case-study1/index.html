@@ -212,14 +212,10 @@
 
     document.getElementById('request-data').onclick = function () {
         // select peer from connected peers list to request data for collaborative data exchange
-        let selectedPeer = document.getElementById('peers').value
-
-        let dataStream = hydroRtcClient.requestDataFromPeer(selectedPeer, 'data')
-        // null, if client is unable to send the request
+        let dataStream = hydroRtcClient.dataTypeReader('tiff')
         if (dataStream != null) {
             dataStream.on('data', (data) => {
-                let receivedData = data.sender + " Sent: " + data.data
-                document.getElementById('received-data').innerHTML += receivedData
+                console.log(data)
             })
         }
     }

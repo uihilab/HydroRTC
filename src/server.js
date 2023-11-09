@@ -12,6 +12,8 @@ const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const { NetCDFReader } = require("netcdfjs");
 const { GRIB } = require("vgrib2");
+const { error } = require("console");
+const { createBrotliCompress } = require("zlib");
 
 /**
  * @class HydroRTCServer
@@ -64,6 +66,10 @@ class HydroRTCServer {
     this.tiff = {
       dataPath: "",
       data: {}
+    }
+
+    this.dataTypeLocation = {
+      dataPath: "",
     }
 
     this.server = null;
@@ -127,6 +133,11 @@ class HydroRTCServer {
       //Obtain all the peer list 
       socket.on("peers-list", (peer) => this.getPeers(peer));
 
+      //Obtain specific peer ID
+      socket.on("peer-id", (peer) => {
+        this.getPeerID(peer)
+      })
+
       socket.on("request-peer", (data) => this.connectPeers(data));
 
       socket.on("start-smart-data-sharing", (peer) =>
@@ -161,6 +172,10 @@ class HydroRTCServer {
 
       socket.on("tiff-reader", (peer) => {
         this.handleTIFF(peer)
+      })
+
+      socket.on("datatype-reader", (peer) => {
+        this.sendFileNames(peer)
       })
     });
   }
@@ -199,16 +214,21 @@ class HydroRTCServer {
    */
 
   joinServer(socket, peer) {
-    peer["socketId"] = socket.id;
-    peer["has-stream-data"] = false;
+    //UserID has the following properties:
+    //clientName
+    let {sessionID} = peer
+    sessionID["socketId"] = socket.id;
+    //This one doesnt make much sense
+    sessionID["has-stream-data"] = false;
 
     // TODO: check for unique peer name
 
     this.peers = this.peers.filter(
-      (existingPeer) => existingPeer.name !== peer.name
+      (existingPeer) => existingPeer.clientName !== sessionID.clientName
     );
-    this.peers.push(peer);
-    console.log("peer (%s) joined: ", peer.name);
+    this.peers.push(sessionID);
+    console.log("peer (%s) joined: ", sessionID.clientName);
+    console.log("peer (%s) joined: ", sessionID.clientID);
   }
 
   /**
@@ -219,7 +239,7 @@ class HydroRTCServer {
 
   validateUser(socket, data) {
     // checks whether username is unique or not
-    let username = data.name;
+    let username = data.clientName;
     const isUsernameUnique = !this.userNameTaken(username)
 
     //Emit the message for validating the given username
@@ -291,20 +311,41 @@ class HydroRTCServer {
    */
 
   getPeers(peer) {
-    console.log("peer (%s) requested to get list of peers: ", peer.name);
+    console.log("peer (%s) requested to get list of peers: ", peer.clientName);
 
     let list = [];
 
     this.peers.forEach((p) => {
-      list.push(p);
+      list.push(p.clientName);
+      console.log(p.clientName)
     });
 
     // broadcasting peers list to all connected peers
-
     this.io.emit("peers", {
       peers: list,
       status: "complete",
     });
+  }
+
+  /**
+   * 
+   * @param {*} peer 
+   * @param {*} socketId 
+   */
+
+  getPeerID(peer, socketId) {
+    let {clientName} = peer
+
+    console.log(`This is the peer value ${peer.clientName}`)
+
+    let peerId = this.peers.find((p) => p.clientName === clientName)
+
+    console.log(`This is the peer Id for the given peer: ${peerId.clientID}`)
+    
+    this.io.emit('peer-id-value', {
+      user: peerId.clientName,
+      id: peerId.clientID
+    })
   }
 
   /**
@@ -325,7 +366,7 @@ class HydroRTCServer {
     let receiverPeer;
     // finding requested peer
     this.peers.forEach((p) => {
-      if (p.name == data.recieverPeerName) {
+      if (p.clientName == data.recieverPeerName) {
         receiverPeer = p;
       }
     });
@@ -344,8 +385,8 @@ class HydroRTCServer {
    */
 
   smartDataShare(peer) {
-    let { name, dataPath, resolution, frequency } = peer
-    console.log("peer (%s) requested to start smart data sharing: ", name);
+    let { clientName, dataPath, resolution, frequency } = peer
+    console.log("peer (%s) requested to start smart data sharing: ", clientName);
 
     this.smartDataSharing = {}
 
@@ -409,12 +450,17 @@ class HydroRTCServer {
    */
 
   taskResult(peer) {
+    let { name, task, result} = peer
     console.log(
       "peer (%s) submitted result for a task (%s): ",
-      (peer.name, peer.task)
+      (name, task)
     );
 
-    console.log("Result: (%s)", peer.result);
+    if (result[0].length === null || typeof result[0].length === undefined) {
+      return error(`Peer was unable to submit result for task ${task}. Error in the results.`)
+    }
+
+    console.log("Result from task (%s) has been saved in the result space", peer.result);
   }
 
   /**
@@ -499,14 +545,14 @@ class HydroRTCServer {
    */
 
   getTask(peer) {
-    console.log("peer (%s) requested for a task: ", peer.name);
+    console.log("peer (%s) requested for a task: ", peer.clientName);
 
     let peerNo = 0;
 
     // Sending tasks to requestor peer
     // Here, we can configure to send specific task to specific peer
     this.peers.forEach((p) => {
-      if (peer.name == p.name) {
+      if (peer.clientName == p.clientName) {
         let taskNo = peerNo % this.tasks.length;
 
         this.io.to(p.socketId).emit("task", {
@@ -557,7 +603,7 @@ class HydroRTCServer {
 
     if (disconnectedPeer) {
       this.peers = this.peers.filter((peer) => peer.socketId !== socket.id);
-      console.log(`Peer disconnected: ${disconnectedPeer.name}`);
+      console.log(`Peer disconnected: ${disconnectedPeer.clientName}`);
     }
   }
 
@@ -576,9 +622,9 @@ class HydroRTCServer {
    * @returns 
    */
   handlenetCDF(peer) {
-    let { name, dataPath, socketId } = peer
+    let { clientName, dataPath, socketId } = peer
 
-    console.log(`peer ${name} requested ${dataPath} file from server.`);
+    console.log(`peer ${clientName} requested ${dataPath} file from server.`);
 
     this.netCDF = {}
 
@@ -622,11 +668,11 @@ class HydroRTCServer {
       const hdf5wasm = await import('h5wasm');
       await hdf5wasm.ready;
 
-      let { name, dataPath, socketId } = peer
+      let { clientName, dataPath, socketId } = peer
 
       this.HDF5 = {}
 
-      console.log(`peer ${name} requested hdf5 file from server.`);
+      console.log(`peer ${clientName} requested hdf5 file from server.`);
 
       this.HDF5.dataPath = dataPath;
 
@@ -669,17 +715,18 @@ class HydroRTCServer {
 
   /**
  * Handler for request of TIFF/GeoTIFF images
+ * NEEDS TO BE FINISHED
  */
   handleTIFF(peer) {
     (async () => {
       const GeoTiff = await import('geotiff');
       const { fromUrl, fromUrls, fromArrayBuffer, fromBlob } = GeoTiff;
 
-      let { name, dataPath, socketId } = peer
+      let { clientName, dataPath, socketId } = peer
 
       this.tiff = {}
 
-      console.log(`peer ${name} requested hdf5 file from server.`);
+      console.log(`peer ${clientName} requested hdf5 file from server.`);
 
       this.tiff.dataPath = dataPath;
 
@@ -718,9 +765,35 @@ class HydroRTCServer {
         data
       });
       return;
-
-
     })()
+  }
+
+  /**
+   * 
+   * @param {*} peer 
+   * @returns 
+   */
+sendFileNames(peer) {
+    let { clientName, dataPath, socketId } = peer
+
+    this.dataTypeLocation = {}
+
+    console.log(`peer ${clientName} requested files file from server with extension ${dataPath}.`);
+
+    this.dataTypeLocation.dataPath = dataPath;
+
+    let resolutions = getDirectories(`./data/${this.dataTypeLocation.dataPath}/`);
+
+    let files = getFiles(resolutions[0]);
+
+    let data = {
+      files
+    }
+
+    this.io.to(socketId).emit("datatype-files", {
+      data
+    });
+    return;
   }
 
   /**
@@ -729,12 +802,17 @@ class HydroRTCServer {
    * @returns 
    */
   userNameTaken(username) {
-    return this.peers.some((peer) => peer.name === username);
+    return this.peers.some((peer) => peer.clientName === username);
   }
 }
 
 // --- utility functions ---
 
+/**
+ * 
+ * @param {*} source 
+ * @returns 
+ */
 function getDirectories(source) {
   try {
     const dirents = readdirSync(source, {
@@ -754,6 +832,11 @@ function getDirectories(source) {
   }
 }
 
+/**
+ * 
+ * @param {*} source 
+ * @returns 
+ */
 function getFiles(source) {
   try {
     const dirents = readdirSync(source, { withFileTypes: true });
