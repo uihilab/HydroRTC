@@ -11,8 +11,10 @@ const {
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const { NetCDFReader } = require("netcdfjs");
+//To implement
 const { GRIB } = require("vgrib2");
 const { error } = require("console");
+//To implement
 const { createBrotliCompress } = require("zlib");
 
 /**
@@ -138,42 +140,54 @@ class HydroRTCServer {
         this.getPeerID(peer)
       })
 
+      //Request the specified peer for connection, 1-1
       socket.on("request-peer", (data) => this.connectPeers(data));
 
+      //Allow requests to do smart data connectivity
       socket.on("start-smart-data-sharing", (peer) =>
         this.smartDataShare(peer)
       );
 
+      //Update requests on smart data management
       socket.on("update-smart-data-sharing", (peer) =>
         this.updateSmartDataShare(peer)
       );
 
+      //Upload data to server, can be saved from the local storage or any other place
       socket.on("peer-to-server", (data) => this.uploadData(data));
 
+      //Obtain the tasks per peer
       socket.on("get-task", (peer) => this.getTask(peer));
 
+      //Obtain the task results back into the server, then broadcast either results or viewer
       socket.on("task-result", (peer) => this.taskResult(peer));
 
+      //Disconnect a specific peer(s)
       socket.on("disconnect", () => {
         this.handleDisconnect(socket);
       });
 
+      //Request a data type to have the correct handler, case study 1 and 2
       socket.on("data-request", (peer) => {
         this.dataType(peer);
       })
 
+      //Return a netCDF reader towards a peer(s)
       socket.on("netcdf-reader", (peer) => {
         this.handlenetCDF(peer);
       })
 
+      //Return a hdf5 reader towards a peer(s)
       socket.on("hdf5-reader", (peer) => {
         this.handleHDF5(peer)
       })
 
+      //Return a TIFF(geoTIFF) reader towards a peer(s)
       socket.on("tiff-reader", (peer) => {
         this.handleTIFF(peer)
       })
 
+      //Send name(s) and data type(s) of file(s) in a folder
       socket.on("datatype-reader", (peer) => {
         this.sendFileNames(peer)
       })

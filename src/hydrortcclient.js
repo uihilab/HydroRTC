@@ -4,6 +4,8 @@ const { configuration } = require("./configuration.js");
 const { io } = require("socket.io-client");
 const { EventEmitter } = require("events");
 const { Peer } = require("peerjs");
+const { eventNames } = require("process");
+const { resolve } = require("path");
 
 // HydroRTCClient object
 class HydroRTCClient {
@@ -72,8 +74,119 @@ class HydroRTCClient {
     //NEEDS MODIFICATION, CANNOT JUST BE STREAMFLOW DATA
     this.streamData = "";
 
+    this.createDB(`HydroRTC_DB_${clientName}`)
+
     // event handler to send object creation status to client
     return this.objectCreationEvent;
+  }
+
+  /**
+   * 
+   */
+  createDB(clientName) {
+
+    const request = indexedDB.open(clientName, 1)
+
+    request.onupgradeneeded = (ev) => {
+      let db = ev.target.result;
+
+      if (!db.objectStoeNames.contains('data')) {
+        db.createObjectStore('data', {
+          keyPath: 'dataID'
+        })
+      }
+    };
+
+    request.onsuccess = (ev) => {
+      console.log(`IndexedDB ${clientName} opened successfully.`);
+      this.db = ev.target.result;
+    }
+
+    request.onerror = (ev) => {
+      console.error(`Error opening and creating IndexedDB ${clientName}: ${ev.target.error}`)
+    }
+  }
+
+  /**
+   * 
+   * @param {*} data 
+   * @param {*} storeName 
+   * @returns 
+   */
+
+  addTaskToDB(data, storeName = 'data') {
+    if (!this.db) {
+      console.err('IndexedDB has not been initialized.');
+      return;
+    }
+
+    const transaction = this.db.transaction([storeName], 'readwrite');
+    const objectStore = transaction.objectStore(storeName);
+
+    //To change in the future for a specific identifier, either with task or keep data, or a combination
+    //Serialize in order to keep tasks
+    data.dataID = new Date().getTime();
+
+    if (data.binaryData instanceof ArrayBuffer) {
+      try {
+      data.binaryData = new Blob([data.binaryData], {
+        type: 'application/octet-binary'
+      })
+    } catch(err) {
+      console.log(`There was an error saving a binary file: ${err}`)
+    }
+    }
+
+    const request = objectStore.add(data);
+
+    request.onsuccess = () => {
+      console.log(`Data was correctly added to IndexedDB: ${data.dataID}`)
+    }
+
+    request.onerror = (ev) => {
+      console.error(`Error adding data to IndexedDB: ${ev.target.error}`)
+    }
+  }
+
+  /**
+   * 
+   * @param {*} storeName 
+   * @returns 
+   */
+
+  getDataFromDB(storeName = 'data') {
+    return new Promise((reject, resolve) => {
+      if (!this.db) {
+        reject('IndexedDB was not initialized.');
+        return
+      }
+      const transaction = this.db.transaction([storeName], 'readwrite');
+      const objectStore = transaction.objectStore(storeName)
+      const request = objectStore.getAll();
+
+      request.onsuccess = (ev) => {
+        const data = ev.target.result;
+
+        //Assuming data is being saved as a buffer
+        data.forEach(item => {
+          if (item.binaryData instanceof Blob) {
+            try {
+            item.buffer.ArrayBuffer().then(buffer => {
+              item.buffer = buffer;
+            })
+          } catch (err) {
+            reject(`There was an error with the requested binary file: ${err}.`)
+          }
+          }
+        })
+
+        resolve(data);
+      };
+
+      request.onerror = (ev) => {
+        reject(`Error getting data from IndexedDB: ${ev.target.error}`)
+      };
+    })
   }
 
   /**
