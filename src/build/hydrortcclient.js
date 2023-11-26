@@ -2812,8 +2812,8 @@ class HydroRTCClient {
 
     //Define the user ID and name to be sent to server
     //Keeping track of all the values
-    this.sessionID = {clientName}
-      // [`${this.clientName}`]: this.lastId,
+    this.sessionID = { clientName }
+    // [`${this.clientName}`]: this.lastId,
 
     // upon object creation, send validate username event to server
     this.socket.emit("validate-username", {
@@ -2826,15 +2826,167 @@ class HydroRTCClient {
     //NEEDS MODIFICATION, CANNOT JUST BE STREAMFLOW DATA
     this.streamData = "";
 
+    this.dbName = `HydroRTC_DB_${clientName}`    
+    this.createDB(this.dbName)
+
     // event handler to send object creation status to client
     return this.objectCreationEvent;
+  }
+
+  /**
+   * 
+   */
+  createDB(clientName) {
+
+    const request = indexedDB.open(clientName, 1)
+
+    request.onupgradeneeded = (ev) => {
+      const db = ev.target.result;
+
+      if (!db.objectStoreNames.contains('data')) {
+        db.createObjectStore('data', {
+          keyPath: 'dataID'
+        })
+      }
+    };
+
+    request.onsuccess = (ev) => {
+      console.log(`IndexedDB ${clientName} opened successfully.`);
+      this.db = ev.target.result;
+    }
+
+    request.onerror = (ev) => {
+      console.error(`Error opening and creating IndexedDB ${clientName}: ${ev.target.error}`)
+    }
+  }
+
+  /**
+   * 
+   * @param {*} data 
+   * @param {*} storeName 
+   * @returns 
+   */
+
+  addDataToDB(data, storeName = 'data') {
+    if (!this.db) {
+      console.err('IndexedDB has not been initialized.');
+      return;
+    }
+
+    const transaction = this.db.transaction([storeName], 'readwrite');
+    const objectStore = transaction.objectStore(storeName);
+
+    //To change in the future for a specific identifier, either with task or keep data, or a combination
+    //Serialize in order to keep tasks
+    data.dataID = new Date().getTime();
+
+    if (data.binaryData instanceof ArrayBuffer) {
+      try {
+        data.binaryData = new Blob([data.binaryData], {
+          type: 'application/octet-binary'
+        })
+      } catch (err) {
+        console.log(`There was an error saving a binary file: ${err}`)
+      }
+    }
+
+    const request = objectStore.add(data);
+
+    request.onsuccess = () => {
+      console.log(`Data was correctly added to IndexedDB: ${data.dataID}`)
+    }
+
+    request.onerror = (ev) => {
+      console.error(`Error adding data to IndexedDB: ${ev.target.error}`)
+    }
+  }
+
+  /**
+   * 
+   * @param {*} storeName 
+   * @returns 
+   */
+
+  getDataFromDB(storeName = 'data') {
+    return new Promise((reject, resolve) => {
+      if (!this.db) {
+        reject('IndexedDB was not initialized.');
+        return
+      }
+      const transaction = this.db.transaction([storeName], 'readwrite');
+      const objectStore = transaction.objectStore(storeName)
+      const request = objectStore.getAll();
+
+      request.onsuccess = (ev) => {
+        const data = ev.target.result;
+
+        //Assuming data is being saved as a buffer
+        data.forEach(item => {
+          if (item.binaryData instanceof Blob) {
+            try {
+              item.buffer.ArrayBuffer().then(buffer => {
+                item.buffer = buffer;
+              })
+            } catch (err) {
+              reject(`There was an error with the requested binary file: ${err}.`)
+            }
+          }
+        })
+
+        resolve(data);
+      };
+
+      request.onerror = (ev) => {
+        reject(`Error getting data from IndexedDB: ${ev.target.error}`)
+      };
+    })
+  }
+
+  /**
+   * 
+   * @returns 
+   */
+  async deleteDB() {
+    if (!this.dbName) {
+      throw new Error('IndexedDB database name is not specified.')
+    }
+
+    if (this.db) {
+      this.db.close();
+    }
+
+    return new Promise((reject, resolve) => {
+      const deleteRequest = indexedDB.deleteDatabase(this.dbName);
+
+      deleteRequest.onsuccess = () => {
+        console.log(`IndexedDB database "${this.dbName}" deleted successfully.`);
+        resolve();
+
+        deleteRequest.onerror = (ev) => {
+          reject(`Error deleting IndexedDB database: ${ev.target.error}`)
+        }
+      }
+    })
+
+  }
+
+  /**
+   * 
+   */
+  async logout() {
+    try {
+      await this.deleteDB();
+      console.log('User database deleted successfully.');
+    } catch (error) {
+      console.error('Error during db deletion: ', error)
+    }
   }
 
   /**
    * defining all socket event handlers
    */
   socketEventHandlers() {
-    this.socket.on("valid-username", (data) => {
+    this.socket.on("valid-username", async (data) => {
       // if username is valid according to server
       if (data.valid) {
         //this. initialPeerConnect()
@@ -2842,6 +2994,7 @@ class HydroRTCClient {
       } else {
         // otherwise, disconnect from server
         this.socket.disconnect();
+        await this.logout()
         // in case username is either invalid or already exists
         this.objectCreationEvent.emit("connect", {
           connected: false,
@@ -2957,6 +3110,11 @@ class HydroRTCClient {
     //using information provided by the user
     this.socket.on("data-upload", (message) => {
 
+    });
+
+    this.socket.on("delete-db", async () => { 
+      await this.deleteDB()
+      console.log(`Database ${this.dbName} was deleted.`)
     })
   }
 
@@ -3092,9 +3250,11 @@ class HydroRTCClient {
    * Connect a client with a specific peer
    * @param {*} peerName
    */
-  connectPeer(peerName) {
+  async connectPeer(peerName) {
 
-    this.connectWithPeer(peerName);
+    return this.connectWithPeer(peerName);
+    //return this.dataExchangeEventHandler
+    
     // this.socket.emit("request-accepted", {
     //   acceptedBy: this.clientName,
     //   requestor: peerName
@@ -3187,13 +3347,13 @@ class HydroRTCClient {
         //this.lastId = this.myConn.id
       }
       console.log(`Client Name: ${this.sessionID.clientName}\nID: ${this.sessionID.clientID}`);
-      
+
       //Initiate the connection right away, save session data in server right away
       this.socket.emit("join", {
         //name: this.clientName,
         sessionID: this.sessionID
       });
-  
+
       // send connection successful information back to client
       this.objectCreationEvent.emit("connect", {
         connected: true,
@@ -3266,27 +3426,36 @@ class HydroRTCClient {
     let outerObj = this;
 
     return new Promise((resolve, reject) => {
-      this.socket.on('peer-id-value', ({user, id}) => {
+      this.socket.on('peer-id-value', ({ user, id }) => {
         console.log(`User: ${user}\n ID: ${id}`)
-      // Create connection to destination peer specified in the input field
-      outerObj.peerConn = outerObj.myConn.connect(id, {
-        reliable: true,
-      });
+        // Create connection to destination peer specified in the input field
+        outerObj.peerConn = outerObj.myConn.connect(id, {
+          reliable: true,
+        });
 
-      outerObj.peerConn.on("open", () => {
-        resolve({ status: "connected" });
-        console.log("Connected to: " + outerObj.peerConn.peer);
-      });
+        outerObj.peerConn.on("open", () => {
+          //resolve({ status: "connected" });
+          console.log("Connected to: " + outerObj.peerConn.peer);
+          resolve(outerObj.dataExchangeEventHandler)
+        });
 
-      outerObj.peerConn.on("data", (data) =>{
-        resolve({data: data})
-      })
+        outerObj.peerConn.on("data", (data) => {
+          console.log(data)
+           outerObj.dataExchangeEventHandler.emit("data", {
+            data: data.data,
+            sender: data.sender,
+          });
+          //THIS NEEDS CHANGE
+          //resolve()
+          // resolve({ data: data })
+        })
 
-      outerObj.peerConn.on("close", function () {
-        console.log("Connection closed");
+        outerObj.peerConn.on("close", function () {
+          console.log("Connection closed");
+          resolve()
+        });
       });
-    });
-  })
+    })
   }
 
   // --- Smart Data Sharing Start ---

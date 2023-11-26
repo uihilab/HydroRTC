@@ -5,19 +5,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peer-to-Peer Chat</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        #login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-box {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 300px;
+        }
+
+        #overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            /* Semi-transparent black overlay */
+            z-index: 999;
+        }
+
+        .overlay-box {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 300px;
+        }
+
+        button#connect {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #chat-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        aside {
+            flex: 1;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+        }
+
+        .users-list h2 {
+            font-size: 18px;
+        }
+
+        .users-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .users-list ul li {
+            margin-bottom: 5px;
+        }
+
+        main {
+            flex: 2;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        #messages {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #messageInput,
+        #fileInput,
+        #username {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
-    <h1> Case Study 3 - P2P </h1>
-    <div id="login-container">
-        <h2>Enter your username:</h2>
-        <input type="text" id="username" placeholder="Username">
-        <button id="connect">Join Chat</button>
+    <div id="overlay">
+        <div class="overlay-box">
+            <h2>Enter your username:</h2>
+            <input type="text" id="username" placeholder="Username">
+            <button id="connect">Join Chat</button>
+        </div>
     </div>
 
     <div id="chat-container" style="display: none;">
-        <h2>Users Online</h2>
+        <h2> Case Study 3 - P2P </h2>
+        <h3>Users Online</h3>
         <select id="users-list">
         </select>
         <button id="select-user">Select User</button>
@@ -25,6 +154,8 @@
         <div id="messages"></div>
         <input type="file" id="fileInput">
         <button id="send-file">Send File</button>
+        <br>
+        <br>
         <textarea id="messageInput" placeholder="Type your message..."></textarea>
         <button id="send-message" onclick="sendMessage()">Send</button>
     </div>
@@ -38,7 +169,7 @@
     let messageBox = document.getElementById('messages');
     let userlist = document.getElementById("users-list");
     // select peer from connected peers list to request data for collaborative data exchange
-    let selectedPeer = document.getElementById('users-list').value
+    let selectedPeer = document.getElementById('users-list')
 
     document.getElementById('connect').onclick = function () {
 
@@ -56,6 +187,8 @@
             clientConn.on('connect', (data) => {
                 // on successfull connection of client
                 if (data.connected) {
+                    document.getElementById('overlay').style.display = 'none';
+                    document.getElementById('chat-container').style.display = 'flex'; // Show the chat container
 
                     // saving client object
                     hydroRtcClient = data.obj
@@ -89,7 +222,6 @@
                                 }
                             })
                             document.getElementById("chat-container").style.display = 'block';
-                            document.getElementById("login-container").style.display = 'none';
                         })
                     }
 
@@ -113,30 +245,30 @@
         }
     }
 
-    function generalSetter() {
-
-    }
-
     document.getElementById('select-user').onclick = function () {
+        selectedPeer = selectedPeer.value
+        console.log(selectedPeer)
         //Needs change, need to mention which type of data to submit        
         let dataStream = hydroRtcClient.requestDataFromPeer(selectedPeer, 'data')
         // null, if client is unable to send the request
         if (dataStream != null) {
             dataStream.on('data', (data) => {
-                addMesage(data.data + 'l126', selectedPeer)
+                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data + ' l264', data.sender)
             })
         }
     }
 
-    document.getElementById('accept-request').onclick = function () {
+    document.getElementById('accept-request').onclick = async function () {
         // select peer from connected peers list to accept the request from the requestor peer for collaborative data exchange
         let selectedPeer = document.getElementById('users-list').value
         // connect with requestor peer
-        hydroRtcClient.connectPeer(selectedPeer)
+        let eventEmitter = await hydroRtcClient.connectPeer(selectedPeer)
 
-        hydroRtcClient.myConn.on('connection', () => {
-            
-        })
+        if (eventEmitter != null) {
+            eventEmitter.on('data', (data) => {
+                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data + ' l278', data.sender)
+            })
+        }
     }
 
 
@@ -150,7 +282,8 @@
         //Needs modification to keep correct track of selected user
         let str = hydroRtcClient.sendDataToPeer(userlist.value, textInput.value)
 
-        addMesage(textInput.value + 'l149', clientName)
+        //Self
+        addMesage(textInput.value + ' l289', clientName)
 
         textInput.value = ""
         scrollToLatestMessage()
@@ -162,7 +295,7 @@
 
     //To implement
     function sendFile() {
-
+                
     }
 
     function addMesage(msg, user) {

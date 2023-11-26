@@ -135,7 +135,8 @@
                             let str = ""
                             document.getElementById("peers").innerHTML = "";
                             data.data.forEach(peer => {
-                                str += "<option value='" + peer.name + "'>" + peer.name + "</option>"
+                                if(peer !== clientConn)
+                                str += "<option value='" + peer + "'>" + peer + "</option>"
                             })
                             document.getElementById("peers").innerHTML = str;
                             document.getElementById('controls').style.display = 'block';

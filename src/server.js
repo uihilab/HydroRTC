@@ -13,7 +13,6 @@ const { instrument } = require("@socket.io/admin-ui");
 const { NetCDFReader } = require("netcdfjs");
 //To implement
 const { GRIB } = require("vgrib2");
-const { error } = require("console");
 //To implement
 const { createBrotliCompress } = require("zlib");
 
@@ -230,7 +229,7 @@ class HydroRTCServer {
   joinServer(socket, peer) {
     //UserID has the following properties:
     //clientName
-    let {sessionID} = peer
+    let { sessionID } = peer
     sessionID["socketId"] = socket.id;
     //This one doesnt make much sense
     sessionID["has-stream-data"] = false;
@@ -348,14 +347,14 @@ class HydroRTCServer {
    */
 
   getPeerID(peer, socketId) {
-    let {clientName} = peer
+    let { clientName } = peer
 
     console.log(`This is the peer value ${peer.clientName}`)
 
     let peerId = this.peers.find((p) => p.clientName === clientName)
 
     console.log(`This is the peer Id for the given peer: ${peerId.clientID}`)
-    
+
     this.io.emit('peer-id-value', {
       user: peerId.clientName,
       id: peerId.clientID
@@ -368,6 +367,7 @@ class HydroRTCServer {
    */
 
   connectPeers(data) {
+    console.log(data)
     if (!data.recieverPeerName) {
       console.log('Peer %s is not found in the server.', data.recieverPeerName)
       return
@@ -464,7 +464,7 @@ class HydroRTCServer {
    */
 
   taskResult(peer) {
-    let { name, task, result} = peer
+    let { name, task, result } = peer
     console.log(
       "peer (%s) submitted result for a task (%s): ",
       (name, task)
@@ -617,6 +617,7 @@ class HydroRTCServer {
 
     if (disconnectedPeer) {
       this.peers = this.peers.filter((peer) => peer.socketId !== socket.id);
+      this.io.to(socket).emit("delete-db");
       console.log(`Peer disconnected: ${disconnectedPeer.clientName}`);
     }
   }
@@ -697,32 +698,32 @@ class HydroRTCServer {
 
       //single path found in the given directory
       //if (resolutions.length === 1) {
-        let files = getFiles(resolutions[0]);
-        console.log(files);
-        //Single file stream now
-        let filename = files[0];
+      let files = getFiles(resolutions[0]);
+      console.log(files);
+      //Single file stream now
+      let filename = files[0];
 
-        let reader = new hdf5wasm.File(this.HDF5.dataPath + filename, 'r');
+      let reader = new hdf5wasm.File(this.HDF5.dataPath + filename, 'r');
 
-        let f = reader.get(reader.keys()[0]).keys()
+      let f = reader.get(reader.keys()[0]).keys()
 
-        //TODO: modify this handler for multiple types of variables
-        let d = reader.get(`${reader.keys()[0]}/precipitationCal`)
+      //TODO: modify this handler for multiple types of variables
+      let d = reader.get(`${reader.keys()[0]}/precipitationCal`)
 
-        console.log(d)
+      console.log(d)
 
-        let data = {
-          metadata: d.metadata,
-          dataType: d.type,
-          shape: d.shape,
-          values: d.to_array()
-        }
+      let data = {
+        metadata: d.metadata,
+        dataType: d.type,
+        shape: d.shape,
+        values: d.to_array()
+      }
 
-        this.io.to(socketId).emit("hdf5-data", {
-          filename,
-          data
-        });
-        return;
+      this.io.to(socketId).emit("hdf5-data", {
+        filename,
+        data
+      });
+      return;
       //}
     })()
   }
@@ -753,7 +754,7 @@ class HydroRTCServer {
 
       console.log(this.tiff.dataPath + filename)
 
-      const res = await largeFileHandler(this.tiff.dataPath+ filename)
+      const res = await largeFileHandler(this.tiff.dataPath + filename)
       const arrayBuffer = res.buffer.slice(res.byteOffset, res.byteOffset + res.byteLength);
       //const arrayBuffer = await res.arrayBuffer();
       const TIFF = await fromArrayBuffer(arrayBuffer);
@@ -787,7 +788,7 @@ class HydroRTCServer {
    * @param {*} peer 
    * @returns 
    */
-sendFileNames(peer) {
+  sendFileNames(peer) {
     let { clientName, dataPath, socketId } = peer
 
     this.dataTypeLocation = {}
@@ -911,6 +912,10 @@ function largeFileHandler(file) {
   })
 }
 
+/**
+ * TO IMPLEMENT
+ * @param {*} data 
+ */
 function uploadData(data) {
 
 }
