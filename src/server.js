@@ -1,3 +1,4 @@
+//Required Imports
 const { createServer } = require("http");
 const { parse } = require("url");
 const { join, sep } = require("path");
@@ -13,7 +14,7 @@ const { instrument } = require("@socket.io/admin-ui");
 const { NetCDFReader } = require("netcdfjs");
 //To implement
 const { GRIB } = require("vgrib2");
-//To implement
+//To implement, if required
 const { createBrotliCompress } = require("zlib");
 
 /**
@@ -24,7 +25,7 @@ const { createBrotliCompress } = require("zlib");
 
 class HydroRTCServer {
   /**
-   *
+   * Sets all the required information for a server through a specific port.
    */
   constructor() {
     // server properties
@@ -83,7 +84,7 @@ class HydroRTCServer {
    * @param {*} hostname
    * @param {*} port
    */
-  prepareServer(hostname, port, homePage) {
+  prepareServer(hostname, port, homePage = undefined) {
     this.hostname = hostname;
     this.port = port;
     const defaultHomePage =
@@ -207,10 +208,14 @@ class HydroRTCServer {
         throw new Error(`Not a file: ${filename}`);
       }
 
+
+
       const fileContent = await fsPromises.readFile(filename, "binary");
       response.writeHead(200, { "Content-Type": "text/html" });
+      //Serve other files in the HTML through static imports. This might need change because of security issues!
+      response.writeHead(200, { "Access-Control-Allow-Origin": "*" })
       response.write(fileContent, "binary");
-      response.end();
+      response.end();    
     } catch (error) {
       response.writeHead(404, {
         "Content-Type": "text/plain",
@@ -919,7 +924,5 @@ function largeFileHandler(file) {
 function uploadData(data) {
 
 }
-
-
 
 this.server = new HydroRTCServer();

@@ -5,134 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peer-to-Peer Chat</title>
-    <!-- <link rel="stylesheet" href="style.css"> -->
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-
-        header {
-            background-color: #007BFF;
-            color: #fff;
-            padding: 20px 0;
-            text-align: center;
-        }
-
-        #login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-box {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 300px;
-        }
-
-        #overlay {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            /* Semi-transparent black overlay */
-            z-index: 999;
-        }
-
-        .overlay-box {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 300px;
-        }
-
-        button#connect {
-            background-color: #007BFF;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-        }
-
-        #chat-container {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-        }
-
-        aside {
-            flex: 1;
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-        }
-
-        .users-list h2 {
-            font-size: 18px;
-        }
-
-        .users-list ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .users-list ul li {
-            margin-bottom: 5px;
-        }
-
-        main {
-            flex: 2;
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-        }
-
-        #messages {
-            height: 300px;
-            overflow-y: scroll;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        #messageInput,
-        #fileInput,
-        #username {
-            width: calc(100% - 22px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        button {
-            background-color: #007BFF;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -169,7 +42,8 @@
     let messageBox = document.getElementById('messages');
     let userlist = document.getElementById("users-list");
     // select peer from connected peers list to request data for collaborative data exchange
-    let selectedPeer = document.getElementById('users-list')
+    let selectedPeer = document.getElementById('users-list');
+    let fileInput = document.getElementById('fileInput');
 
     document.getElementById('connect').onclick = function () {
 
@@ -253,7 +127,10 @@
         // null, if client is unable to send the request
         if (dataStream != null) {
             dataStream.on('data', (data) => {
-                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data + ' l264', data.sender)
+                console.log(data)
+                if (data.usecase === 'message') { 
+                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
+            }
             })
         }
     }
@@ -264,9 +141,13 @@
         // connect with requestor peer
         let eventEmitter = await hydroRtcClient.connectPeer(selectedPeer)
 
+        //Peer-to-peer channel is now open
         if (eventEmitter != null) {
             eventEmitter.on('data', (data) => {
-                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data + ' l278', data.sender)
+                console.log(data)
+                if (data.usecase === 'message') {
+                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
+            }
             })
         }
     }
@@ -279,11 +160,10 @@
         }
 
         // send data to selected peer (if request is received from that peer and this client has accepted this request)
-        //Needs modification to keep correct track of selected user
-        let str = hydroRtcClient.sendDataToPeer(userlist.value, textInput.value)
+        let str = hydroRtcClient.sendDataToPeer(textInput.value, 'message')
 
         //Self
-        addMesage(textInput.value + ' l289', clientName)
+        addMesage(textInput.value, clientName)
 
         textInput.value = ""
         scrollToLatestMessage()
@@ -295,7 +175,7 @@
 
     //To implement
     function sendFile() {
-                
+
     }
 
     function addMesage(msg, user) {
@@ -322,6 +202,18 @@
         }
         return t
     }
+
+    document.getElementById('send-file').addEventListener('click', async () => {
+        try {
+            console.log('Here!!!')
+            //const { fileData, fileExt } = 
+            hydroRtcClient.getfileData(fileInput, 0.2);
+            // console.log('File ArrayBuffer:', fileData);
+            // console.log('File Extension:', fileExt);
+        } catch (error) {
+            console.error('Error', error)
+        }
+    })
 </script>
 
 </html>

@@ -1,6 +1,5 @@
-/* styles.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
@@ -21,6 +20,29 @@ header {
 }
 
 .login-box {
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 300px;
+}
+
+#overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent black overlay */
+    z-index: 999;
+}
+
+.overlay-box {
     background-color: #fff;
     padding: 20px;
     border: 1px solid #ccc;
@@ -84,11 +106,14 @@ main {
     margin-bottom: 10px;
 }
 
-#messageInput, #fileInput {
-    width: 100%;
+#messageInput,
+#fileInput,
+#username {
+    width: calc(100% - 22px);
     padding: 10px;
     border: 1px solid #ccc;
     margin-bottom: 10px;
+    box-sizing: border-box;
 }
 
 button {

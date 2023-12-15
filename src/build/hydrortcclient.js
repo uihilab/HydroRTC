@@ -2778,9 +2778,14 @@ class HydroRTCClient {
 
     this.streamData = null;
 
+    this.dataStreamState = {
+      start: null,
+      end: null,
+      size: 0
+    }
+
     // TODO: ensure server is run before client
     // init
-    //this.clientName = clientName;
     this.configuration = configuration;
     // Defining Event Handlers for sending to client
     //TODO: need to modify some of this emitters
@@ -2796,14 +2801,13 @@ class HydroRTCClient {
     this.hdf5EventHandler = new EventEmitter();
     this.tiffEventHandler = new EventEmitter();
     this.dataTypesEventHandler = new EventEmitter();
+    this.fileInputEventHandler = new EventEmitter();
 
     // initializing client socket
     this.socket = io();
 
     // trigger all the event handlers so they are ready upon initialization
     this.socketEventHandlers();
-    // id of last connecter peer
-    //this.lastId = null;
     // peer connection
     this.peerConn = null;
     // client's own connection
@@ -2813,12 +2817,9 @@ class HydroRTCClient {
     //Define the user ID and name to be sent to server
     //Keeping track of all the values
     this.sessionID = { clientName }
-    // [`${this.clientName}`]: this.lastId,
 
     // upon object creation, send validate username event to server
     this.socket.emit("validate-username", {
-      //name: this.sessionID.clientName,
-      //CHANGE THIS FOR THE SESSIONID VAR
       clientName: this.sessionID.clientName
     });
 
@@ -2826,7 +2827,7 @@ class HydroRTCClient {
     //NEEDS MODIFICATION, CANNOT JUST BE STREAMFLOW DATA
     this.streamData = "";
 
-    this.dbName = `HydroRTC_DB_${clientName}`    
+    this.dbName = `HydroRTC_DB_${clientName}`
     this.createDB(this.dbName)
 
     // event handler to send object creation status to client
@@ -2939,6 +2940,28 @@ class HydroRTCClient {
       request.onerror = (ev) => {
         reject(`Error getting data from IndexedDB: ${ev.target.error}`)
       };
+    })
+  }
+
+  deleteDataFromDB(itemID, storeName = 'data') {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        console.log('IndexedDB has not been initialized.')
+        return;
+      }
+
+      const transaction = this.db.transaction([storeName], 'readwrite');
+      const objectStore = transaction.objectStore(storeName);
+      const request = objectStore.deleteDB(itemID);
+
+      request.onsuccess = () => {
+        console.log(`Item with ID ${itemID} was deleted from the database named ${storeName}`);
+        resolve()
+      }
+
+      request.onerror = (ev) => {
+        reject(`There was an eror with deleting ${itemID} from database ${storeName}:/n ${ev.target.error}`)
+      }
     })
   }
 
@@ -3112,7 +3135,7 @@ class HydroRTCClient {
 
     });
 
-    this.socket.on("delete-db", async () => { 
+    this.socket.on("delete-db", async () => {
       await this.deleteDB()
       console.log(`Database ${this.dbName} was deleted.`)
     })
@@ -3164,6 +3187,11 @@ class HydroRTCClient {
     return this.peersEventHandler;
   }
 
+  /**
+   * 
+   * @param {*} remotePeerId 
+   * @returns 
+   */
   getPeersID(remotePeerId) {
     //Obtain the peer ID if found in the server
     this.socket.emit("peer-id", {
@@ -3251,14 +3279,7 @@ class HydroRTCClient {
    * @param {*} peerName
    */
   async connectPeer(peerName) {
-
     return this.connectWithPeer(peerName);
-    //return this.dataExchangeEventHandler
-    
-    // this.socket.emit("request-accepted", {
-    //   acceptedBy: this.clientName,
-    //   requestor: peerName
-    // });
   }
 
   /**
@@ -3266,16 +3287,21 @@ class HydroRTCClient {
    * @param {*} peerName
    * @param {*} data
    */
-
-  // client sends data to given peer
-  sendDataToPeer(peerName, data) {
+  //Requestor sends data to requested
+  sendDataToPeer(data, usecase = 'message') {
     // TODO: send data only when peer to peer connection is established
-    //KEEP TRACK OF THE USER STATUS
-    this.peerConn.send({ data: data, usecase: "", sender: this.sessionID.clientName });
-    this.dataExchangeEventHandler.emit("data", {
-      data: data.data,
-      sender: data.sender,
-    });
+    //Assuming the case study is 
+    if (usecase === "message") {
+      this.peerConn.send(
+        { data: data, usecase, sender: this.sessionID.clientName }
+      );
+    }
+    //In case its data, trigger the data partitions
+    else {
+      ///write here    
+
+    }
+    console.log('This is the trigger')
     return this.dataExchangeEventHandler
   }
 
@@ -3313,11 +3339,17 @@ class HydroRTCClient {
           data: data.data,
           status: data.status,
         });
-      } else {
-        this.dataExchangeEventHandler.emit("data", {
-          data: data.data,
-          sender: data.sender,
-        });
+      } else if (data.usecase === "message") {
+        //Requested sends message data to requestor
+        this.dataExchangeEventHandler.emit("data",
+          data
+        )
+      } else if (data.usecase === "data") {
+        this.calculateThroughput(data)
+        //this.dataExchangeEventHandler.emit("data", data)
+      }
+      else {
+
       }
     });
   }
@@ -3326,13 +3358,13 @@ class HydroRTCClient {
 
   /**
    * Largely based on examples from Peer.js
-   *
+   * 
    */
-  initPeerJSConn() {
+  initPeerJSConn(props = {}) {
     // TODO: make properties configurable
-    this.myConn = new Peer(null, {
-      initiator: true,
-      trickle: false,
+    this.myConn = new Peer(null, props ? props : {
+      secure: true,
+      pingInterval: 3000,
       debug: 3,
     });
     this.myConn.on("open", (id) => {
@@ -3384,11 +3416,8 @@ class HydroRTCClient {
     this.myConn.on("disconnected", () => {
       console.log("Connection lost. Reconnecting...");
       console.log(this.sessionID.clientName)
-      //console.log(this.lastId)
 
       // Workaround for peer.reconnect deleting previous id
-      //this.myConn._id = this.lastId;
-      //this.myConn._lastServerId = this.lastId;
       this.myConn._id = this.sessionID.clientID;
       this.myConn._lastServerId = this.sessionID.clientID;
       this.myConn.reconnect();
@@ -3439,15 +3468,18 @@ class HydroRTCClient {
           resolve(outerObj.dataExchangeEventHandler)
         });
 
+        //Requestor data received, handler here!
         outerObj.peerConn.on("data", (data) => {
-          console.log(data)
-           outerObj.dataExchangeEventHandler.emit("data", {
-            data: data.data,
-            sender: data.sender,
-          });
-          //THIS NEEDS CHANGE
-          //resolve()
-          // resolve({ data: data })
+          console.log('696');
+          //console.log(data)
+          if (data)
+            outerObj.dataExchangeEventHandler.emit("data",
+              data
+              // {
+              //   data: data.data,
+              //   sender: data.sender,
+              // }
+            );
         })
 
         outerObj.peerConn.on("close", function () {
@@ -3602,23 +3634,120 @@ class HydroRTCClient {
   }
 
   // --- Distributed Data Analysis and Processing End ---
+  dataChunks(file, maxChunkSize) {
+    console.log('Callee')
+    console.log('Start sending chunks')
+    const fileSize = file.size;
+    const fileName = file.name;
+    const usecase = 'data'
+    const fileExt = fileName.split('.').pop();
+    let offset = 0;
+
+    const sendChunk = () => {
+      const chunkEnd = Math.min(offset + maxChunkSize, fileSize);
+      const chunkBlob = file.slice(offset, chunkEnd)
+
+      const fileReader = new FileReader();
+
+      fileReader.onload = (event) => {
+        const chunkArray = event.target.result;
+        let isLastChunk = offset + maxChunkSize >= fileSize
+
+        //From here trigger the reassembling in indexedDB using the lastChunk event
+        if (isLastChunk) {
+          this.peerConn.send({ usecase, fileExt, chunkArray, isLastChunk, fileSize });
+          console.log('All checks sent.')
+        }
+
+        else {
+          console.log('Sending a chunk')
+          this.peerConn.send({ offset, usecase, chunkArray });
+          console.log(`Chunk sent from ${offset} to ${chunkEnd} to peer.`)
+          offset += maxChunkSize;
+          setTimeout(sendChunk(), 3)
+        }
+      }
+      //Convert to array buffer
+      fileReader.readAsArrayBuffer(chunkBlob)
+    }
+    //First chunk
+    sendChunk()
+    // })
+  }
+
+  getfileData(fileInput, chunkSize = 1) {
+    let maxChunkSize = chunkSize * 1024 * 1024//10 MB in bytes
+    fileInput.addEventListener('change', (ev) => {
+      //1 file per request
+      const selectedFile = ev.target.files[0];
+      //const selectedFile = fileInput.files[0];
+      console.log('here')
+
+      if (!selectedFile) {
+        //reject("No file selected");
+        return
+      }
+
+      console.log('Caller')
+
+      this.dataChunks(selectedFile, maxChunkSize)
+    }
+    )
+
+    if (fileInput.files.length > 0) {
+      const selectedFile = fileInput.files[0];
+
+      if (!selectedFile) {
+        return;
+      }
+
+      console.log('Caller')
+
+      this.dataChunks(selectedFile, maxChunkSize)
+    }
+  }
 
   /**
-   *
-   * @returns
+   * 
+   * @param {*} start 
+   * @param {*} end 
+   * @param {*} size 
+   * @param {*} chunk 
+   * @returns 
    */
-  getStreamDataChunks() {
-    // chunk size in bytes
-    let size = 1024;
-    const numChunks = Math.ceil(this.streamData.length / size);
-    const chunks = new Array(numChunks);
-    for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-      //change for deprecated features
-      chunks[i] = this.streamData.substring(o, size);
+  calculateThroughput(chunk) {
+
+    if (chunk.offset === 0 && this.dataStreamState.start === null) {
+      // If chunk offset is 0, update start time
+      this.dataStreamState.start = new Date()
     }
 
-    return chunks;
+    if (chunk.isLastChunk) {
+      this.dataStreamState.end = new Date();
+      this.dataStreamState.size = chunk.fileSize;
+
+      const timeTaken = this.dataStreamState.end.getTime() - this.dataStreamState.start.getTime();
+      const throughPut = (this.dataStreamState.size / timeTaken).toFixed(2)
+      console.log(`Total data size: ${this.dataStreamState.size}\n`);
+      console.log(`Time taken for the data: ${(timeTaken / 1000).toFixed(2)} s.\n`)
+      console.log(`Total data throughput: ${throughPut} b/ms.`);
+      this.dataStreamState.start = null, this.dataStreamState.end = null, this.dataStreamState.size = 0;
+      return
+    }
+    else {
+      console.log('Intermission...')
+      return null;
+    }
   }
+
+  concatenateResults() {
+    return
+  }
+
+  downloadFile() {
+    return
+  }
+
 }
 
 window.HydroRTCClient = HydroRTCClient;
