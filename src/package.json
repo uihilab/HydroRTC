@@ -41,7 +41,7 @@
     "vgrib2": "^0.1.13"
   },
   "author": "UIHI Lab",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/uihilab/WebRTC/issues"
   },

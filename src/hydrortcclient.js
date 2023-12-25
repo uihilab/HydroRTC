@@ -1,5 +1,4 @@
 // this file exports global objects for browser/client
-
 const { configuration } = require("./configuration.js");
 const { io } = require("socket.io-client");
 const { EventEmitter } = require("events");
@@ -8,7 +7,7 @@ const { Peer } = require("peerjs");
 // HydroRTCClient object
 class HydroRTCClient {
   /**
-   * 
+   * Constructor class for the HydroRTC system
    * @param {*} clientName 
    * @returns 
    */
@@ -351,6 +350,8 @@ class HydroRTCClient {
     })
 
     this.socket.on("tiff-data", ({ data, filename }) => {
+      //Testing
+      this.socket.emit("tiff-data", console.log('data'))
       this.tiffEventHandler.emit("data", {
         data,
         filename
@@ -606,7 +607,7 @@ class HydroRTCClient {
       } else if (data.usecase === "data") {
         this.lastProcessedFile = data.name
         this.calculateThroughput(data)
-        this.addDataToDB(data)
+        //this.addDataToDB(data)
         
         //this.dataExchangeEventHandler.emit("data", data)
       }
@@ -924,7 +925,7 @@ class HydroRTCClient {
         else {
           console.log('Sending a chunk')
           this.peerConn.send({ offset, usecase, chunkArray, name, fileExt });
-          console.log(`Chunk sent from ${offset} to ${chunkEnd} to peer.`)
+          //console.log(`Chunk sent from ${offset} to ${chunkEnd} to peer.`)
           offset += maxChunkSize;
           //Send next data chunk after 3ms. This might need change.
           setTimeout(sendChunk(), 3)

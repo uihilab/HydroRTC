@@ -2753,7 +2753,6 @@ this.configuration = new Configuration();
   
 },{}],7:[function(require,module,exports){
 // this file exports global objects for browser/client
-
 const { configuration } = require("./configuration.js");
 const { io } = require("socket.io-client");
 const { EventEmitter } = require("events");
@@ -2761,6 +2760,11 @@ const { Peer } = require("peerjs");
 
 // HydroRTCClient object
 class HydroRTCClient {
+  /**
+   * Constructor class for the HydroRTC system
+   * @param {*} clientName 
+   * @returns 
+   */
   //Initializer of required variables and event emitters
   constructor(clientName) {
     // list of usecases that can be used by client
@@ -2778,6 +2782,7 @@ class HydroRTCClient {
 
     this.streamData = null;
 
+    //Keeping track of throughput and datasize for a particular file
     this.dataStreamState = {
       start: null,
       end: null,
@@ -2825,7 +2830,7 @@ class HydroRTCClient {
 
     // this object will hold stream data once received
     //NEEDS MODIFICATION, CANNOT JUST BE STREAMFLOW DATA
-    this.streamData = "";
+    this.lastProcessedFile = null;
 
     this.dbName = `HydroRTC_DB_${clientName}`
     this.createDB(this.dbName)
@@ -2836,6 +2841,7 @@ class HydroRTCClient {
 
   /**
    * 
+   * @param {*} clientName 
    */
   createDB(clientName) {
 
@@ -2877,9 +2883,12 @@ class HydroRTCClient {
     const transaction = this.db.transaction([storeName], 'readwrite');
     const objectStore = transaction.objectStore(storeName);
 
+    if (!this.lastProcessedFile) {
+
     //To change in the future for a specific identifier, either with task or keep data, or a combination
     //Serialize in order to keep tasks
-    data.dataID = new Date().getTime();
+    this.lastProcessedFile = new Date().getTime();
+  }
 
     if (data.binaryData instanceof ArrayBuffer) {
       try {
@@ -2943,6 +2952,12 @@ class HydroRTCClient {
     })
   }
 
+  /**
+   * 
+   * @param {*} itemID 
+   * @param {*} storeName 
+   * @returns 
+   */
   deleteDataFromDB(itemID, storeName = 'data') {
     return new Promise((resolve, reject) => {
       if (!this.db) {
@@ -3006,7 +3021,7 @@ class HydroRTCClient {
   }
 
   /**
-   * defining all socket event handlers
+   * Data driven event handlers 
    */
   socketEventHandlers() {
     this.socket.on("valid-username", async (data) => {
@@ -3089,6 +3104,8 @@ class HydroRTCClient {
     })
 
     this.socket.on("tiff-data", ({ data, filename }) => {
+      //Testing
+      this.socket.emit("tiff-data", console.log('data'))
       this.tiffEventHandler.emit("data", {
         data,
         filename
@@ -3145,8 +3162,6 @@ class HydroRTCClient {
    * Stream data request initiator
    * @returns {Function} - Event emitter for the stream data requestor
    */
-
-  // returns event handler for sending data stream
   streamDataRequest(filePath) {
     console.log(filePath)
     // client can hold one stream data at time.
@@ -3256,7 +3271,6 @@ class HydroRTCClient {
    * @param {*} request
    * @returns {Function} - Handler for data exchange
    */
-
   // TODO: reject request / obsolete request after some interval
   // TODO: Limit number of connected peers
   // returns event handler send data receieved from requested peer
@@ -3345,7 +3359,10 @@ class HydroRTCClient {
           data
         )
       } else if (data.usecase === "data") {
+        this.lastProcessedFile = data.name
         this.calculateThroughput(data)
+        //this.addDataToDB(data)
+        
         //this.dataExchangeEventHandler.emit("data", data)
       }
       else {
@@ -3638,9 +3655,9 @@ class HydroRTCClient {
     console.log('Callee')
     console.log('Start sending chunks')
     const fileSize = file.size;
-    const fileName = file.name;
+    let fileName = file.name;
     const usecase = 'data'
-    const fileExt = fileName.split('.').pop();
+    let [name, fileExt] = fileName.split('.');
     let offset = 0;
 
     const sendChunk = () => {
@@ -3655,15 +3672,16 @@ class HydroRTCClient {
 
         //From here trigger the reassembling in indexedDB using the lastChunk event
         if (isLastChunk) {
-          this.peerConn.send({ usecase, fileExt, chunkArray, isLastChunk, fileSize });
+          this.peerConn.send({ usecase, name, fileExt, chunkArray, isLastChunk, fileSize });
           console.log('All checks sent.')
         }
 
         else {
           console.log('Sending a chunk')
-          this.peerConn.send({ offset, usecase, chunkArray });
-          console.log(`Chunk sent from ${offset} to ${chunkEnd} to peer.`)
+          this.peerConn.send({ offset, usecase, chunkArray, name, fileExt });
+          //console.log(`Chunk sent from ${offset} to ${chunkEnd} to peer.`)
           offset += maxChunkSize;
+          //Send next data chunk after 3ms. This might need change.
           setTimeout(sendChunk(), 3)
         }
       }
@@ -3741,6 +3759,7 @@ class HydroRTCClient {
   }
 
   concatenateResults() {
+    
     return
   }
 

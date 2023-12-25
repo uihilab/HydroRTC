@@ -1,7 +1,7 @@
 //Required Imports
 const { createServer } = require("http");
 const { parse } = require("url");
-const { join, sep } = require("path");
+const { join } = require("path");
 const {
   createReadStream,
   readdirSync,
@@ -65,40 +65,44 @@ class HydroRTCServer {
       data: {}
     }
 
+    //TIFF or geoTIFF namespaces
     this.tiff = {
       dataPath: "",
       data: {}
     }
 
+    //Different datatypes locations
     this.dataTypeLocation = {
       dataPath: "",
     }
 
+    //Set server and input/output variables
     this.server = null;
-
     this.io = null;
   }
 
   /**
-   *
-   * @param {*} hostname
-   * @param {*} port
+   * @method prepareServer - Initializes the sever for the HydroRTC library. Sets the available 
+   * @memberof HydroRTCServer
+   * @param {String} hostname = The hostname or IP address for the server
+   * @param {Number} port - Port number for the server. It looks into the environment to set the specific port based on the available 
+   * @param {String} [homePage = 'index.html'] - location of the homPage the sever interacts with. Defaults to the available index.html, if exists.
+   * @returns {VoidFunction}
    */
-  prepareServer(hostname, port, homePage = undefined) {
+  prepareServer(hostname, port, homePage = "index.html") {
     this.hostname = hostname;
-    this.port = port;
-    const defaultHomePage =
-      homePage || (sep === "/" ? "/index.html" : "\\index.html");
+    this.port = process.env.PORT || port;
+    const defaultHomePage = homePage.startsWith("/") ? homePage : `/${homePage}`;
     this.server = createServer(async (request, response) => {
-      var uri = parse(request.url).pathname,
-        filename = join(process.cwd(), uri);
+      const uri = parse(request.url).pathname,
+        filename = join(process.cwd(), uri),
 
-      //var isWin = !!process.platform.match(/^win/);
-      // specifiying default home page of the library client application
-      // TODO: allow library client to specify name and location of homepage file
-      const filePath = statSync(filename).isDirectory()
-        ? filename + defaultHomePage
-        : filename;
+        //var isWin = !!process.platform.match(/^win/);
+        // specifiying default home page of the library client application
+        // TODO: allow library client to specify name and location of homepage file
+        filePath = statSync(filename).isDirectory()
+          ? join(filename, defaultHomePage)
+          : filename;
 
       await this.serveFile(response, filePath);
     });
@@ -195,9 +199,11 @@ class HydroRTCServer {
   }
 
   /**
-   * HTML file server
-   * @param {*} response
-   * @param {*} filename
+   * @method serveFile - Reads and serves a specified file to the client's response
+   * @memberof HydroRTCServer
+   * @param {Object{}} response - Response object to send data back to the client
+   * @param {String} filename - Path of the file to be served
+   * @returns {Promise<void>} Serves the HTML page
    */
 
   async serveFile(response, filename) {
@@ -208,14 +214,12 @@ class HydroRTCServer {
         throw new Error(`Not a file: ${filename}`);
       }
 
-
-
       const fileContent = await fsPromises.readFile(filename, "binary");
       response.writeHead(200, { "Content-Type": "text/html" });
       //Serve other files in the HTML through static imports. This might need change because of security issues!
       response.writeHead(200, { "Access-Control-Allow-Origin": "*" })
       response.write(fileContent, "binary");
-      response.end();    
+      response.end();
     } catch (error) {
       response.writeHead(404, {
         "Content-Type": "text/plain",
@@ -226,9 +230,11 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} socket
-   * @param {*} peer
+   * @method joinServer - Joins a peer to the existing server and gets broadcasted to the exisiting peer list.
+   * @memberof HydroRTCServer
+   * @param {Object{}} socket - Socket representing the peer's connection
+   * @param {Object{}} peer - Information about the joining peer.
+   * @returns {void} registers the peer on the server.
    */
 
   joinServer(socket, peer) {
@@ -250,9 +256,11 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} socket
-   * @param {*} data
+   * @method validateUser - validates that a user is already registered on the live server.
+   * @memberof hydroRtcServer
+   * @param {Object{}} socket - current socket used by the user
+   * @param {Object{}} data - peer data available
+   * @returns {EventEmitter}
    */
 
   validateUser(socket, data) {
@@ -421,7 +429,7 @@ class HydroRTCServer {
     if (resolutions.length === 1) {
       let files = getFiles(resolutions[0]);
       let count = 0;
-      console.log(files);
+      //console.log(files);
       this.smartDataSharing.data[this.smartDataSharing.resolution] = files;
       this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
       return;
@@ -531,7 +539,10 @@ class HydroRTCServer {
     let data = this.smartDataSharing.data[this.smartDataSharing.resolution];
 
     const emitFile = () => {
-      if (typeof data === 'undefined') { console.log(data); return }
+      if (typeof data === 'undefined') {
+        //console.log(data); 
+        return
+      }
       if (count < data.length) {
         let filename = data[count];
         let stgData = imageHandler(this.smartDataSharing.dataPath + filename);
@@ -644,7 +655,7 @@ class HydroRTCServer {
   handlenetCDF(peer) {
     let { clientName, dataPath, socketId } = peer
 
-    console.log(`peer ${clientName} requested ${dataPath} file from server.`);
+    //console.log(`peer ${clientName} requested ${dataPath} file from server.`);
 
     this.netCDF = {}
 
@@ -658,7 +669,7 @@ class HydroRTCServer {
     //single path found in the given directory
     if (resolutions.length === 1) {
       let files = getFiles(resolutions[0]);
-      console.log(files);
+      //console.log(files);
       //Single file stream now
       let filename = files[0];
       largeFileHandler(this.netCDF.dataPath + filename).then(data => {
@@ -692,7 +703,7 @@ class HydroRTCServer {
 
       this.HDF5 = {}
 
-      console.log(`peer ${clientName} requested hdf5 file from server.`);
+      //console.log(`peer ${clientName} requested hdf5 file from server.`);
 
       this.HDF5.dataPath = dataPath;
 
@@ -704,7 +715,7 @@ class HydroRTCServer {
       //single path found in the given directory
       //if (resolutions.length === 1) {
       let files = getFiles(resolutions[0]);
-      console.log(files);
+      //console.log(files);
       //Single file stream now
       let filename = files[0];
 
@@ -715,7 +726,7 @@ class HydroRTCServer {
       //TODO: modify this handler for multiple types of variables
       let d = reader.get(`${reader.keys()[0]}/precipitationCal`)
 
-      console.log(d)
+      //console.log(d)
 
       let data = {
         metadata: d.metadata,
@@ -746,18 +757,18 @@ class HydroRTCServer {
 
       this.tiff = {}
 
-      console.log(`peer ${clientName} requested hdf5 file from server.`);
+      //console.log(`peer ${clientName} requested tiff file from server.`);
 
       this.tiff.dataPath = dataPath;
 
       let resolutions = getDirectories(this.tiff.dataPath);
 
       let files = getFiles(resolutions[0]);
-      console.log(files);
+      //console.log(files);
       //Single file stream now
       let filename = files[0];
 
-      console.log(this.tiff.dataPath + filename)
+      //console.log(this.tiff.dataPath + filename)
 
       const res = await largeFileHandler(this.tiff.dataPath + filename)
       const arrayBuffer = res.buffer.slice(res.byteOffset, res.byteOffset + res.byteLength);
@@ -798,7 +809,7 @@ class HydroRTCServer {
 
     this.dataTypeLocation = {}
 
-    console.log(`peer ${clientName} requested files file from server with extension ${dataPath}.`);
+    //console.log(`peer ${clientName} requested files file from server with extension ${dataPath}.`);
 
     this.dataTypeLocation.dataPath = dataPath;
 
@@ -905,7 +916,7 @@ function largeFileHandler(file) {
     //On finished stream
     //Still need to change the way this handler is supposed to work
     read.on('end', () => {
-      console.log(data.length)
+      //console.log(data.length)
       //Buffer.concat(data.slice(window))
       resolve(Buffer.concat(data))
     })
