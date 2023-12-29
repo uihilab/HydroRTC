@@ -135,8 +135,8 @@
                             let str = ""
                             document.getElementById("peers").innerHTML = "";
                             data.data.forEach(peer => {
-                                if(peer !== clientConn)
-                                str += "<option value='" + peer + "'>" + peer + "</option>"
+                                if (peer !== clientConn)
+                                    str += "<option value='" + peer + "'>" + peer + "</option>"
                             })
                             document.getElementById("peers").innerHTML = str;
                             document.getElementById('controls').style.display = 'block';
@@ -163,48 +163,62 @@
         }
     }
 
-    document.getElementById('stream-data').onclick = function () {
-
-        // stream data usecase
-        let dataStream = hydroRtcClient.streamDataRequest("./data/sensor-data.txt")
-        // null, if client is unable to use the usecase
-        if (dataStream != null) {
-            // on receiving data stream
-            dataStream.on('data', (data) => {
-                // checking whether last data chunk is received or not
-                if (data.status == "incomplete") {
-                    document.getElementById('text').innerHTML += data.data
-                }
-            })
-        }
-    }
-
     document.getElementById('netcdf-data').onclick = function () {
+        let start = performance.now();
+        let end = 0;
 
-        let dataStream = hydroRtcClient.getnetCDF('./data/netcdf/')
+        let dataStream = hydroRtcClient.getnetCDF('./data/netcdf/');
+
+        // Remove all previous 'data' event listeners
+        dataStream.removeAllListeners('data');
+
         if (dataStream != null) {
             dataStream.on('data', (data) => {
-                console.log(data)
-            })
+                console.log(data);
+                end = performance.now();
+                console.log(`Total time: ${(end - start) / 1000} s.`);
+            });
         }
-    }
+
+        dataStream = null;
+    };
+
 
     document.getElementById('tiff-data').onclick = function () {
 
+        let start = performance.now();
+        let end = 0;
+
         let dataStream = hydroRtcClient.getTIFF('./data/tiff/')
+
+        // Remove all previous 'data' event listeners
+        dataStream.removeAllListeners('data');
+
         if (dataStream != null) {
             dataStream.on('data', (data) => {
                 console.log(data)
+                end = performance.now();
+                console.log(`Total time: ${(end - start) / 1000} s.`);
             })
         }
+        dataStream = null
     }
 
     document.getElementById('hdf5-data').onclick = function () {
 
+        let start = performance.now();
+        let end = 0;
+
         let dataStream = hydroRtcClient.gethdf5('./data/hdf5/')
+
+        // Remove all previous 'data' event listeners
+        dataStream.removeAllListeners('data');
+
         if (dataStream != null) {
             dataStream.on('data', (data) => {
                 console.log(data)
+                end = performance.now();
+                console.log(`Total time: ${(end - start) / 1000} s.`);
             })
         }
 
@@ -214,6 +228,10 @@
     document.getElementById('request-data').onclick = function () {
         // select peer from connected peers list to request data for collaborative data exchange
         let dataStream = hydroRtcClient.dataTypeReader('tiff')
+
+        // Remove all previous 'data' event listeners
+        dataStream.removeAllListeners('data');
+
         if (dataStream != null) {
             dataStream.on('data', (data) => {
                 console.log(data)

@@ -336,6 +336,7 @@ class HydroRTCClient {
 
     //TODO: Clients can read the NetCDF file from sever. Client implementation should also be added
     this.socket.on("netcdf-data", ({ data, filename }) => {
+      console.log('triggered...')
       this.netCDFEventHandler.emit("data", {
         data,
         filename
@@ -351,7 +352,7 @@ class HydroRTCClient {
 
     this.socket.on("tiff-data", ({ data, filename }) => {
       //Testing
-      this.socket.emit("tiff-data", console.log('data'))
+      this.socket.emit('tiff-data-request', (()=>{console.log('Working!')}))
       this.tiffEventHandler.emit("data", {
         data,
         filename

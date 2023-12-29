@@ -656,9 +656,6 @@ class HydroRTCServer {
     let { clientName, dataPath, socketId } = peer
 
     //console.log(`peer ${clientName} requested ${dataPath} file from server.`);
-
-    this.netCDF = {}
-
     this.netCDF.dataPath = dataPath;
 
     // reading cdf files from current directory
@@ -675,15 +672,17 @@ class HydroRTCServer {
       largeFileHandler(this.netCDF.dataPath + filename).then(data => {
         //This is where the data should be either streamed as it is or changed
         let reader = new NetCDFReader(data);
-        let values = {
+        this.netCDF.data = {
           dimensions: reader.dimensions,
           variables: reader.variables,
           attributes: reader.globalAttributes
         }
         this.io.to(socketId).emit("netcdf-data", {
           filename,
-          data: values
+          data: this.netCDF.data
         });
+
+        this.netCDF = {}
         return;
       });
     }
@@ -700,8 +699,6 @@ class HydroRTCServer {
       await hdf5wasm.ready;
 
       let { clientName, dataPath, socketId } = peer
-
-      this.HDF5 = {}
 
       //console.log(`peer ${clientName} requested hdf5 file from server.`);
 
@@ -728,7 +725,7 @@ class HydroRTCServer {
 
       //console.log(d)
 
-      let data = {
+      this.HDF5.data = {
         metadata: d.metadata,
         dataType: d.type,
         shape: d.shape,
@@ -737,8 +734,9 @@ class HydroRTCServer {
 
       this.io.to(socketId).emit("hdf5-data", {
         filename,
-        data
+        data: this.HDF5.data
       });
+      this.HDF5 = {}
       return;
       //}
     })()
@@ -754,8 +752,6 @@ class HydroRTCServer {
       const { fromUrl, fromUrls, fromArrayBuffer, fromBlob } = GeoTiff;
 
       let { clientName, dataPath, socketId } = peer
-
-      this.tiff = {}
 
       //console.log(`peer ${clientName} requested tiff file from server.`);
 
@@ -786,15 +782,16 @@ class HydroRTCServer {
       const resolution = image.getResolution();
       const bbox = image.getBoundingBox();
 
-      let data = {
+      this.tiff.data = {
         sizes: { width, height, tileWidth, tileHeight },
         resolution: { samplesPerPixel, origin, resolution, bbox },
       }
 
       this.io.to(socketId).emit("tiff-data", {
         filename,
-        data
+        data: this.tiff.data
       });
+      this.tiff = {}
       return;
     })()
   }
