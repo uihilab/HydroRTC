@@ -50,4 +50,5 @@ package-lock.json
 .yarn-integrity
 
 #data
-hydro-rtc-test/data/*
+test/server-to-peer/case-study1/data/*
+test/server-to-peer/case-study2/data/*

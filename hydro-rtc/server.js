@@ -1,14 +1,8 @@
 
 const http = require('http')
-const fs = require('fs');
-const createReadStream = require('fs').createReadStream
-const readFile = require('fs').readFile
-const readdirSync = require('fs').readdirSync
-const exists = require('fs').exists
-const statSync = require('fs').statSync
-const Server = require('socket.io').Server
-const createRequire = require('module').createRequire;
 const path = require('path');
+const { createReadStream, readFile, readdirSync, exists, statSync } = require('fs')
+const { Server } = require('socket.io')
 
 var HydroRTCServer = function(){
 
@@ -216,7 +210,7 @@ var HydroRTCServer = function(){
                     let count = 0
                     rows.forEach(row=>{
                         if (count < 1) {
-                            let filenames = fs.readdirSync(currDir+row+"/")  
+                            let filenames = readdirSync(currDir+row+"/")  
                             outerObj.smartDataSharing.data[resolution][row]=filenames
                         }
                         count++

@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <h1> HydroRTC Client </h1>
+    <h1> Case Study 2 - Smart Data Transmission </h1>
     <!-- Input to get client id-->
     <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
@@ -83,6 +83,7 @@
         <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->   
         <div>
             <h2>Smart Data Transmission:</h2>
+            <div id="image-container"></div>
             <p id="img"></p>
         </div>
         <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
@@ -124,10 +125,12 @@
 
                     // on receiving peers list
                     dataStream.on('data', (data)=>{
+                        console.log(data)
                         let str = ""
                         document.getElementById("peers").innerHTML = "";
                         data.data.forEach(peer=>{
-                            str += "<option value='"+peer.name+"'>" + peer.name + "</option>"
+                            if (peer !== document.getElementById('name').value)
+                            str += "<option value='"+peer+"'>" + peer + "</option>"
                         })
                         document.getElementById("peers").innerHTML = str;
                         document.getElementById( 'controls' ).style.display = 'block';
@@ -156,8 +159,8 @@
 
    document.getElementById('stream-data').onclick = function(){
         
-        // stream data usecase
-        let dataStream = hydroRtcClient.streamDataRequest()
+        // stream data usecase, passing datapath file into the server listener
+        let dataStream = hydroRtcClient.streamDataRequest("./data/sensor/sensor-data.txt")
         // null, if client is unable to use the usecase
         if (dataStream != null) {
             // on receiving data stream
@@ -214,13 +217,37 @@
         let frequency = document.getElementById('frequency').value
 
         // requesting for smart data by specifiying data location
-        smartDataHandler = hydroRtcClient.receiveSmartData('./data/building_tiles/_alllayers', frequency, resolution)
+        smartDataHandler = hydroRtcClient.receiveSmartData('./data/jpeg/', frequency, resolution)
         // null, if client is unable to receive the smart data
         if (smartDataHandler != null) {
             // on receiving smart data chunk
             smartDataHandler.on('data', (data)=>{
+                //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
+                let container = document.getElementById('image-container')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
-                document.getElementById('img').innerHTML+= filePath
+                container.innerHTML=''
+                container.innerHTML=filePath
+
+                const binaryData = atob(data.data);
+                const arrayBuffer = new ArrayBuffer(binaryData.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                for (let i = 0; i < binaryData.length; i++) {
+                    uint8Array[i] = binaryData.charCodeAt(i)
+                }
+
+                const blob = new Blob([arrayBuffer], {type: 'image/jpeg'});
+
+                const reader = new FileReader();
+
+                reader.onload = (event) => {
+                    const dataURL = event.target.result;
+
+                    const imageElement = document.createElement('img')
+                    imageElement.src = dataURL;
+                    container.appendChild(imageElement);
+                };
+
+                reader.readAsDataURL(blob);
             })
         }
         

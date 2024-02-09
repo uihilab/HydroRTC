@@ -1,18 +1,9 @@
 // this file exports global objects for browser/client
 
-const configuration = require("./configuration.js").configuration;
-const io = require("socket.io-client").io;
+const { configuration } = require("./configuration.js");
+const { io } = require("socket.io-client");
 const events = require("events");
-const $ = require('./lib/jquery.js').$
-// const Peer = require('peerjs')
-
-// Dynamically loading peerjs script
-$.when(
-  $.getScript( "https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js" ),
-  $.Deferred(function( deferred ){
-      $( deferred.resolve );
-  })
-).done(function(){})
+const  { Peer } = require('peerjs')
 
 // HydroRTCClient object
 this.HydroRTCClient = function (clientName) {
@@ -26,7 +17,7 @@ this.HydroRTCClient = function (clientName) {
   ];
 
   // datatypes that can be shared and received by the client
-  let dataTypes = ["csv", "xml", "json", "js", "png"];
+  let dataTypes = ["csv", "xml", "json", "js", "png", "tab", "tiff", "ts"];
 
   // in the configuration
   // user can enable / disable usecases
@@ -478,7 +469,8 @@ this.HydroRTCClient = function (clientName) {
     const numChunks = Math.ceil(this.streamData.length / size)
     const chunks = new Array(numChunks)
     for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-      chunks[i] = this.streamData.substr(o, size)
+      //change for deprecated features
+      chunks[i] = this.streamData.substring(o, size)
     }
   
     return chunks
