@@ -1,4 +1,4 @@
-This repository contains following two folders:
+This repository contains a following two folders:
 1. <strong> [hydro-rtc](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc)</strong>: This folder contains all the HydroRTC library files and code.
 2.  <strong> [hydro-rtc-test](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc-test)</strong>: This is a demo application to demonstrate how HydroRTC library can be imported and used.
 
