@@ -1,7 +1,3 @@
-This repository contains a following two folders:
-1. <strong> [hydro-rtc](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc)</strong>: This folder contains all the HydroRTC library files and code.
-2.  <strong> [hydro-rtc-test](https://github.com/uihilab/WebRTC/tree/main/hydro-rtc-test)</strong>: This is a demo application to demonstrate how HydroRTC library can be imported and used.
-
 # HydroRTC
 
 It is a library to facilitate applications in data sharing and analysis. This library has following features with possible usecases:
@@ -28,9 +24,13 @@ HydroRTC library is divided into two major components:
 
 Both of the components communicate with each other using [Socket.IO library](https://socket.io/). HydroRTC Client uses [Client API](https://socket.io/docs/v3/client-api/index.html) while, HydroRTC uses [Server API](https://socket.io/docs/v3/server-api/index.html). In the following figure, Modules, Functions, and data contained inside these components can be seen.
 
-![component](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Highlevel-component.png)
+![component](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/architecture.png)
 
 ## How to setup library
+
+This repository is mainly composed of the following:
+1. <strong> [src](https://github.com/uihilab/WebRTC/tree/main/src)</strong>: This folder contains all the HydroRTC library files and code.
+2.  <strong> [test](https://github.com/uihilab/WebRTC/tree/main/test)</strong>: This folder contains example for the peer-to-peer and server-to-peer usage of the library.
 
 In this section we are going to discuss steps required to build the library for deployment. This library is based on NodeJS so, you need to install and configure [NodeJS](https://nodejs.org/en/download/) in your environment. After configuring NodeJS, you can follow following steps to setup the library for publishing or deployment.
 
@@ -73,19 +73,19 @@ npm install
 
 1. Streaming Data:
 
-![stream-data](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Stream-Data.png)
+![stream-data](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/s2p.png)
 
 2. Smart Data Tranmission:
 
-![smart-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Smart-Data-Sharing.png)
+![smart-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/data-p2p.png)
 3. Distributed Data Sharing:
 
-![distributed-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Distributed.png)
+![distributed-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/tasks.png)
 
 4. Decentralized Data Distribution:
 
 ![decentralized-data-distribution](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/decentralized.png)
 
-5. Collaborative Data Exchange:
+5. Peer-to-Peer Data Exchange:
 
-![collaborative-data-exchange](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/collaborative.png)
+![collaborative-data-exchange](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/p2p.png)
