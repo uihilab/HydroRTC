@@ -3,21 +3,18 @@ A Web-Based Data Transfer and Communication Library for Collaborative Data Proce
 
 ## Table of Contents
 
-* [Introduction]()
-* [How to Use]()
-* [Expansions and Test Cases]()
-* [Community]()
-* [Feedback]()
-* [Scalability and To Do's]()
+* [Introduction](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#introduction)
+* [How to Use](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#how-to-use)
+* [Expansions and Test Cases](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#expansions-and-test-cases)
+* [Community](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#community)
+* [Feedback](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#feedback)
+* [Scalability and To Do's](https://github.com/uihilab/HydroRTC/tree/main?tab=readme-ov-file#scalability-and-to-dos)
 * [License]()
 * [Acknowledgements]()
 * [References]()
 
 ## Introduction
 It is a library to facilitate applications in data sharing and analysis. This library has following features with possible usecases:
-
-## Features and Potential usecases
-
  
 ## How to Use
 HydroRTC library is divided into two major components:
@@ -90,11 +87,12 @@ To test the applications, we have used HDF5, NetCDF, GRIBB, and large TIFF/geoTI
 
 1. Sever-to-Peer Data:
 
-![stream-data](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/server-to-peer.png)
+![stream-data](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/s2p.png)
 
 2. Smart Data Tranmission:
 
-![smart-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/smart-data.png)
+![smart-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/data-p2p.png)
+
 3. Distributed Data Sharing:
 
 ![distributed-data-sharing](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/tasks.png)
@@ -105,7 +103,30 @@ To test the applications, we have used HDF5, NetCDF, GRIBB, and large TIFF/geoTI
 
 5. Peer to Peer Data Exchange:
 
-![collaborative-data-exchange](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/Peer-to-Peer.png)
+![collaborative-data-exchange](https://github.com/uihilab/WebRTC/blob/main/docs/diagrams/p2p.png)
+
+## Community
+
+The library is meant as a developing environment that allows the deployment of different types of application through an easy to use interface. New workflows and examples can be added by the community of users to exemplofy different examples on how to create web applications for server and client side using the library.
+
+## Feedback
+
+Please feel free to send feedback to us on any issues found by filing an issue.
+
+## Scalability and To Do's
+
+The framework is not limited to the functions and modules implemented, but rather provides a boilerplate for new features to be added. Nonetheless, the following should be considered:
+
+* The current implementation runs solely on Node.js environment, and thus not optimized to render 
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/uihilab/HydroRTC/tree/main?tab=MIT-1-ov-file#readme) file for details.
+
+## Acknowledgements
+This project is developed by the University of Iowa Hydroinformatics Lab (UIHI Lab):
+
+https://hydroinformatics.uiowa.edu/.
 
 ## References
 
