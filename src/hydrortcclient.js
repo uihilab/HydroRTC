@@ -7,11 +7,11 @@ const { Peer } = require("peerjs");
 // HydroRTCClient object
 class HydroRTCClient {
   /**
-   * Constructor class for the HydroRTC system
-   * @param {*} clientName 
-   * @returns 
+   * @description class for the HydroRTC-Client system, initializer of required variables and event emitters
+   * @constructor
+   * @param {String} clientName 
+   * @returns {Object} - Clientside rendering
    */
-  //Initializer of required variables and event emitters
   constructor(clientName) {
     // list of usecases that can be used by client
     this.usecases = [
@@ -35,11 +35,13 @@ class HydroRTCClient {
       size: 0
     }
 
-    // TODO: ensure server is run before client
-    // init
+    // TODO: ensure server is run before client starts
     this.configuration = configuration;
+
     // Defining Event Handlers for sending to client
     //TODO: need to modify some of this emitters
+
+    /**List of emitters used from client server and vice versa */
     this.objectCreationEvent = new EventEmitter();
     this.streamEventHandler = new EventEmitter();
     this.peersEventHandler = new EventEmitter();
@@ -59,25 +61,26 @@ class HydroRTCClient {
 
     // trigger all the event handlers so they are ready upon initialization
     this.socketEventHandlers();
+
     // peer connection
     this.peerConn = null;
+
     // client's own connection
     this.myConn = null;
-
 
     //Define the user ID and name to be sent to server
     //Keeping track of all the values
     this.sessionID = { clientName }
 
-    // upon object creation, send validate username event to server
+    //Upon object creation, send validate username event to server
     this.socket.emit("validate-username", {
       clientName: this.sessionID.clientName
     });
 
     // this object will hold stream data once received
-    //NEEDS MODIFICATION, CANNOT JUST BE STREAMFLOW DATA
     this.lastProcessedFile = null;
 
+    //Definition of the database that will hold data saved by the user
     this.dbName = `HydroRTC_DB_${clientName}`
     this.createDB(this.dbName)
 
@@ -85,14 +88,18 @@ class HydroRTCClient {
     return this.objectCreationEvent;
   }
 
-  /**
-   * 
-   * @param {*} clientName 
+  /** 
+   * @description Creator of the database per clientName
+   * @method createDB
+   * @memberof HydroRTCClient
+   * @param {String} clientName 
+   * @returns {null} - registers an IndexedDB store for the data to be saved
    */
   createDB(clientName) {
-
+    //Create a request for the DB to open
     const request = indexedDB.open(clientName, 1)
 
+    //Handlers for the request
     request.onupgradeneeded = (ev) => {
       const db = ev.target.result;
 
@@ -114,12 +121,11 @@ class HydroRTCClient {
   }
 
   /**
-   * 
-   * @param {*} data 
-   * @param {*} storeName 
-   * @returns 
+   * @description Adds data into the database depending on the type of data that the user has been created by the user
+   * @param {Object} data - given data and datatype by the user
+   * @param {String} storeName - provides a keyword space to connect to the database
+   * @returns  {null}
    */
-
   addDataToDB(data, storeName = 'data') {
     if (!this.db) {
       console.err('IndexedDB has not been initialized.');
@@ -131,10 +137,10 @@ class HydroRTCClient {
 
     if (!this.lastProcessedFile) {
 
-    //To change in the future for a specific identifier, either with task or keep data, or a combination
-    //Serialize in order to keep tasks
-    this.lastProcessedFile = new Date().getTime();
-  }
+      //To change in the future for a specific identifier, either with task or keep data, or a combination
+      //Serialize in order to keep tasks
+      this.lastProcessedFile = new Date().getTime();
+    }
 
     if (data.binaryData instanceof ArrayBuffer) {
       try {
@@ -146,6 +152,7 @@ class HydroRTCClient {
       }
     }
 
+    //Adds data to the request
     const request = objectStore.add(data);
 
     request.onsuccess = () => {
@@ -198,12 +205,23 @@ class HydroRTCClient {
     })
   }
 
-  /**
-   * 
-   * @param {*} itemID 
-   * @param {*} storeName 
-   * @returns 
-   */
+/**
+ * @description Deletes data from the IndexedDB store.
+ * @method deleteDataFromDB
+ * @memberof HydroRTCClient
+ * @param {String} itemID - The ID of the item to be deleted.
+ * @param {string} [storeName='data'] - The name of the store from which data will be deleted.
+ * @returns {Promise<void>} - A promise that resolves when the item is successfully deleted.
+ * @example
+ * // Usage example:
+ * deleteDataFromDB(123, 'storeName')
+ *   .then(() => {
+ *     console.log('Item deleted successfully.');
+ *   })
+ *   .catch((error) => {
+ *     console.error(error);
+ *   });
+ */
   deleteDataFromDB(itemID, storeName = 'data') {
     return new Promise((resolve, reject) => {
       if (!this.db) {
@@ -226,10 +244,22 @@ class HydroRTCClient {
     })
   }
 
-  /**
-   * 
-   * @returns 
-   */
+/**
+ * @description Deletes the IndexedDB database.
+ * @method deleteDB
+ * @memberof HydroRTCClient
+ * @returns {Promise<void>} - A promise that resolves when the database is successfully deleted.
+ * @throws {Error} Throws an error if the IndexedDB database name is not specified.
+ * @example
+ * // Usage example:
+ * deleteDB()
+ *   .then(() => {
+ *     console.log('IndexedDB database deleted successfully.');
+ *   })
+ *   .catch((error) => {
+ *     console.error(error);
+ *   });
+ */
   async deleteDB() {
     if (!this.dbName) {
       throw new Error('IndexedDB database name is not specified.')
@@ -254,9 +284,21 @@ class HydroRTCClient {
 
   }
 
-  /**
-   * 
-   */
+/**
+ * @description Logs out the user by deleting the IndexedDB database.
+ * @method logout
+ * @memberof HydroRTCClient
+ * @returns {Promise<void>} - A promise that resolves when the user is successfully logged out.
+ * @example
+ * // Usage example:
+ * logout()
+ *   .then(() => {
+ *     console.log('User logged out successfully.');
+ *   })
+ *   .catch((error) => {
+ *     console.error('Error during logout: ', error);
+ *   });
+ */
   async logout() {
     try {
       await this.deleteDB();
@@ -352,7 +394,7 @@ class HydroRTCClient {
 
     this.socket.on("tiff-data", ({ data, filename }) => {
       //Testing
-      this.socket.emit('tiff-data-request', (()=>{console.log('Working!')}))
+      this.socket.emit('tiff-data-request', (() => { console.log('Working!') }))
       this.tiffEventHandler.emit("data", {
         data,
         filename
@@ -609,7 +651,7 @@ class HydroRTCClient {
         this.lastProcessedFile = data.name
         this.calculateThroughput(data)
         //this.addDataToDB(data)
-        
+
         //this.dataExchangeEventHandler.emit("data", data)
       }
       else {
@@ -1006,7 +1048,7 @@ class HydroRTCClient {
   }
 
   concatenateResults() {
-    
+
     return
   }
 
