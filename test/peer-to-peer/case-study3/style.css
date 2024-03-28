@@ -2,11 +2,11 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #ffffff; /* White background */
 }
 
 header {
-    background-color: #007BFF;
+    background-color: #343a40; /* Dark background for header */
     color: #fff;
     padding: 20px 0;
     text-align: center;
@@ -22,7 +22,7 @@ header {
 .login-box {
     background-color: #fff;
     padding: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
     max-width: 300px;
@@ -37,23 +37,22 @@ header {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    /* Semi-transparent black overlay */
+    background: rgba(240, 240, 240, 0.9); /* Very light gray background for overlay */
     z-index: 999;
 }
 
 .overlay-box {
     background-color: #fff;
     padding: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
     max-width: 300px;
 }
 
 button#connect {
-    background-color: #007BFF;
-    color: #fff;
+    background-color: #000000; /* Black button background */
+    color: #fff; /* White font color */
     padding: 10px 20px;
     border: none;
     cursor: pointer;
@@ -71,7 +70,7 @@ aside {
     flex: 1;
     background-color: #fff;
     padding: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     max-width: 300px;
 }
@@ -93,7 +92,7 @@ main {
     flex: 2;
     background-color: #fff;
     padding: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     max-width: 600px;
 }
@@ -101,7 +100,7 @@ main {
 #messages {
     height: 300px;
     overflow-y: scroll;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     padding: 10px;
     margin-bottom: 10px;
 }
@@ -111,14 +110,14 @@ main {
 #username {
     width: calc(100% - 22px);
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da; /* Lighter border */
     margin-bottom: 10px;
     box-sizing: border-box;
 }
 
 button {
-    background-color: #007BFF;
-    color: #fff;
+    background-color: #000000; /* Black button background */
+    color: #fff; /* White font color */
     padding: 10px 20px;
     border: none;
     cursor: pointer;

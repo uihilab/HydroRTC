@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uihilab/WebRTC.git"
+    "url": "git+https://github.com/uihilab/HydroRTC.git"
   },
   "keywords": [
     "Decentralized",
@@ -43,7 +43,7 @@
   "author": "UIHI Lab",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/uihilab/WebRTC/issues"
+    "url": "https://github.com/uihilab/HydroRTC/issues"
   },
-  "homepage": "https://github.com/uihilab/WebRTC#readme"
+  "homepage": "https://github.com/uihilab/HydrRTC#readme"
 }
