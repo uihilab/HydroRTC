@@ -8,12 +8,14 @@ const {
   statSync,
   promises: fsPromises,
   readFileSync,
+  read,
 } = require("fs");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const { NetCDFReader } = require("netcdfjs");
-//To implement
-const { GRIB } = require("vgrib2");
+
+const grib2 = require('grib2-simple/index')
+
 //To implement, if required
 const { createBrotliCompress } = require("zlib");
 
@@ -87,6 +89,16 @@ class HydroRTCServer {
    * @param {String} hostname = The hostname or IP address for the server
    * @param {Number} port - Port number for the server. It looks into the environment to set the specific port based on the available 
    * @param {String} [homePage = 'index.html'] - location of the homPage the sever interacts with. Defaults to the available index.html, if exists.
+   *  * @description Initializes the server for the HydroRTC library. Sets the available event emitters and their corresponding handlers:
+ * - `'request'`: Emitted when a client makes a request to the server.
+ * - `'connection'`: Emitted when a new client connects to the server.
+ * - `'disconnect'`: Emitted when a client disconnects from the server.
+ * - `'error'`: Emitted when an error occurs on the server.
+ * - `'message'`: Emitted when the server receives a message from a client.
+ * - `'data'`: Emitted when the server receives data from a client.
+ * - `'close'`: Emitted when the server is closed.
+ * - `'upgrade'`: Emitted when the server is upgraded.
+ * - `'listening'`: Emitted when the server starts listening for connections.
    * @returns {VoidFunction}
    */
   prepareServer(hostname, port, homePage = "index.html") {
@@ -257,7 +269,7 @@ class HydroRTCServer {
 
   /**
    * @method validateUser - validates that a user is already registered on the live server.
-   * @memberof hydroRtcServer
+   * @memberof HydroRTCServer
    * @param {Object{}} socket - current socket used by the user
    * @param {Object{}} data - peer data available
    * @returns {EventEmitter}
@@ -280,11 +292,13 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} socket
-   * @param {*} peer
+   * @method streamData
+   * @memberof HydroRTCServer
+   * @param {Object{}} socket - The current socket used by the user.
+   * @param {Object{}} data - The peer data available.
+   * @emits 'data-stream'
+   * @description Streams the requested data to the user's socket.
    */
-
   streamData(socket, data) {
     let { name, filePath } = data
     console.log(name, filePath)
@@ -332,10 +346,12 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
+   * @method getPeers
+   * @memberof HydroRTCServer
+   * @param {Object{}} peer - The current peer requesting the list of peers.
+   * @emits 'peers'
+   * @description Retrieves and broadcasts the list of connected peers.
    */
-
   getPeers(peer) {
     console.log("peer (%s) requested to get list of peers: ", peer.clientName);
 
@@ -354,11 +370,14 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
-   * @param {*} socketId 
+   * Retrieves the unique identifier (clientID) for a given peer, based on the clientName property.
+   * @method getPeerID
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object containing the clientName property.
+   * @param {string} socketId - The socket ID of the peer.
+   * @emits 'peer-id-value'
+   * @description Emits an event with the peer's clientName and clientID.
    */
-
   getPeerID(peer, socketId) {
     let { clientName } = peer
 
@@ -375,10 +394,16 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} data
+   * Connects two peers by forwarding a connection request to the receiver peer.
+   * @method connectPeers
+   * @memberof HydroRTCServer
+   * @param {Object} data - An object containing information about the connection request.
+   * @param {string} data.requestorName - The name of the peer requesting the connection.
+   * @param {string} data.recieverPeerName - The name of the peer to receive the connection request.
+   * @param {string} data.request - The type of connection request (e.g., "collaborative").
+   * @emits 'connect-request'
+   * @description Forwards the connection request to the receiver peer, if the receiver peer is found in the list of connected peers.
    */
-
   connectPeers(data) {
     console.log(data)
     if (!data.recieverPeerName) {
@@ -407,15 +432,25 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
+   * Handles the process of smart data sharing between peers.
+   * @method smartDataShare
+   * @memberof HydroRTCServer
+   * @param {Object} peer - An object containing information about the peer requesting smart data sharing.
+   * @param {string} peer.clientName - The name of the peer.
+   * @param {string} peer.dataPath - The path to the directory containing the data to be shared.
+   * @param {string} peer.resolution - The resolution of the data to be shared.
+   * @param {number} peer.frequency - The frequency at which the data should be shared.
+   * @description Reads the data from the specified directory, organizes it by resolution and row, and sets up an interval to periodically share the data with the peer.
    */
-
   smartDataShare(peer) {
     let { clientName, dataPath, resolution, frequency } = peer
     console.log("peer (%s) requested to start smart data sharing: ", clientName);
 
-    this.smartDataSharing = {}
+    this.smartDataSharing = {};
+
+    if (!this.smartDataSharing.data) {
+      this.smartDataSharing.data = {};
+  }
 
     this.smartDataSharing.dataPath = dataPath;
     this.smartDataSharing.resolution = resolution;
@@ -425,11 +460,13 @@ class HydroRTCServer {
 
     let resolutions = getDirectories(this.smartDataSharing.dataPath);
 
+    console.log(resolutions)
+
     //single path found in the given directory
     if (resolutions.length === 1) {
       let files = getFiles(resolutions[0]);
       let count = 0;
-      //console.log(files);
+      console.log(files);
       this.smartDataSharing.data[this.smartDataSharing.resolution] = files;
       this.smartDataInterval = this.getSmartDataIntervalCallback(peer);
       return;
@@ -453,10 +490,15 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
+   * Updates the smart data sharing configuration for a peer.
+   * @method updateSmartDataShare
+   * @memberof HydroRTCServer
+   * @param {Object} peer - An object containing information about the peer requesting the smart data sharing update.
+   * @param {string} peer.name - The name of the peer.
+   * @param {string} peer.resolution - The new resolution of the data to be shared.
+   * @param {number} peer.frequency - The new frequency at which the data should be shared.
+   * @description Logs the peer's request to update the smart data configuration, updates the resolution and frequency properties, clears the old smart data interval, and creates a new interval based on the updated properties.
    */
-
   updateSmartDataShare(peer) {
     console.log(
       "peer (%s) requested to update smart data configuration: ",
@@ -472,10 +514,15 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
+   * Processes the result of a task submitted by a peer.
+   * @method taskResult
+   * @memberof HydroRTCServer
+   * @param {Object} peer - An object containing information about the peer submitting the task result.
+   * @param {string} peer.name - The name of the peer.
+   * @param {string} peer.task - The name of the task.
+   * @param {Array} peer.result - The result of the task.
+   * @description Logs the peer's submission of the task result, checks if the result is valid, and logs a message indicating that the result has been saved.
    */
-
   taskResult(peer) {
     let { name, task, result } = peer
     console.log(
@@ -491,13 +538,15 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peerName
-   * @param {*} property
-   * @param {*} value
-   * @returns
+   * Updates a property of a peer in the peers array.
+   * @method updatePeerProperty
+   * @memberof HydroRTCServer
+   * @param {string} peerName - The name of the peer whose property needs to be updated.
+   * @param {string} property - The name of the property to be updated.
+   * @param {any} value - The new value for the property.
+   * @description Iterates through the peers array, finds the peer with the given name, and updates the specified property with the provided value.
+   * @returns {null} - Returns `null` if the property was successfully updated.
    */
-
   updatePeerProperty(peerName, property, value) {
     for (let i = 0; i < this.peers.length; i++) {
       if (this.peers[i].name == peerName) {
@@ -508,10 +557,12 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @returns
+   * Retrieves the most recent peer that has stream data.
+   * @method getPeerwithStreamData
+   * @memberof HydroRTCServer
+   * @description Iterates through the peers array in reverse order (from most recent to oldest) and returns the first peer that has the "has-stream-data" property set to true. If no such peer is found, it returns null.
+   * @returns {Object|null} - Returns the most recent peer with stream data, or null if no such peer is found.
    */
-
   getPeerwithStreamData() {
     // get most recent peer
 
@@ -527,11 +578,21 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
-   * @returns
+   * Generates a callback function that emits smart data to a specific peer at a regular interval.
+   * @method getSmartDataIntervalCallback
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object to which the smart data will be emitted.
+   * @returns {number} - The ID of the interval that was set up to emit the smart data.
+   * @description
+   * This method sets up an interval that emits smart data to the specified peer at a regular interval. It retrieves the smart data from the `this.smartDataSharing.data[this.smartDataSharing.resolution]` array, and for each file in the array, it:
+   * 1. Retrieves the file data using the `imageHandler` function.
+   * 2. Emits the file data to the peer using the "smart-data" event, along with the resolution, row number, filename, and usecase.
+   * 3. Increments the count of emitted files.
+   * 
+   * If all files have been emitted, the interval is cleared.
+   * 
+   * The method returns the ID of the interval that was set up, which can be used to clear the interval later if needed.
    */
-
   // callback to send smart data stream after configured interval
   // this does not necesarilly has to be 
   getSmartDataIntervalCallback(peer) {
@@ -545,7 +606,8 @@ class HydroRTCServer {
       }
       if (count < data.length) {
         let filename = data[count];
-        let stgData = imageHandler(this.smartDataSharing.dataPath + filename);
+        //Right now set up for images, but will be updated to handle any kind of file
+        let stgData = fileEnconder(this.smartDataSharing.dataPath + filename);
 
         this.io.to(peer.socketId).emit("smart-data", {
           resolution: this.smartDataSharing.resolution,
@@ -570,10 +632,17 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} peer
+   * Handles the request for a task from a peer and assigns a task to the peer.
+   * @method getTask
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object that requested the task.
+   * @description
+   * This method is called when a peer requests a task. It logs the request and then iterates through the `this.peers` array to find the requesting peer. Once the requesting peer is found, a task is assigned to the peer by emitting the "task" event with the task data.
+   * 
+   * The task is selected by taking the `peerNo` modulo the length of the `this.tasks` array, which ensures that the tasks are distributed evenly among the peers.
+   * 
+   * The task data is sent to the peer using the "task" event, along with the "usecase" property set to "distributed-data-analysis-and-processing".
    */
-
   getTask(peer) {
     console.log("peer (%s) requested for a task: ", peer.clientName);
 
@@ -595,9 +664,16 @@ class HydroRTCServer {
   }
 
   /**
-   *
+   * Starts the server and listens for incoming connections.
+   * @method runServer
+   * @memberof HydroRTCServer
+   * @description
+   * This method is responsible for starting the server and listening for incoming connections. It first checks if the server can run on the given port and hostname, and then starts the server and logs the address it's listening on.
+   * 
+   * The server is started using the `listen` method of the `this.server` object, which is likely an instance of a web server like Express or Node.js's built-in HTTP server. The `listen` method takes the port and hostname as arguments, and a callback function that is called when the server starts listening.
+   * 
+   * Inside the callback function, the `address` method of the server is called to get the address the server is listening on, and this information is logged to the console.
    */
-
   runServer() {
     // TODO: check if server can run on given port and hostname or not
     this.server = this.server.listen(this.port, this.hostname, function () {
@@ -625,8 +701,13 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} socket
+   * Handles the disconnection of a peer from the WebSocket connection.
+   * @method handleDisconnect
+   * @memberof HydroRTCServer
+   * @param {Object} socket - The socket object representing the disconnected peer.
+   * @returns {void}
+   * @description
+   * Removes the disconnected peer from the `this.peers` array, emits a "delete-db" event to the peer's socket, and logs a message to the console.
    */
   handleDisconnect(socket) {
     const disconnectedPeer = this.getPeerBySocketId(socket.id);
@@ -639,21 +720,47 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} socketId
-   * @returns
+   * Retrieves a peer object by its socket ID.
+   * @method getPeerBySocketId
+   * @memberof HydroRTCServer
+   * @param {string} socketId - The socket ID of the peer to retrieve.
+   * @returns {Object|undefined} - The peer object if found, or undefined if not found.
+   * @description
+   * This method searches the `this.peers` array for a peer object with the matching `socketId` and returns it. If no matching peer is found, it returns `undefined`.
    */
   getPeerBySocketId(socketId) {
     return this.peers.find((peer) => peer.socketId === socketId);
   }
 
   /**
-   * 
-   * @param {*} peer 
-   * @returns 
+   * Handles the processing of a NetCDF file request from a peer.
+   * @method handleNetCDF
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object containing the client's information.
+   * @returns {void}
+   * @description
+   * This method processes a NetCDF file request from a client. It reads the file, extracts the data, and sends it back to the client.
+   * @example
+   * const peer = {
+   *   clientName: 'myClient',
+   *   dataPath: '/path/to/netcdf/file.nc',
+   *   socketId: 'abc123'
+   * };
+   * this.handleNetCDF(peer);
    */
-  handlenetCDF(peer) {
-    let { clientName, dataPath, socketId } = peer
+  async handlenetCDF(peer) {
+    let { clientName, dataPath = null, socketId, fileBuffer = null } = peer
+
+    let reader, filename, data;
+
+    if (fileBuffer) {
+      reader = new NetCDFReader(fileBuffer);
+      this.netCDF.data = {
+        dimensions: reader.dimensions,
+        variables: reader.variables,
+        attributes: reader.globalAttributes
+      }
+    } else {
 
     //console.log(`peer ${clientName} requested ${dataPath} file from server.`);
     this.netCDF.dataPath = dataPath;
@@ -663,34 +770,43 @@ class HydroRTCServer {
 
     let resolutions = getDirectories(this.netCDF.dataPath);
 
-    //single path found in the given directory
-    if (resolutions.length === 1) {
-      let files = getFiles(resolutions[0]);
-      //console.log(files);
-      //Single file stream now
-      let filename = files[0];
-      largeFileHandler(this.netCDF.dataPath + filename).then(data => {
-        //This is where the data should be either streamed as it is or changed
-        let reader = new NetCDFReader(data);
-        this.netCDF.data = {
-          dimensions: reader.dimensions,
-          variables: reader.variables,
-          attributes: reader.globalAttributes
-        }
-        this.io.to(socketId).emit("netcdf-data", {
-          filename,
-          data: this.netCDF.data
-        });
-
-        this.netCDF = {}
-        return;
-      });
+    let files = getFiles(resolutions[0]);
+    //console.log(files);
+    //Single file stream now
+    filename = files[0];
+    data = await largeFileHandler(this.netCDF.dataPath + filename)
+      //This is where the data should be either streamed as it is or changed
+    reader = new NetCDFReader(data);
+    this.netCDF.data = {
+      dimensions: reader.dimensions,
+      variables: reader.variables,
+      attributes: reader.globalAttributes
     }
+  }
+      this.io.to(socketId).emit("netcdf-data", {
+        filename,
+        data: this.netCDF.data
+      });
+
+      this.netCDF = {}
+      return;
   }
 
   /**
-   * 
-   * @param {*} peer 
+   * Handles the processing of an HDF5 file request from a peer.
+   * @method handleHDF5
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object containing the client's information.
+   * @returns {void}
+   * @description
+   * This method processes an HDF5 file request from a client. It reads the file, extracts the data, and sends it back to the client.
+   * @example
+   * const peer = {
+   *   clientName: 'myClient',
+   *   dataPath: '/path/to/hdf5/file.h5',
+   *   socketId: 'abc123'
+   * };
+   * this.handleHDF5(peer);
    */
   handleHDF5(peer) {
     //Workaround to run the async/await stuff on node outside a module
@@ -698,10 +814,15 @@ class HydroRTCServer {
       const hdf5wasm = await import('h5wasm');
       await hdf5wasm.ready;
 
-      let { clientName, dataPath, socketId } = peer
+      let { dataPath = null, socketId, fileBuffer = null } = peer
+
+      let reader, filename;
 
       //console.log(`peer ${clientName} requested hdf5 file from server.`);
 
+      if (fileBuffer) {
+        reader = new hdf5wasm.File(fileBuffer, 'r')
+      } else {
       this.HDF5.dataPath = dataPath;
 
       // reading HDF5 files from current directory
@@ -714,22 +835,33 @@ class HydroRTCServer {
       let files = getFiles(resolutions[0]);
       //console.log(files);
       //Single file stream now
-      let filename = files[0];
+      filename = files[0];
 
-      let reader = new hdf5wasm.File(this.HDF5.dataPath + filename, 'r');
+      reader = new hdf5wasm.File(this.HDF5.dataPath + filename, 'r');
 
-      let f = reader.get(reader.keys()[0]).keys()
+    }
+
+      //let f = reader.get(reader.keys()[0]).keys()
+      let variables = reader.get(reader.keys()[0]).keys()
+
+      console.log(variables)
 
       //TODO: modify this handler for multiple types of variables
-      let d = reader.get(`${reader.keys()[0]}/precipitationCal`)
 
-      //console.log(d)
+      this.HDF5.data = {}
+      for (let i = 0; i < variables.length; i++) {
+        let d = reader.get(`${reader.keys()[0]}/${variables[i]}`)
 
-      this.HDF5.data = {
-        metadata: d.metadata,
-        dataType: d.type,
-        shape: d.shape,
-        values: d.to_array()
+        let values = d.to_array()
+        let subset = values.map(subarr => Array.isArray(subarr) ? subarr.slice(0, 10) : subarr)
+        //console.log(values.map(subarr => Array.isArray(subarr) ? subarr.slice(0, 10) : subarr))
+
+        this.HDF5.data[`${variables[i]}`] = {
+          metadata: d.metadata ? d.metadata : undefined,
+          dataType: d.type ? d.type: undefined,
+          shape: d.shape ? d.shape : undefined,
+          values: subset
+        }  
       }
 
       this.io.to(socketId).emit("hdf5-data", {
@@ -742,32 +874,73 @@ class HydroRTCServer {
     })()
   }
 
+  //STILL MISSING
+  async handleGrib(peer) {
+    let { clientName, dataPath = null, socketId, fileBuffer = null } = peer
+
+    //console.log(`peer ${clientName} requested tiff file from server.`);
+
+    this.gribb.dataPath = dataPath;
+
+    let resolutions = getDirectories(this.tiff.dataPath);
+
+    let files = getFiles(resolutions[0]);
+    //console.log(files);
+    //Single file stream now
+    let filename = files[0];
+
+    const res = await largeFileHandler(this.tiff.dataPath + filename)
+
+  }
+
   /**
- * Handler for request of TIFF/GeoTIFF images
- * NEEDS TO BE FINISHED
- */
+   * Handles the processing of a TIFF file request from a peer.
+   * @method handleTIFF
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object containing the client's information.
+   * @returns {void}
+   * @description
+   * This method processes a TIFF file request from a client. It reads the file, extracts the data, and sends it back to the client.
+   * @example
+   * const peer = {
+   *   clientName: 'myClient',
+   *   dataPath: '/path/to/tiff/file.tiff',
+   *   socketId: 'abc123'
+   * };
+   * this.handleTIFF(peer);
+   */
   handleTIFF(peer) {
     (async () => {
       const GeoTiff = await import('geotiff');
       const { fromUrl, fromUrls, fromArrayBuffer, fromBlob } = GeoTiff;
 
-      let { clientName, dataPath, socketId } = peer
+      let { clientName, dataPath = null, socketId, fileBuffer = null } = peer
 
       //console.log(`peer ${clientName} requested tiff file from server.`);
 
-      this.tiff.dataPath = dataPath;
+      let filename, arrayBuffer, res;
+    
 
+      if (fileBuffer) {
+        arrayBuffer = fileBuffer
+      } else {
+        this.tiff.dataPath = dataPath;
+
+        
       let resolutions = getDirectories(this.tiff.dataPath);
 
       let files = getFiles(resolutions[0]);
       //console.log(files);
       //Single file stream now
-      let filename = files[0];
+      filename = files[0];
 
       //console.log(this.tiff.dataPath + filename)
 
       const res = await largeFileHandler(this.tiff.dataPath + filename)
-      const arrayBuffer = res.buffer.slice(res.byteOffset, res.byteOffset + res.byteLength);
+
+      arrayBuffer = res.buffer.slice(res.byteOffset, res.byteOffset + res.byteLength);
+      }
+
       //const arrayBuffer = await res.arrayBuffer();
       const TIFF = await fromArrayBuffer(arrayBuffer);
       const image = await TIFF.getImage();
@@ -797,38 +970,44 @@ class HydroRTCServer {
   }
 
   /**
-   * 
-   * @param {*} peer 
-   * @returns 
+   * Sends the list of file names available for a given data type to the client.
+   * @method sendFileNames
+   * @memberof HydroRTCServer
+   * @param {Object} peer - The peer object containing the client's information.
+   * @returns {void}
+   * @description
+   * This method retrieves the list of file names for a given data type and sends it to the client.
+   * @example
+   * const peer = {
+   *   clientName: 'myClient',
+   *   dataPath: 'tiff',
+   *   socketId: 'abc123'
+   * };
+   * this.sendFileNames(peer);
    */
   sendFileNames(peer) {
-    let { clientName, dataPath, socketId } = peer
+    try {
+      const { clientName, dataPath, socketId } = peer;
+      const directories = getDirectories(`./data/${dataPath}/`);
+      const files = getFiles(directories[0]);
 
-    this.dataTypeLocation = {}
-
-    //console.log(`peer ${clientName} requested files file from server with extension ${dataPath}.`);
-
-    this.dataTypeLocation.dataPath = dataPath;
-
-    let resolutions = getDirectories(`./data/${this.dataTypeLocation.dataPath}/`);
-
-    let files = getFiles(resolutions[0]);
-
-    let data = {
-      files
+      const data = { files };
+      io.to(socketId).emit("datatype-files", { data });
+    } catch (error) {
+      console.error("Error sending file names:", error);
+      // Handle or propagate the error as needed
     }
-
-    this.io.to(socketId).emit("datatype-files", {
-      data
-    });
-    return;
   }
 
   /**
-   * 
-   * @param {*} username 
-   * @returns 
-   */
+   * Checks if a given username is already taken by another client.
+   * @method userNameTaken
+   * @memberof HydroRTCServer
+   * @param {string} username - The username to check.
+   * @returns {boolean} - True if the username is already taken, false otherwise.
+   * @description
+   * This method checks the list of connected peers to see if the given username is already in use.
+     */
   userNameTaken(username) {
     return this.peers.some((peer) => peer.clientName === username);
   }
@@ -837,9 +1016,15 @@ class HydroRTCServer {
 // --- utility functions ---
 
 /**
- * 
- * @param {*} source 
- * @returns 
+ * Retrieves the list of directories in a given path.
+ * @function getDirectories
+ * @param {string} source - The path to the directory.
+ * @memberof HydroRTCServer
+ * @returns {string[]} - An array of directory names.
+ * @description
+ * This function uses the `readdirSync` method from the `fs` module to read the contents of the directory at the given path.
+ * It then filters the results to only include directories and maps the directory names to an array.
+ * If no directories are found, the function returns an array containing the original path.
  */
 function getDirectories(source) {
   try {
@@ -861,9 +1046,14 @@ function getDirectories(source) {
 }
 
 /**
- * 
- * @param {*} source 
- * @returns 
+ * Retrieves the list of files in a given path.
+ * @function getFiles
+ * @param {string} source - The path to the directory.
+ * @memberof HydroRTCServer
+ * @returns {string[]} - An array of file names.
+ * @description
+ * This function uses the `readdirSync` method from the `fs` module to read the contents of the directory at the given path.
+ * It then filters the results to only include files and maps the file names to an array.
  */
 function getFiles(source) {
   try {
@@ -879,24 +1069,33 @@ function getFiles(source) {
 }
 
 /**
- * Function for handling different types of image files.
- * Support t: jpg, tiff, tif, jpeg, png
- * @param {*} file 
- * @returns 
+ * Reads the contents of an image file and returns it as a base64-encoded string.
+ * @function imageHandler
+ * @memberof HydroRTCServer
+ * @param {string} file - The path to the image file.
+ * @returns {string} - The base64-encoded contents of the image file.
+ * @description
+ * This function uses the `readFileSync` method from the `fs` module to read the contents of the image file at the given path.
+ * It then encodes the contents as a base64 string and returns it.
  */
-function imageHandler(file) {
+function fileEnconder(file, enconding = 'base64') {
 
-  let fileStream = readFileSync(file, { encoding: 'base64' });
+  let fileStream = readFileSync(file, 
+    { encoding: enconding }
+  );
   return fileStream
   //
 }
 
 /**
- * Function for handling large files for streaming
- * Returns stream of bytes that needs to be handled
- * By the implemented file handler
- * @param {String} file 
- * @returns {Promise} memory saved and stored
+ * Reads the contents of a large file and returns it as a Buffer.
+ * @function largeFileHandler
+ * @memberof HydroRTCServer
+ * @param {string} file - The path to the large file.
+ * @returns {Promise<Buffer>} - A Promise that resolves to a Buffer containing the contents of the file.
+ * @description
+ * This function uses the `createReadStream` method from the `fs` module to read the contents of the file at the given path in chunks.
+ * It then concatenates the chunks into a single Buffer and returns it as a Promise.
  */
 function largeFileHandler(file) {
   //
@@ -933,4 +1132,8 @@ function uploadData(data) {
 
 }
 
-this.server = new HydroRTCServer();
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = HydroRTCServer;
+} else if (typeof window !== 'undefined') {
+  window.HydroRTC = HydroRTCServer;
+}

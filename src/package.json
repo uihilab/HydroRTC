@@ -4,7 +4,8 @@
   "description": "Distributed data sharing and analysis",
   "main": "index.js",
   "scripts": {
-    "build": "browserify hydrortcclient.js -o build/hydrortcclient.js"
+    "build": "browserify hydrortcclient.js -o build/hydrortcclient.js",
+    "build_server": "browserify hydrortcserver.js --standalone HydroRTC -o build/hydrortcserver.js"
   },
   "repository": {
     "type": "git",
@@ -32,13 +33,13 @@
   "dependencies": {
     "@socket.io/admin-ui": "^0.5.1",
     "geotiff": "^2.0.7",
+    "grib2-simple": "^1.1.1",
     "h5wasm": "^0.6.3",
     "netcdfjs": "^2.0.2",
     "peer": "^0.x",
     "peerjs": "^1.3.x",
     "socket.io": "3.x",
-    "socket.io-client": "4.x",
-    "vgrib2": "^0.1.13"
+    "socket.io-client": "4.x"
   },
   "author": "UIHI Lab",
   "license": "MIT",

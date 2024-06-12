@@ -45,6 +45,10 @@
     let selectedPeer = document.getElementById('users-list');
     let fileInput = document.getElementById('fileInput');
 
+    let receivedData = [];
+
+    let dataStream;
+
     document.getElementById('connect').onclick = function () {
 
         if (document.getElementById('username').value.length == 0) {
@@ -127,10 +131,10 @@
         // null, if client is unable to send the request
         if (dataStream != null) {
             dataStream.on('data', (data) => {
-                console.log(data)
-                if (data.usecase === 'message') { 
-                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
-            }
+                data.chunkArray ? receivedData.push(data.chunkArray) : null
+                if (data.usecase === 'message') {
+                    if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
+                }
             })
         }
     }
@@ -144,10 +148,10 @@
         //Peer-to-peer channel is now open
         if (eventEmitter != null) {
             eventEmitter.on('data', (data) => {
-                console.log(data)
+                data.chunkArray ? receivedData.push(data.chunkArray) : null
                 if (data.usecase === 'message') {
-                if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
-            }
+                    if (data.sender !== clientName && data.sender !== undefined) addMesage(data.data, data.sender)
+                }
             })
         }
     }
@@ -187,7 +191,14 @@
         if (h > 12) h -= 12;
         else if (h === 0) h = 12;
 
-        messageBox.innerHTML = `<br><span class=\""msg-time\" >${h}:${m}:${s} ${user} - ${msg} </span>${messageBox.innerHTML}`
+
+        // Create a new message element
+        let messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.innerHTML = `<span class="msg-time">${h}:${m}:${s} ${user} - ${msg}</span>`;
+
+        // Append the new message to the bottom of the message box
+        messageBox.appendChild(messageElement);
     }
 
     //
