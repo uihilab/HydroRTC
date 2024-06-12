@@ -33,7 +33,7 @@ node_modules
 jspm_packages
 package-lock.json
 .DS_Store
-config.json
+config_not.json
 
 
 # Optional npm cache directory

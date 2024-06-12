@@ -130,4 +130,4 @@ https://hydroinformatics.uiowa.edu/.
 
 ## References
 
-* Erazo Ramirez, C., Sermet, Y., Shahid, M., Demir, I. (2024). HydroRTC: A Web-Based Data Transfer and Communication Library for Collaborative Data Processing and Sharing in the Hydrological Domain. Preprint in EarthArxiv. https://doi.org/10.31223/X5PQ5R
+* Erazo Ramirez, C., Sermet, Y., Shahid, M., & Demir, I. (2024). HydroRTC: A web-based data transfer and communication library for collaborative data processing and sharing in the hydrological domain. Environmental Modelling & Software, 178, 106068. https://doi.org/10.1016/j.envsoft.2024.106068

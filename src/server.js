@@ -1124,10 +1124,6 @@ function largeFileHandler(file) {
   })
 }
 
-/**
- * TO IMPLEMENT
- * @param {*} data 
- */
 function uploadData(data) {
 
 }
