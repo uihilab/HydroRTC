@@ -1,4 +1,4 @@
-const { server } = require('./server.js')
+const HydroRTCServer = require('./server.js')
 
 /**
  * @class HydroRTC
@@ -6,9 +6,9 @@ const { server } = require('./server.js')
  */
 class HydroRTC {
   //Users should be able to pass their own app instantiator and server port.
-    constructor(appName, server) {
+    constructor(appName) {
       this.appName = appName;
-      this.server = server;
+      this.server = new HydroRTCServer();
     }
 
     /**
@@ -29,5 +29,9 @@ class HydroRTC {
       this.server.setTasks(tasks);
     }
   }
-  
-this.hydroRtcServer = new HydroRTC('hydrortc', server)
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = HydroRTC;
+} else if (typeof window !== 'undefined') {
+  window.HydroRTC = HydroRTC;
+}

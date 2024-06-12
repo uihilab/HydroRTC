@@ -33,6 +33,8 @@ node_modules
 jspm_packages
 package-lock.json
 .DS_Store
+config.json
+
 
 # Optional npm cache directory
 .npm
@@ -53,6 +55,7 @@ package-lock.json
 hydro-rtc-test/data/*
 test/server-to-peer/case-study1/data/*
 test/server-to-peer/case-study2/data/*
+test/server-to-peer/case-study3/data/*
 # Logs
 logs
 *.log
@@ -110,4 +113,8 @@ test/server-to-peer/case-study2/data/*
 
 #original
 hydro-rtc
+
+#hydrocompute
+hydrocompute
+docs/docs
 

@@ -4,10 +4,11 @@
 <head>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hydrolang@1.1.7/hydrolang.js"></script>
+    <script type="application/javascript" src="hydrocompute/hydrocompute.js"></script>
 </head>
 
 <body>
-    <h1> Case Study 1 - Stream Data Transmission</h1>
+    <h1> Case Study 3 - Fetching Data from Gridded Formats</h1>
     <!-- Input to get client id-->
     <input type="text" placeholder="Enter username" id="name">
     <button id="connect">Connect</button>
@@ -25,37 +26,38 @@
         <!-- List of all other connected peers-->
         <div class="button-row">
             <!-- Buttons for collaborative data exchange usecase-->
-            <button id="netcdf-data">Request netCDF Data</button>
+            <button class="overlay-trigger" id="netcdf-data">Request netCDF Data</button>
             <br><br>
-            <button id="hdf5-data">Request HDF5 Data</button>
+            <button class="overlay-trigger" id="hdf5-data">Request HDF5 Data</button>
             <br><br>
-            <button id="tiff-data">Request TIFF Data</button>
+            <button class="overlay-trigger" id="tiff-data">Request TIFF Data</button>
             <br><br>
         </div>
         <br>
+        <h2> Smart Data Transmission</h2>
         <!-- Button for smart data sharing usecase-->
-        <button id="start-smart-data">Start Receiving Smart Data</button>
-        <!-- Options for smart data sharing -->
-        <label for="frequency">Select Frequency (seconds) for smart data :</label>
-        <select id="frequency">
-            <option value="5" selected>5</option>
-            <option value="15">10</option>
-            <option value="20">20</option>
-        </select>
-        <label for="resolution">Select Resoultion (m) of images for smart data:</label>
-        <select id="resolution">
-            <option value="L00" selected>50</option>
-            <option value="L01">25</option>
-            <option value="L02">10</option>
-            <option value="L03">5</option>
-            <option value="L04">1</option>
-        </select>
+        <div class="button-row">
+            <button class="overlay-trigger" id="start-smart-data">Retrieve</button>
+            <!-- Options for smart data sharing -->
+            <label for="frequency">Select Frequency (seconds) for smart data :</label>
+            <select id="frequency">
+                <option value="5" selected>5</option>
+                <option value="15">10</option>
+                <option value="20">20</option>
+            </select>
+            <label for="resolution">Select Resoultion (m) of images for smart data:</label>
+            <select id="resolution">
+                <option value="L00" selected>50</option>
+                <option value="L01">25</option>
+                <option value="L02">10</option>
+                <option value="L03">5</option>
+                <option value="L04">1</option>
+            </select>
+        </div>
 
-        <br><br>
         <br>
         <div>
             <!-- Logging of all the receieved data stream from server for stream data usecase -->
-
             <!-- Logging of all the receieved data stream from server for stream data usecase -->
             <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
             <div>
@@ -64,6 +66,13 @@
                 <p id="img"></p>
             </div>
             <!-- Logging of all the receieved smart data stream from server for smart data sharing usecase -->
+            <!-- Overlay for displaying results -->
+            <div class="overlay" id="overlay">
+                <div class="overlay-box">
+                    <div id="jsonrenderer"></div>
+                    <button id="close-overlay">Close</button>
+                </div>
+            </div>
         </div>
 
 </body>
@@ -72,7 +81,13 @@
 
     let hydroRtcClient = null
     let receivedData = []
+
     let hydro = new Hydrolang()
+
+
+const initHydrocompute = async () => {
+    window.compute = new hydroCompute();
+};
 
     document.getElementById('connect').onclick = function () {
 
@@ -142,7 +157,7 @@
             dataStream.on('data', (data) => {
                 console.log(data);
                 receivedData.push(data)
-                hydro.visualize.draw({params: {type: 'json'}, data})
+                hydro.visualize.draw({ params: { type: 'json' }, data })
                 end = performance.now();
                 console.log(`Total time: ${(end - start) / 1000} s.`);
             });
@@ -209,7 +224,7 @@
             // on receiving smart data chunk
             smartDataHandler.on('data', (data) => {
                 //THIS NEEDS TO CHANGE, MOVE TO ANOTHER VARIABLE
-                let container = document.getElementById('image-container')
+                let container = document.getElementById('jsonrenderer')
                 let filePath = data.resolution + "/" + data.rowNo + "/" + data.filename + "<br>"
                 container.innerHTML = ''
                 container.innerHTML = filePath
@@ -247,6 +262,24 @@
         hydroRtcClient.updateSmartDataPriority(frequency, resolution)
 
     }
+
+    const overlayTriggers = document.querySelectorAll('.overlay-trigger');
+    overlayTriggers.forEach(trigger => {
+        trigger.addEventListener('click', () => {
+            const targetId = trigger.getAttribute('data-target');
+            const target = document.getElementById(targetId);
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = 'flex';
+            // Assuming jsonrenderer is a placeholder, you can replace it with the appropriate logic to populate the results
+            document.getElementById('jsonrenderer').innerHTML = target.innerHTML;
+        });
+    });
+
+    // Add event listener to close overlay button
+    document.getElementById('close-overlay').addEventListener('click', () => {
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
+    });
 </script>
 
 </html>

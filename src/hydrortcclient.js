@@ -128,41 +128,43 @@ class HydroRTCClient {
    */
   addDataToDB(data, storeName = 'data') {
     if (!this.db) {
-      console.err('IndexedDB has not been initialized.');
-      return;
+        console.error('IndexedDB has not been initialized.');
+        return;
     }
 
     const transaction = this.db.transaction([storeName], 'readwrite');
     const objectStore = transaction.objectStore(storeName);
 
     if (!this.lastProcessedFile) {
-
-      //To change in the future for a specific identifier, either with task or keep data, or a combination
-      //Serialize in order to keep tasks
-      this.lastProcessedFile = new Date().getTime();
+        //To change in the future for a specific identifier, either with task or keep data, or a combination
+        //Serialize in order to keep tasks
+        this.lastProcessedFile = new Date().getTime();
     }
 
-    if (data.binaryData instanceof ArrayBuffer) {
-      try {
-        data.binaryData = new Blob([data.binaryData], {
-          type: 'application/octet-binary'
-        })
-      } catch (err) {
-        console.log(`There was an error saving a binary file: ${err}`)
-      }
+    if (data.data instanceof ArrayBuffer) {
+        try {
+            data.binaryData = new Blob([data.binaryData], {
+                type: 'application/octet-binary'
+            });
+        } catch (err) {
+            console.log(`There was an error saving a binary file: ${err}`);
+        }
+    //Add some other data types that can be saved.
     }
 
-    //Adds data to the request
+    // Adds data to the request
     const request = objectStore.add(data);
 
     request.onsuccess = () => {
-      console.log(`Data was correctly added to IndexedDB: ${data.dataID}`)
-    }
+        console.log(`Data was correctly added to IndexedDB: ${data.id}`);
+        // Commit the transaction
+        transaction.commit();
+    };
 
     request.onerror = (ev) => {
-      console.error(`Error adding data to IndexedDB: ${ev.target.error}`)
-    }
-  }
+        console.error(`Error adding data to IndexedDB: ${ev.target.error}`);
+    };
+}
 
   /**
    * 
@@ -378,7 +380,6 @@ class HydroRTCClient {
 
     //TODO: Clients can read the NetCDF file from sever. Client implementation should also be added
     this.socket.on("netcdf-data", ({ data, filename }) => {
-      console.log('triggered...')
       this.netCDFEventHandler.emit("data", {
         data,
         filename
@@ -394,7 +395,7 @@ class HydroRTCClient {
 
     this.socket.on("tiff-data", ({ data, filename }) => {
       //Testing
-      this.socket.emit('tiff-data-request', (() => { console.log('Working!') }))
+      this.socket.emit('tiff-data-request', (() => { console.log('TIFF data submitted') }))
       this.tiffEventHandler.emit("data", {
         data,
         filename
@@ -452,7 +453,6 @@ class HydroRTCClient {
    * @returns {Function} - Event emitter for the stream data requestor
    */
   streamDataRequest(filePath) {
-    console.log(filePath)
     // client can hold one stream data at time.
     // new stream data will update the old request.
     this.streamData = "";
@@ -475,10 +475,11 @@ class HydroRTCClient {
     }
   }
 
-  /**
-   * Peer handlers
-   * @returns {Function} - Event emitter for the peer listener
-   */
+/**
+ * @method getPeers - Retrieves the list of peers for the current client
+ * @memberof HydroRTCClient
+ * @returns {Function} - Event emitter for the peer listener
+ */
   getPeers() {
     let socketId = this.socket.id;
 
@@ -491,11 +492,12 @@ class HydroRTCClient {
     return this.peersEventHandler;
   }
 
-  /**
-   * 
-   * @param {*} remotePeerId 
-   * @returns 
-   */
+/**
+ * @method getPeersID - Retrieves the peer ID for the specified remote peer
+ * @memberof HydroRTCClient
+ * @param {String} remotePeerId - The ID of the remote peer
+ * @returns {Function} - Event emitter for the peer listener
+ */
   getPeersID(remotePeerId) {
     //Obtain the peer ID if found in the server
     this.socket.emit("peer-id", {
@@ -504,23 +506,24 @@ class HydroRTCClient {
     return this.peersEventHandler
   }
 
-  /**
-   *
-   * @returns {Function} - Event hanlder for the connection request
-   */
+/**
+ * @method listenRequests - Enables the client to receive connection requests from other peers
+ * @memberof HydroRTCClient
+ * @returns {Function} - Event handler for the connection request
+ */
   // makes the client eligible to receive requests from other peer
   // returns event handler to send information of peer who initiated the request
   listenRequests() {
     return this.connectEventHandler;
   }
 
-  /**
-   * user can enable / disable usecases
-   * and types of data they can send / receive
-   * @param {*} usecases
-   * @param {*} receiveDataTypes
-   * @param {*} sendDataTypes
-   */
+/**
+ * @method setConfiguration - Configures the client's use cases and data types for sending and receiving
+ * @memberof HydroRTCClient
+ * @param {string[]} usecases - The use cases to be enabled for the client
+ * @param {string[]} receiveDataTypes - The data types the client can receive
+ * @param {string[]} sendDataTypes - The data types the client can send
+ */
   setConfiguration(usecases, receiveDataTypes, sendDataTypes) {
     // TODO: validate all inputs
     this.configuration.setUsecases(usecases);
@@ -528,38 +531,42 @@ class HydroRTCClient {
     this.configuration.setSendDataTypes(sendDataTypes);
   }
 
-  /**
-   * 
-   * @returns 
-   */
+/**
+ * @method getConfiguration - Retrieves the current configuration of the client
+ * @memberof HydroRTCClient
+ * @returns {Object} - The current configuration of the client
+ */
   getConfiguration = function () {
     return this.configuration.getConfig();
   };
 
-  /**
-   * 
-   * @returns 
-   */
+/**
+ * @method getAvailableUsecases - Retrieves the available use cases for the client
+ * @memberof HydroRTCClient
+ * @returns {string[]} - The available use cases
+ */
   getAvailableUsecases = function () {
     return usecases;
   };
 
-  /**
-   * 
-   * @returns 
-   */
+/**
+ * @method getAvailableDataTypes - Retrieves the available data types for the client
+ * @memberof HydroRTCClient
+ * @returns {string[]} - The available data types
+ */
   getAvailableDataTypes = function () {
     return dataTypes;
   };
 
   // --- Collaborative Data Exchange Start ---
 
-  /**
-   *
-   * @param {*} peerName
-   * @param {*} request
-   * @returns {Function} - Handler for data exchange
-   */
+/**
+ * @method requestDataFromPeer - Requests data from a specified peer
+ * @memberof HydroRTCClient
+ * @param {string} peerName - The name of the peer to request data from
+ * @param {Promise} request - The data request to be sent to the peer
+ * @returns {Function} - The event handler for the data exchange
+ */
   // TODO: reject request / obsolete request after some interval
   // TODO: Limit number of connected peers
   // returns event handler send data receieved from requested peer
@@ -577,19 +584,23 @@ class HydroRTCClient {
   }
 
   // connects client with given peer
-  /**
-   * Connect a client with a specific peer
-   * @param {*} peerName
-   */
+/**
+ * @method connectPeer - Connect a client with a specific peer
+ * @memberof HydroRTCClient
+ * @param {string} peerName - The name of the peer to connect to
+ * @returns {Promise<void>} - A promise that resolves when the connection is established
+ */
   async connectPeer(peerName) {
     return this.connectWithPeer(peerName);
   }
 
-  /**
-   *
-   * @param {*} peerName
-   * @param {*} data
-   */
+/**
+ * @method sendDataToPeer - Send data to a connected peer
+ * @memberof HydroRTCClient
+ * @param {Object} data - The data to be sent to the peer
+ * @param {string} [usecase='message'] - The use case for the data being sent (default is 'message')
+ * @returns {Promise<void>} - A promise that resolves when the data has been sent
+ */
   //Requestor sends data to requested
   sendDataToPeer(data, usecase = 'message') {
     // TODO: send data only when peer to peer connection is established
@@ -604,7 +615,7 @@ class HydroRTCClient {
       ///write here    
 
     }
-    console.log('This is the trigger')
+    console.log('Requested exchange.')
     return this.dataExchangeEventHandler
   }
 
@@ -632,8 +643,10 @@ class HydroRTCClient {
   // --- Collaborative Data Exchange End ---
 
   /**
-   * Triggered once a connection has been achieved.
-   * Defines callbacks to handle incoming data and connection events.
+   * @method ready - Triggered once a connection has been achieved.Defines callbacks to handle incoming data and connection events.
+   * @memberof HydroRTCClient
+ * Initializes the event listeners for the peer connection and handles incoming data based on the use case.
+ * @returns {void} 
    */
   ready() {
     this.peerConn.on("data", (data) => {
@@ -663,8 +676,14 @@ class HydroRTCClient {
   // --- PeerJS connections configuration ---
 
   /**
-   * Largely based on examples from Peer.js
-   * 
+ * Initializes the PeerJS connection for the HydroRTCClient.
+ * @method initPeerJSConn
+ * @memberof HydroRTCClient
+ * @param {Object} [props={}] - Optional configuration properties for the PeerJS connection.
+ * @param {boolean} [props.secure=true] - Whether to use a secure connection.
+ * @param {number} [props.pingInterval=3000] - The interval (in milliseconds) at which to send a ping to the PeerJS server.
+ * @param {number} [props.debug=3] - The debug level for the PeerJS connection.
+ * @returns {void}
    */
   initPeerJSConn(props = {}) {
     // TODO: make properties configurable
@@ -748,6 +767,17 @@ class HydroRTCClient {
    *
    * Sets up callbacks that handle any events related to the
    * connection and data received on it.
+    * Connects to a remote peer using the PeerJS connection.
+ * @method connectWithPeer
+ * @memberof HydroRTCClient
+ * @param {string} remotePeerId - The ID of the remote peer to connect to.
+ * @returns {Promise<Function>} - A promise that resolves to the `dataExchangeEventHandler` function.
+ * @example
+ * const client = new HydroRTCClient();
+ * client.connectWithPeer('remotePeerId')
+ *   .then((dataExchangeEventHandler) => {
+ *     // Use the dataExchangeEventHandler to handle data exchange events
+ *   });
    */
   connectWithPeer(remotePeerId) {
     this.getPeersID(remotePeerId)
@@ -776,8 +806,6 @@ class HydroRTCClient {
 
         //Requestor data received, handler here!
         outerObj.peerConn.on("data", (data) => {
-          console.log('696');
-          //console.log(data)
           if (data)
             outerObj.dataExchangeEventHandler.emit("data",
               data
@@ -798,7 +826,21 @@ class HydroRTCClient {
 
   // --- Smart Data Sharing Start ---
 
-  // return event handler to send data to client based on given parameters/priorities
+/**
+ * Initiates the reception of smart data from the server.
+ * @method receiveSmartData
+ * @memberof HydroRTCClient
+ * @param {string} dataPath - The path to the smart data to receive.
+ * @param {number} frequency - The frequency at which to receive the smart data.
+ * @param {number} resolution - The resolution of the smart data.
+ * @returns {EventEmitter} - An event emitter that emits the received smart data.
+ * @example
+ * const client = new HydroRTCClient();
+ * const smartDataEventHandler = client.receiveSmartData('/path/to/data', 1000, 100);
+ * smartDataEventHandler.on('data', (data) => {
+ *   console.log(data);
+ * });
+ */
   receiveSmartData(dataPath, frequency, resolution) {
     let socketId = this.socket.id;
 
@@ -819,64 +861,97 @@ class HydroRTCClient {
 
   }
 
-  /**
-   * 
-   * @param {*} dataPath 
-   */
-  gethdf5(dataPath) {
+/**
+ * Initiates the retrieval of HDF5 data from the server.
+ * @method getHDF5
+ * @memberof HydroRTCClient
+ * @param {string} dataPath - The path to the HDF5 data to retrieve.
+ * @returns {EventEmitter} - An event emitter that emits the retrieved HDF5 data.
+ * @example
+ * const client = new HydroRTCClient();
+ * const hdf5EventHandler = client.getHDF5('/path/to/hdf5/data');
+ * hdf5EventHandler.on('data', (data) => {
+ *   console.log(data);
+ * });
+ */
+  gethdf5({dataPath = null, fileBuffer = null}) {
     let socketId = this.socket.id;
 
     this.socket.emit("hdf5-reader", {
       name: this.sessionID.clientName,
       socketId: socketId,
-      dataPath: dataPath
+      dataPath: dataPath,
+      fileBuffer: fileBuffer
     })
 
     return this.hdf5EventHandler
   }
 
-  /**
-   * 
-   * @param {*} dataPath 
-   * @returns 
-   */
-  getnetCDF(dataPath) {
+/**
+ * Initiates the retrieval of netCDF data from the server.
+ * @method getNetCDF
+ * @memberof HydroRTCClient
+ * @param {string} dataPath - The path to the netCDF data to retrieve.
+ * @returns {EventEmitter} - An event emitter that emits the retrieved netCDF data.
+ * @example
+ * const client = new HydroRTCClient();
+ * const netCDFEventHandler = client.getNetCDF('/path/to/netcdf/data');
+ * netCDFEventHandler.on('data', (data) => {
+ *   console.log(data);
+ * });
+ */
+  getnetCDF({dataPath = null, fileBuffer = null}) {
     let socketId = this.socket.id;
 
     this.socket.emit("netcdf-reader", {
       name: this.sessionID.clientName,
       socketId: socketId,
-      dataPath: dataPath
+      dataPath: dataPath,
+      fileBuffer: fileBuffer
     });
 
     return this.netCDFEventHandler
   }
 
-  /**
-   * 
-   * @param {*} dataPath 
-   * @returns 
-   */
-
-  getTIFF(dataPath) {
+/**
+ * Initiates the retrieval of TIFF data from the server.
+ * @method getTIFF
+ * @memberof HydroRTCClient
+ * @param {string} dataPath - The path to the TIFF data to retrieve.
+ * @returns {EventEmitter} - An event emitter that emits the retrieved TIFF data.
+ * @example
+ * const client = new HydroRTCClient();
+ * const tiffEventHandler = client.getTIFF('/path/to/tiff/data');
+ * tiffEventHandler.on('data', (data) => {
+ *   console.log(data);
+ * });
+ */
+  getTIFF({dataPath = null, fileBuffer = null}) {
     let socketId = this.socket.id;
 
     this.socket.emit("tiff-reader", {
       name: this.sessionID.clientName,
       socketId: socketId,
-      dataPath: dataPath
+      dataPath: dataPath,
+      fileBuffer: fileBuffer
     });
 
     return this.tiffEventHandler
   }
 
-  /**
-   * Method for handling different types of data requests based on the type of data user has selected
-   * The user may select 1 or multiple datatypes, however, the datastream will be done for a single
-   * @param {*} fileType 
-   * @returns 
-   */
-
+/**
+ * Initiates the retrieval of data types supported by the server.
+ * @method dataTypeReader
+ * @memberof HydroRTCClient
+ * @param {string} fileType - The type of data file to retrieve the supported data types for.
+ * @returns {EventEmitter} - An event emitter that emits the supported data types.
+ * @example
+ * const client = new HydroRTCClient();
+ * const dataTypesEventHandler = client.dataTypeReader('hdf5');
+ * dataTypesEventHandler.on('data', (dataTypes) => {
+ *   console.log(dataTypes);
+ * });
+ */
   dataTypeReader(fileType) {
     let socketId = this.socket.id;
 
@@ -889,7 +964,17 @@ class HydroRTCClient {
     return this.dataTypesEventHandler
   }
 
-  // update parameters / priorities for smart data sharing
+/**
+ * Updates the priority of smart data sharing based on the specified frequency and resolution.
+ * @method updateSmartDataPriority
+ * @memberof HydroRTCClient
+ * @param {number} frequency - The desired frequency of data updates.
+ * @param {number} resolution - The desired resolution of the data.
+ * @returns {void}
+ * @example
+ * const client = new HydroRTCClient();
+ * client.updateSmartDataPriority(1000, 10);
+ */
   updateSmartDataPriority(frequency, resolution) {
     let socketId = this.socket.id;
     console.log(`User ${this.sessionID.clientName} has updated the frequency from `)
@@ -907,10 +992,18 @@ class HydroRTCClient {
 
   // --- Distributed Data Analysis and Processing ---
 
-  /**
-   * 
-   * @returns 
-   */
+/**
+ * Retrieves a task from the server.
+ * @method receiveTask
+ * @memberof HydroRTCClient
+ * @returns {EventEmitter} - An event emitter that emits the task data.
+ * @example
+ * const client = new HydroRTCClient();
+ * const taskDataEventHandler = client.receiveTask();
+ * taskDataEventHandler.on('data', (taskData) => {
+ *   console.log(taskData);
+ * });
+ */
   receiveTask() {
     let socketId = this.socket.id;
 
@@ -922,12 +1015,19 @@ class HydroRTCClient {
     return this.taskDataEventHandler;
   }
 
-  /**
-   * 
-   * @param {*} task 
-   * @param {*} result 
-   */
-  // submits results for given task to server
+/**
+ * Submits the result of a task to the server.
+ * @method submitTaskResult
+ * @memberof HydroRTCClient
+ * @param {object} task - The task object.
+ * @param {object} result - The result of the task.
+ * @returns {void}
+ * @example
+ * const client = new HydroRTCClient();
+ * const task = { id: 1, description: 'Perform data analysis' };
+ * const result = { analysis: 'The data shows a positive trend' };
+ * client.submitTaskResult(task, result);
+ */
   submitTaskResult(task, result) {
     let socketId = this.socket.id;
 
@@ -940,6 +1040,18 @@ class HydroRTCClient {
   }
 
   // --- Distributed Data Analysis and Processing End ---
+  /**
+ * Sends a file in chunks to a peer connection.
+ * @method dataChunks
+ * @memberof HydroRTCClient
+ * @param {File} file - The file to be sent.
+ * @param {number} maxChunkSize - The maximum size of each chunk in bytes.
+ * @returns {void}
+ * @example
+ * const client = new HydroRTCClient();
+ * const file = new File(['Hello, World!'], 'hello.txt', { type: 'text/plain' });
+ * client.dataChunks(file, 1024);
+ */
   dataChunks(file, maxChunkSize) {
     console.log('Callee')
     console.log('Start sending chunks')
@@ -962,7 +1074,7 @@ class HydroRTCClient {
         //From here trigger the reassembling in indexedDB using the lastChunk event
         if (isLastChunk) {
           this.peerConn.send({ usecase, name, fileExt, chunkArray, isLastChunk, fileSize });
-          console.log('All checks sent.')
+          console.log('All file chunks sent.')
         }
 
         else {
@@ -982,20 +1094,32 @@ class HydroRTCClient {
     // })
   }
 
+  /**
+ * Retrieves file data from an input element and sends it in chunks to a peer connection.
+ * @method getfileData
+ * @memberof HydroRTCClient
+ * @param {HTMLInputElement} fileInput - The file input element to retrieve the file from.
+ * @param {number} [chunkSize=1] - The size of each chunk in megabytes. Default is 1 MB.
+ * @returns {void}
+ * @example
+ * const fileInput = document.getElementById('file-input');
+ * const client = new HydroRTCClient();
+ * client.getfileData(fileInput, 10); // Send file in 10 MB chunks
+ */
   getfileData(fileInput, chunkSize = 1) {
     let maxChunkSize = chunkSize * 1024 * 1024//10 MB in bytes
     fileInput.addEventListener('change', (ev) => {
       //1 file per request
       const selectedFile = ev.target.files[0];
       //const selectedFile = fileInput.files[0];
-      console.log('here')
+      console.log('Datafile selected.')
 
       if (!selectedFile) {
         //reject("No file selected");
         return
       }
 
-      console.log('Caller')
+      console.log('Initializing data submission request.')
 
       this.dataChunks(selectedFile, maxChunkSize)
     }
@@ -1014,14 +1138,24 @@ class HydroRTCClient {
     }
   }
 
-  /**
-   * 
-   * @param {*} start 
-   * @param {*} end 
-   * @param {*} size 
-   * @param {*} chunk 
-   * @returns 
-   */
+/**
+ * Calculates the throughput of a data stream.
+ * @method calculateThroughput
+ * @memberof HydroRTCClient
+ * @param {Object} chunk - The current chunk of data being sent.
+ * @param {number} chunk.offset - The offset of the current chunk in the file.
+ * @param {number} chunk.fileSize - The total size of the file in bytes.
+ * @param {boolean} chunk.isLastChunk - Indicates whether the current chunk is the last one.
+ * @returns {void|null}
+ * @example
+ * const client = new HydroRTCClient();
+ * const chunk = {
+ *   offset: 0,
+ *   fileSize: 1024 * 1024, // 1 MB
+ *   isLastChunk: true
+ * };
+ * client.calculateThroughput(chunk);
+ */
   calculateThroughput(chunk) {
 
     if (chunk.offset === 0 && this.dataStreamState.start === null) {
@@ -1047,9 +1181,27 @@ class HydroRTCClient {
     }
   }
 
-  concatenateResults() {
-
-    return
+  concatenateResults(arrayBuffers) {
+        // Calculate the total length of all arrayBuffers
+        let totalLength = 0;
+        for (let i = 0; i < arrayBuffers.length; i++) {
+            totalLength += arrayBuffers[i].byteLength;
+        }
+    
+        // Create a new ArrayBuffer with the total length
+        let concatenatedArrayBuffer = new ArrayBuffer(totalLength);
+        let concatenatedUint8Array = new Uint8Array(concatenatedArrayBuffer);
+    
+        // Copy each arrayBuffer into the concatenatedArrayBuffer
+        let offset = 0;
+        for (let i = 0; i < arrayBuffers.length; i++) {
+            let arrayBuffer = arrayBuffers[i];
+            let uint8Array = new Uint8Array(arrayBuffer);
+            concatenatedUint8Array.set(uint8Array, offset);
+            offset += uint8Array.length;
+        }
+    
+        return concatenatedArrayBuffer;
   }
 
   downloadFile() {
