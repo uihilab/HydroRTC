@@ -683,8 +683,8 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @param {*} tasks
+   * @method setTasks
+   * @param {Object} tasks
    */
 
   setTasks(tasks) {
@@ -692,8 +692,8 @@ class HydroRTCServer {
   }
 
   /**
-   *
-   * @returns
+   * @method getAddress
+   * @returns {String} - The address of a given host and port
    */
 
   getAddress() {
