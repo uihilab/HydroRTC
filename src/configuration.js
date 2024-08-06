@@ -6,24 +6,24 @@ class Configuration {
     }
 
     /**
-     * 
-     * @param {*} usecases 
+     * @method setUsecases
+     * @param {Array} usecases - Usecases for the library instance 
      */  
     setUsecases(usecases) {
       this.usecases = usecases;
     }
   
     /**
-     * 
-     * @param {*} receiveDataTypes 
+     * @method setReceiveDataTypes
+     * @param {Array} receiveDataTypes - Setter for receiving data types
      */
     setReceiveDataTypes(receiveDataTypes) {
       this.receiveDataTypes = receiveDataTypes;
     }
 
     /**
-     * 
-     * @param {*} sendDataTypes 
+     * @method setSendDataTypes
+     * @param {Array} sendDataTypes - Different data types that will be used throughout the library instance
      */
   
     setSendDataTypes(sendDataTypes) {
@@ -31,8 +31,8 @@ class Configuration {
     }
 
     /**
-     * 
-     * @returns 
+     * @method getConfig
+     * @returns {Object} - Contains the configuration that will be used throughout the library instance
      */  
     getConfig() {
       return {
