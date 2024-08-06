@@ -14,6 +14,7 @@
   },
   "author": "UIHI Lab",
   "dependencies": {
-    "hydro-rtc": "../../../src"
+    "hydro-rtc": "../../../src",
+    "hydrolang": "^1.1.10"
   }
 }

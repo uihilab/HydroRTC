@@ -213,7 +213,7 @@ class HydroRTCServer {
   /**
    * @method serveFile - Reads and serves a specified file to the client's response
    * @memberof HydroRTCServer
-   * @param {Object{}} response - Response object to send data back to the client
+   * @param {Object} response - Response object to send data back to the client
    * @param {String} filename - Path of the file to be served
    * @returns {Promise<void>} Serves the HTML page
    */
@@ -244,8 +244,8 @@ class HydroRTCServer {
   /**
    * @method joinServer - Joins a peer to the existing server and gets broadcasted to the exisiting peer list.
    * @memberof HydroRTCServer
-   * @param {Object{}} socket - Socket representing the peer's connection
-   * @param {Object{}} peer - Information about the joining peer.
+   * @param {Object} socket - Socket representing the peer's connection
+   * @param {Object} peer - Information about the joining peer.
    * @returns {void} registers the peer on the server.
    */
 
@@ -270,8 +270,8 @@ class HydroRTCServer {
   /**
    * @method validateUser - validates that a user is already registered on the live server.
    * @memberof HydroRTCServer
-   * @param {Object{}} socket - current socket used by the user
-   * @param {Object{}} data - peer data available
+   * @param {Object} socket - current socket used by the user
+   * @param {Object} data - peer data available
    * @returns {EventEmitter}
    */
 
@@ -294,8 +294,8 @@ class HydroRTCServer {
   /**
    * @method streamData
    * @memberof HydroRTCServer
-   * @param {Object{}} socket - The current socket used by the user.
-   * @param {Object{}} data - The peer data available.
+   * @param {Object} socket - The current socket used by the user.
+   * @param {Object} data - The peer data available.
    * @emits 'data-stream'
    * @description Streams the requested data to the user's socket.
    */
@@ -348,7 +348,7 @@ class HydroRTCServer {
   /**
    * @method getPeers
    * @memberof HydroRTCServer
-   * @param {Object{}} peer - The current peer requesting the list of peers.
+   * @param {Object} peer - The current peer requesting the list of peers.
    * @emits 'peers'
    * @description Retrieves and broadcasts the list of connected peers.
    */
