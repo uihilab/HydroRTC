@@ -6,7 +6,7 @@
     "source": {
         "include": ["./src/" ],
         "includePattern": ".js",
-        "excludePattern": "(node_modules)|(build)"
+        "excludePattern": "(node_modules)|(build)|(.*\\.json$)"
     },
     "recurseDepth": 20,    
     "plugins": [
