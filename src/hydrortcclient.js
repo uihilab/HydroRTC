@@ -94,6 +94,12 @@ class HydroRTCClient {
    * @memberof HydroRTCClient
    * @param {String} clientName 
    * @returns {null} - registers an IndexedDB store for the data to be saved
+    * @example
+ * const client = new HydroRTCClient();
+ * client.createDB('ClientA');
+ * // Output in console: "IndexedDB ClientA opened successfully."
+ *
+ * // Later in the code, you can use `client.db` to interact with the created IndexedDB instance.
    */
   createDB(clientName) {
     //Create a request for the DB to open
@@ -120,12 +126,33 @@ class HydroRTCClient {
     }
   }
 
-  /**
-   * @description Adds data into the database depending on the type of data that the user has been created by the user
-   * @param {Object} data - given data and datatype by the user
-   * @param {String} storeName - provides a keyword space to connect to the database
-   * @returns  {null}
-   */
+/**
+ * Adds data to the specified object store in IndexedDB.
+ *
+ * @method addDataToDB
+ * @memberof HydroRTCClient
+ * @param {Object} data - The data object to be added to the database. The object can include a `data` field that is an ArrayBuffer, which will be converted to a Blob if necessary.
+ * @param {string} [storeName='data'] - The name of the object store where the data will be added. Defaults to 'data'.
+ * @returns {null} - This method does not return a value. It logs success or error messages to the console.
+ *
+ * @description This method adds the provided data to the specified IndexedDB object store. If the data includes an ArrayBuffer, it converts it to a Blob before adding it to the store. The method also logs success or error messages based on the outcome of the addition operation.
+ *
+ * @example
+ * const client = new HydroRTCClient();
+ * client.createDB('ClientB'); // Initializes the database
+ * 
+ * const data = {
+ *   id: 'unique-id',
+ *   data: new ArrayBuffer(8),
+ *   binaryData: new Uint8Array([1, 2, 3, 4])
+ * };
+ * 
+ * client.addDataToDB(data, 'data');
+ * // Output in console: "Data was correctly added to IndexedDB: unique-id"
+ * 
+ * // If an error occurs, it will be logged to the console.
+ */
+
   addDataToDB(data, storeName = 'data') {
     if (!this.db) {
         console.error('IndexedDB has not been initialized.');
@@ -166,11 +193,31 @@ class HydroRTCClient {
     };
 }
 
-  /**
-   * 
-   * @param {*} storeName 
-   * @returns 
-   */
+/**
+ * Retrieves all data from the specified object store in IndexedDB.
+ *
+ * @method getDataFromDB
+ * @memberof HydroRTCClient
+ * @param {string} [storeName='data'] - The name of the object store to retrieve data from. Defaults to 'data'.
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of objects stored in the object store. 
+ *                                   The data is processed to convert any binary data stored as a Blob into an ArrayBuffer.
+ * @throws {Error} Will reject the promise with an error message if IndexedDB is not initialized or if there is an error during the retrieval process.
+ *
+ * @description This method retrieves all data from the specified object store in IndexedDB. If the data includes binary data stored as a Blob, it is converted into an ArrayBuffer. The method returns a promise that resolves with the processed data or rejects with an error message if any issues occur.
+ *
+ * @example
+ * const client = new HydroRTCClient();
+ * client.createDB('ClientC'); // Initializes the database
+ * 
+ * client.getDataFromDB('data')
+ *   .then(data => {
+ *     console.log('Retrieved data:', data);
+ *   })
+ *   .catch(error => {
+ *     console.error('Error retrieving data:', error);
+ *   });
+ * // Output: "Retrieved data: [/* array of objects */
+
 
   getDataFromDB(storeName = 'data') {
     return new Promise((reject, resolve) => {
@@ -310,9 +357,33 @@ class HydroRTCClient {
     }
   }
 
-  /**
-   * Data driven event handlers 
-   */
+/**
+ * Sets up event handlers for various socket events.
+ *
+ * @method socketEventHandlers
+ * @memberof HydroRTCClient
+ * @returns {void}
+ *
+ * @description This method initializes handlers for different socket events including user validation, data streams, peers, and file types. Each handler processes incoming data from the server and triggers the corresponding event handlers within the client.
+ *
+ * @example
+ * const client = new HydroRTCClient();
+ * client.socketEventHandlers();
+ * 
+ * // The socketEventHandlers method sets up handlers for events such as:
+ * // - "valid-username": Handles validation of usernames.
+ * // - "connect": Logs connection status.
+ * // - "data-stream": Processes incoming data streams.
+ * // - "peers": Manages peer lists.
+ * // - "smart-data": Handles smart data streams.
+ * // - "netcdf-data", "hdf5-data", "tiff-data": Handles different file types.
+ * // - "datatype-files": Manages data type requests.
+ * // - "connect-request": Manages peer connection requests.
+ * // - "task": Handles tasks from the server.
+ * // - "data-upload": Handles user data uploads.
+ * // - "delete-db": Deletes the database and logs a message.
+ */
+
   socketEventHandlers() {
     this.socket.on("valid-username", async (data) => {
       // if username is valid according to server
@@ -448,10 +519,31 @@ class HydroRTCClient {
     })
   }
 
-  /**
-   * Stream data request initiator
-   * @returns {Function} - Event emitter for the stream data requestor
-   */
+/**
+ * Requests streaming data from the server for a specified file path.
+ *
+ * @method streamDataRequest
+ * @memberof HydroRTCClient
+ * @param {string} filePath - The path to the file for which streaming data is requested.
+ * @returns {EventEmitter|null} An EventEmitter instance for handling stream data events if the request is successful. Returns `null` if the client is not eligible for the "stream-data" use case.
+ *
+ * @description This method requests streaming data from the server for a given file path. It resets the `streamData` property to ensure that only one stream of data is handled at a time. If the client is eligible for the "stream-data" use case, it emits a "stream-data" event to the server with the client name, socket ID, and file path. The method returns an EventEmitter instance to handle the stream data events or `null` if the client is not eligible.
+ *
+ * @example
+ * const client = new HydroRTCClient();
+ * const filePath = '/path/to/file';
+ * 
+ * const streamHandler = client.streamDataRequest(filePath);
+ * 
+ * if (streamHandler) {
+ *   streamHandler.on('data', (data) => {
+ *     console.log('Received stream data:', data);
+ *   });
+ * } else {
+ *   console.log('Client is not eligible for stream-data use case.');
+ * }
+ */
+
   streamDataRequest(filePath) {
     // client can hold one stream data at time.
     // new stream data will update the old request.
@@ -619,11 +711,6 @@ class HydroRTCClient {
     return this.dataExchangeEventHandler
   }
 
-  /**
-   * ???
-   * This does nothing. Rewrite with streaming large data chunks
-   * @param {*} usecase
-   */
   sendStreamDataToPeer(usecase) {
     this.getStreamDataChunks().forEach((chunk) => {
       this.peerConn.send({
@@ -1181,6 +1268,25 @@ class HydroRTCClient {
     }
   }
 
+  /**
+ * Concatenates multiple ArrayBuffers into a single ArrayBuffer.
+ *
+ * @method concatenateResults
+ * @memberof HydroRTCClient
+ * @param {Array<ArrayBuffer>} arrayBuffers - An array of ArrayBuffer objects to be concatenated.
+ * @returns {ArrayBuffer} A new ArrayBuffer containing the concatenated data from all input ArrayBuffers.
+ *
+ * @description This method takes an array of ArrayBuffer objects, calculates the total length required, and creates a new ArrayBuffer to hold the concatenated data. It copies the contents of each input ArrayBuffer into the new ArrayBuffer and returns it.
+ *
+ * @example
+ * const client = new HydroRTCClient();
+ * const arrayBuffer1 = new Uint8Array([1, 2, 3]).buffer;
+ * const arrayBuffer2 = new Uint8Array([4, 5, 6]).buffer;
+ * 
+ * const concatenatedBuffer = client.concatenateResults([arrayBuffer1, arrayBuffer2]);
+ * 
+ * // concatenatedBuffer will be an ArrayBuffer with data [1, 2, 3, 4, 5, 6]
+ */
   concatenateResults(arrayBuffers) {
         // Calculate the total length of all arrayBuffers
         let totalLength = 0;
