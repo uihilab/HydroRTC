@@ -1,0 +1,5765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HydroRTCClient - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="HydroRTC.html">HydroRTC</a><ul class='methods'><li data-type='method'><a href="HydroRTC.html#run">run</a></li><li data-type='method'><a href="HydroRTC.html#setTasks">setTasks</a></li></ul></li><li><a href="HydroRTCClient.html">HydroRTCClient</a><ul class='methods'><li data-type='method'><a href="HydroRTCClient.html#.addDataToDB">addDataToDB</a></li><li data-type='method'><a href="HydroRTCClient.html#.calculateThroughput">calculateThroughput</a></li><li data-type='method'><a href="HydroRTCClient.html#.concatenateResults">concatenateResults</a></li><li data-type='method'><a href="HydroRTCClient.html#.connectPeer-Connectaclientwithaspecificpeer">connectPeer - Connect a client with a specific peer</a></li><li data-type='method'><a href="HydroRTCClient.html#.connectWithPeer">connectWithPeer</a></li><li data-type='method'><a href="HydroRTCClient.html#.createDB">createDB</a></li><li data-type='method'><a href="HydroRTCClient.html#.dataChunks">dataChunks</a></li><li data-type='method'><a href="HydroRTCClient.html#.dataTypeReader">dataTypeReader</a></li><li data-type='method'><a href="HydroRTCClient.html#.deleteDataFromDB">deleteDataFromDB</a></li><li data-type='method'><a href="HydroRTCClient.html#.deleteDB">deleteDB</a></li><li data-type='method'><a href="HydroRTCClient.html#.getAvailableDataTypes-Retrievestheavailabledatatypesfortheclient">getAvailableDataTypes - Retrieves the available data types for the client</a></li><li data-type='method'><a href="HydroRTCClient.html#.getAvailableUsecases-Retrievestheavailableusecasesfortheclient">getAvailableUsecases - Retrieves the available use cases for the client</a></li><li data-type='method'><a href="HydroRTCClient.html#.getConfiguration-Retrievesthecurrentconfigurationoftheclient">getConfiguration - Retrieves the current configuration of the client</a></li><li data-type='method'><a href="HydroRTCClient.html#.getDataFromDB">getDataFromDB</a></li><li data-type='method'><a href="HydroRTCClient.html#.getfileData">getfileData</a></li><li data-type='method'><a href="HydroRTCClient.html#.getHDF5">getHDF5</a></li><li data-type='method'><a href="HydroRTCClient.html#.getNetCDF">getNetCDF</a></li><li data-type='method'><a href="HydroRTCClient.html#.getPeers-Retrievesthelistofpeersforthecurrentclient">getPeers - Retrieves the list of peers for the current client</a></li><li data-type='method'><a href="HydroRTCClient.html#.getPeersID-RetrievesthepeerIDforthespecifiedremotepeer">getPeersID - Retrieves the peer ID for the specified remote peer</a></li><li data-type='method'><a href="HydroRTCClient.html#.getTIFF">getTIFF</a></li><li data-type='method'><a href="HydroRTCClient.html#.initPeerJSConn">initPeerJSConn</a></li><li data-type='method'><a href="HydroRTCClient.html#.listenRequests-Enablestheclienttoreceiveconnectionrequestsfromotherpeers">listenRequests - Enables the client to receive connection requests from other peers</a></li><li data-type='method'><a href="HydroRTCClient.html#.logout">logout</a></li><li data-type='method'><a href="HydroRTCClient.html#.receiveSmartData">receiveSmartData</a></li><li data-type='method'><a href="HydroRTCClient.html#.receiveTask">receiveTask</a></li><li data-type='method'><a href="HydroRTCClient.html#.requestDataFromPeer-Requestsdatafromaspecifiedpeer">requestDataFromPeer - Requests data from a specified peer</a></li><li data-type='method'><a href="HydroRTCClient.html#.sendDataToPeer-Senddatatoaconnectedpeer">sendDataToPeer - Send data to a connected peer</a></li><li data-type='method'><a href="HydroRTCClient.html#.setConfiguration-Configurestheclient'susecasesanddatatypesforsendingandreceiving">setConfiguration - Configures the client's use cases and data types for sending and receiving</a></li><li data-type='method'><a href="HydroRTCClient.html#.socketEventHandlers">socketEventHandlers</a></li><li data-type='method'><a href="HydroRTCClient.html#.streamDataRequest">streamDataRequest</a></li><li data-type='method'><a href="HydroRTCClient.html#.submitTaskResult">submitTaskResult</a></li><li data-type='method'><a href="HydroRTCClient.html#.updateSmartDataPriority">updateSmartDataPriority</a></li></ul><ul class='members'><li data-type='method'><a href="HydroRTCClient.html#objectCreationEvent">objectCreationEvent</a></li></ul></li><li><a href="HydroRTCServer.html">HydroRTCServer</a><ul class='methods'><li data-type='method'><a href="HydroRTCServer.html#.connectPeers">connectPeers</a></li><li data-type='method'><a href="HydroRTCServer.html#.getDirectories">getDirectories</a></li><li data-type='method'><a href="HydroRTCServer.html#.getFiles">getFiles</a></li><li data-type='method'><a href="HydroRTCServer.html#.getPeerBySocketId">getPeerBySocketId</a></li><li data-type='method'><a href="HydroRTCServer.html#.getPeerID">getPeerID</a></li><li data-type='method'><a href="HydroRTCServer.html#.getPeers">getPeers</a></li><li data-type='method'><a href="HydroRTCServer.html#.getPeerwithStreamData">getPeerwithStreamData</a></li><li data-type='method'><a href="HydroRTCServer.html#.getSmartDataIntervalCallback">getSmartDataIntervalCallback</a></li><li data-type='method'><a href="HydroRTCServer.html#.getTask">getTask</a></li><li data-type='method'><a href="HydroRTCServer.html#.handleDisconnect">handleDisconnect</a></li><li data-type='method'><a href="HydroRTCServer.html#.handleHDF5">handleHDF5</a></li><li data-type='method'><a href="HydroRTCServer.html#.handleNetCDF">handleNetCDF</a></li><li data-type='method'><a href="HydroRTCServer.html#.handleTIFF">handleTIFF</a></li><li data-type='method'><a href="HydroRTCServer.html#.imageHandler">imageHandler</a></li><li data-type='method'><a href="HydroRTCServer.html#.joinServer-Joinsapeertotheexistingserverandgetsbroadcastedtotheexisitingpeerlist.">joinServer - Joins a peer to the existing server and gets broadcasted to the exisiting peer list.</a></li><li data-type='method'><a href="HydroRTCServer.html#.largeFileHandler">largeFileHandler</a></li><li data-type='method'><a href="HydroRTCServer.html#.runServer">runServer</a></li><li data-type='method'><a href="HydroRTCServer.html#.sendFileNames">sendFileNames</a></li><li data-type='method'><a href="HydroRTCServer.html#.serveFile-Readsandservesaspecifiedfiletotheclient'sresponse">serveFile - Reads and serves a specified file to the client's response</a></li><li data-type='method'><a href="HydroRTCServer.html#.smartDataShare">smartDataShare</a></li><li data-type='method'><a href="HydroRTCServer.html#.streamData">streamData</a></li><li data-type='method'><a href="HydroRTCServer.html#.taskResult">taskResult</a></li><li data-type='method'><a href="HydroRTCServer.html#.updatePeerProperty">updatePeerProperty</a></li><li data-type='method'><a href="HydroRTCServer.html#.updateSmartDataShare">updateSmartDataShare</a></li><li data-type='method'><a href="HydroRTCServer.html#.userNameTaken">userNameTaken</a></li><li data-type='method'><a href="HydroRTCServer.html#.validateUser-validatesthatauserisalreadyregisteredontheliveserver.">validateUser - validates that a user is already registered on the live server.</a></li></ul></li></ul><h3>Global</h3><ul><li><a href="global.html#getAddress">getAddress</a></li><li><a href="global.html#getConfig">getConfig</a></li><li><a href="global.html#setReceiveDataTypes">setReceiveDataTypes</a></li><li><a href="global.html#setSendDataTypes">setSendDataTypes</a></li><li><a href="global.html#setTasks">setTasks</a></li><li><a href="global.html#setUsecases">setUsecases</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">HydroRTCClient</h1>
+    
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        HydroRTCClient
+        </h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="HydroRTCClient"><span class="type-signature"></span>new HydroRTCClient<span class="signature">(clientName)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>class for the HydroRTC-Client system, initializer of required variables and event emitters</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>clientName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line15">line 15</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Clientside rendering</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            <div class="subsection-item">
+                
+<h4 class="name" id="objectCreationEvent"><span class="type-signature"></span>objectCreationEvent<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>List of emitters used from client server and vice versa</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line45">line 45</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            </div>
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".addDataToDB"><span class="type-signature">(static) </span>addDataToDB<span class="signature">(data, storeName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {null}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>This method adds the provided data to the specified IndexedDB object store. If the data includes an ArrayBuffer, it converts it to a Blob before adding it to the store. The method also logs success or error messages based on the outcome of the addition operation.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The data object to be added to the database. The object can include a <code>data</code> field that is an ArrayBuffer, which will be converted to a Blob if necessary.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>storeName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'data'
+                
+                </td>
+            
+
+            <td class="description last"><p>The name of the object store where the data will be added. Defaults to 'data'.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line129">line 129</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>This method does not return a value. It logs success or error messages to the console.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.createDB('ClientB'); // Initializes the database
+
+const data = {
+  id: 'unique-id',
+  data: new ArrayBuffer(8),
+  binaryData: new Uint8Array([1, 2, 3, 4])
+};
+
+client.addDataToDB(data, 'data');
+// Output in console: "Data was correctly added to IndexedDB: unique-id"
+
+// If an error occurs, it will be logged to the console.</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".calculateThroughput"><span class="type-signature">(static) </span>calculateThroughput<span class="signature">(chunk)</span><span class="type-signature"> &rarr; {void|null}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Calculates the throughput of a data stream.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>chunk</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The current chunk of data being sent.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>offset</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The offset of the current chunk in the file.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fileSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The total size of the file in bytes.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>isLastChunk</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Indicates whether the current chunk is the last one.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1228">line 1228</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+|
+
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const chunk = {
+  offset: 0,
+  fileSize: 1024 * 1024, // 1 MB
+  isLastChunk: true
+};
+client.calculateThroughput(chunk);</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".concatenateResults"><span class="type-signature">(static) </span>concatenateResults<span class="signature">(arrayBuffers)</span><span class="type-signature"> &rarr; {ArrayBuffer}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>This method takes an array of ArrayBuffer objects, calculates the total length required, and creates a new ArrayBuffer to hold the concatenated data. It copies the contents of each input ArrayBuffer into the new ArrayBuffer and returns it.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>arrayBuffers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;ArrayBuffer></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>An array of ArrayBuffer objects to be concatenated.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1271">line 1271</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>A new ArrayBuffer containing the concatenated data from all input ArrayBuffers.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ArrayBuffer</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const arrayBuffer1 = new Uint8Array([1, 2, 3]).buffer;
+const arrayBuffer2 = new Uint8Array([4, 5, 6]).buffer;
+
+const concatenatedBuffer = client.concatenateResults([arrayBuffer1, arrayBuffer2]);
+
+// concatenatedBuffer will be an ArrayBuffer with data [1, 2, 3, 4, 5, 6]</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".connectPeer-Connectaclientwithaspecificpeer"><span class="type-signature">(static) </span>connectPeer - Connect a client with a specific peer<span class="signature">(peerName)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>peerName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The name of the peer to connect to</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line679">line 679</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves when the connection is established</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".connectWithPeer"><span class="type-signature">(static) </span>connectWithPeer<span class="signature">(remotePeerId)</span><span class="type-signature"> &rarr; {Promise.&lt;function()>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Create the connection between the two Peers.</p>
+<p>Sets up callbacks that handle any events related to the
+connection and data received on it.
+Connects to a remote peer using the PeerJS connection.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>remotePeerId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The ID of the remote peer to connect to.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line852">line 852</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves to the <code>dataExchangeEventHandler</code> function.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;function()></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.connectWithPeer('remotePeerId')
+  .then((dataExchangeEventHandler) => {
+    // Use the dataExchangeEventHandler to handle data exchange events
+  });</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".createDB"><span class="type-signature">(static) </span>createDB<span class="signature">(clientName)</span><span class="type-signature"> &rarr; {null}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Creator of the database per clientName</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>clientName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line91">line 91</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>registers an IndexedDB store for the data to be saved</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.createDB('ClientA');
+// Output in console: "IndexedDB ClientA opened successfully."
+
+// Later in the code, you can use `client.db` to interact with the created IndexedDB instance.</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".dataChunks"><span class="type-signature">(static) </span>dataChunks<span class="signature">(file, maxChunkSize)</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Sends a file in chunks to a peer connection.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>file</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">File</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The file to be sent.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>maxChunkSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The maximum size of each chunk in bytes.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1130">line 1130</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const file = new File(['Hello, World!'], 'hello.txt', { type: 'text/plain' });
+client.dataChunks(file, 1024);</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".dataTypeReader"><span class="type-signature">(static) </span>dataTypeReader<span class="signature">(fileType)</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initiates the retrieval of data types supported by the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>fileType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The type of data file to retrieve the supported data types for.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1029">line 1029</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the supported data types.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const dataTypesEventHandler = client.dataTypeReader('hdf5');
+dataTypesEventHandler.on('data', (dataTypes) => {
+  console.log(dataTypes);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".deleteDataFromDB"><span class="type-signature">(static) </span>deleteDataFromDB<span class="signature">(itemID, storeName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Deletes data from the IndexedDB store.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>itemID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The ID of the item to be deleted.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>storeName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'data'
+                
+                </td>
+            
+
+            <td class="description last"><p>The name of the store from which data will be deleted.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line257">line 257</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves when the item is successfully deleted.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// Usage example:
+deleteDataFromDB(123, 'storeName')
+  .then(() => {
+    console.log('Item deleted successfully.');
+  })
+  .catch((error) => {
+    console.error(error);
+  });</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".deleteDB"><span class="type-signature">(static) </span>deleteDB<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Deletes the IndexedDB database.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line296">line 296</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>Throws an error if the IndexedDB database name is not specified.</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves when the database is successfully deleted.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// Usage example:
+deleteDB()
+  .then(() => {
+    console.log('IndexedDB database deleted successfully.');
+  })
+  .catch((error) => {
+    console.error(error);
+  });</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getAvailableDataTypes-Retrievestheavailabledatatypesfortheclient"><span class="type-signature">(static) </span>getAvailableDataTypes - Retrieves the available data types for the client<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;string>}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line644">line 644</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>The available data types</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;string></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getAvailableUsecases-Retrievestheavailableusecasesfortheclient"><span class="type-signature">(static) </span>getAvailableUsecases - Retrieves the available use cases for the client<span class="signature">()</span><span class="type-signature"> &rarr; {Array.&lt;string>}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line635">line 635</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>The available use cases</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;string></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getConfiguration-Retrievesthecurrentconfigurationoftheclient"><span class="type-signature">(static) </span>getConfiguration - Retrieves the current configuration of the client<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line626">line 626</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>The current configuration of the client</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getDataFromDB"><span class="type-signature">(static) </span>getDataFromDB<span class="signature">(storeName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;Object>>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>This method retrieves all data from the specified object store in IndexedDB. If the data includes binary data stored as a Blob, it is converted into an ArrayBuffer. The method returns a promise that resolves with the processed data or rejects with an error message if any issues occur.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>storeName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'data'
+                
+                </td>
+            
+
+            <td class="description last"><p>The name of the object store to retrieve data from. Defaults to 'data'.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line196">line 196</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>Will reject the promise with an error message if IndexedDB is not initialized or if there is an error during the retrieval process.</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>A promise that resolves to an array of objects stored in the object store.
+The data is processed to convert any binary data stored as a Blob into an ArrayBuffer.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;Object>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.createDB('ClientC'); // Initializes the database
+
+client.getDataFromDB('data')
+  .then(data => {
+    console.log('Retrieved data:', data);
+  })
+  .catch(error => {
+    console.error('Error retrieving data:', error);
+  });
+// Output: "Retrieved data: [/* array of objects</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getfileData"><span class="type-signature">(static) </span>getfileData<span class="signature">(fileInput, chunkSize<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Retrieves file data from an input element and sends it in chunks to a peer connection.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>fileInput</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">HTMLInputElement</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The file input element to retrieve the file from.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>chunkSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
+
+            <td class="description last"><p>The size of each chunk in megabytes. Default is 1 MB.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1184">line 1184</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const fileInput = document.getElementById('file-input');
+const client = new HydroRTCClient();
+client.getfileData(fileInput, 10); // Send file in 10 MB chunks</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getHDF5"><span class="type-signature">(static) </span>getHDF5<span class="signature">(dataPath)</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initiates the retrieval of HDF5 data from the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dataPath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The path to the HDF5 data to retrieve.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line951">line 951</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the retrieved HDF5 data.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const hdf5EventHandler = client.getHDF5('/path/to/hdf5/data');
+hdf5EventHandler.on('data', (data) => {
+  console.log(data);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getNetCDF"><span class="type-signature">(static) </span>getNetCDF<span class="signature">(dataPath)</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initiates the retrieval of netCDF data from the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dataPath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The path to the netCDF data to retrieve.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line977">line 977</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the retrieved netCDF data.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const netCDFEventHandler = client.getNetCDF('/path/to/netcdf/data');
+netCDFEventHandler.on('data', (data) => {
+  console.log(data);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getPeers-Retrievesthelistofpeersforthecurrentclient"><span class="type-signature">(static) </span>getPeers - Retrieves the list of peers for the current client<span class="signature">()</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line570">line 570</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Event emitter for the peer listener</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getPeersID-RetrievesthepeerIDforthespecifiedremotepeer"><span class="type-signature">(static) </span>getPeersID - Retrieves the peer ID for the specified remote peer<span class="signature">(remotePeerId)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>remotePeerId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The ID of the remote peer</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line587">line 587</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Event emitter for the peer listener</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".getTIFF"><span class="type-signature">(static) </span>getTIFF<span class="signature">(dataPath)</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initiates the retrieval of TIFF data from the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dataPath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The path to the TIFF data to retrieve.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1003">line 1003</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the retrieved TIFF data.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const tiffEventHandler = client.getTIFF('/path/to/tiff/data');
+tiffEventHandler.on('data', (data) => {
+  console.log(data);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".initPeerJSConn"><span class="type-signature">(static) </span>initPeerJSConn<span class="signature">(props<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initializes the PeerJS connection for the HydroRTCClient.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    {}
+                
+                </td>
+            
+
+            <td class="description last"><p>Optional configuration properties for the PeerJS connection.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>secure</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>Whether to use a secure connection.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>pingInterval</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    3000
+                
+                </td>
+            
+
+            <td class="description last"><p>The interval (in milliseconds) at which to send a ping to the PeerJS server.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>debug</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    3
+                
+                </td>
+            
+
+            <td class="description last"><p>The debug level for the PeerJS connection.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line765">line 765</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".listenRequests-Enablestheclienttoreceiveconnectionrequestsfromotherpeers"><span class="type-signature">(static) </span>listenRequests - Enables the client to receive connection requests from other peers<span class="signature">()</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line601">line 601</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>Event handler for the connection request</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".logout"><span class="type-signature">(static) </span>logout<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Logs out the user by deleting the IndexedDB database.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line336">line 336</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves when the user is successfully logged out.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// Usage example:
+logout()
+  .then(() => {
+    console.log('User logged out successfully.');
+  })
+  .catch((error) => {
+    console.error('Error during logout: ', error);
+  });</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".receiveSmartData"><span class="type-signature">(static) </span>receiveSmartData<span class="signature">(dataPath, frequency, resolution)</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Initiates the reception of smart data from the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dataPath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The path to the smart data to receive.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>frequency</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The frequency at which to receive the smart data.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resolution</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The resolution of the smart data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line916">line 916</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the received smart data.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const smartDataEventHandler = client.receiveSmartData('/path/to/data', 1000, 100);
+smartDataEventHandler.on('data', (data) => {
+  console.log(data);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".receiveTask"><span class="type-signature">(static) </span>receiveTask<span class="signature">()</span><span class="type-signature"> &rarr; {EventEmitter}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Retrieves a task from the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1082">line 1082</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>An event emitter that emits the task data.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const taskDataEventHandler = client.receiveTask();
+taskDataEventHandler.on('data', (taskData) => {
+  console.log(taskData);
+});</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".requestDataFromPeer-Requestsdatafromaspecifiedpeer"><span class="type-signature">(static) </span>requestDataFromPeer - Requests data from a specified peer<span class="signature">(peerName, request)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>peerName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The name of the peer to request data from</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>request</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Promise</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The data request to be sent to the peer</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line655">line 655</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>The event handler for the data exchange</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".sendDataToPeer-Senddatatoaconnectedpeer"><span class="type-signature">(static) </span>sendDataToPeer - Send data to a connected peer<span class="signature">(data, usecase<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>The data to be sent to the peer</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>usecase</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    'message'
+                
+                </td>
+            
+
+            <td class="description last"><p>The use case for the data being sent (default is 'message')</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line689">line 689</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>A promise that resolves when the data has been sent</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".setConfiguration-Configurestheclient'susecasesanddatatypesforsendingandreceiving"><span class="type-signature">(static) </span>setConfiguration - Configures the client's use cases and data types for sending and receiving<span class="signature">(usecases, receiveDataTypes, sendDataTypes)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>usecases</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The use cases to be enabled for the client</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>receiveDataTypes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The data types the client can receive</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sendDataTypes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The data types the client can send</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line612">line 612</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".socketEventHandlers"><span class="type-signature">(static) </span>socketEventHandlers<span class="signature">()</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>This method initializes handlers for different socket events including user validation, data streams, peers, and file types. Each handler processes incoming data from the server and triggers the corresponding event handlers within the client.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line360">line 360</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.socketEventHandlers();
+
+// The socketEventHandlers method sets up handlers for events such as:
+// - "valid-username": Handles validation of usernames.
+// - "connect": Logs connection status.
+// - "data-stream": Processes incoming data streams.
+// - "peers": Manages peer lists.
+// - "smart-data": Handles smart data streams.
+// - "netcdf-data", "hdf5-data", "tiff-data": Handles different file types.
+// - "datatype-files": Manages data type requests.
+// - "connect-request": Manages peer connection requests.
+// - "task": Handles tasks from the server.
+// - "data-upload": Handles user data uploads.
+// - "delete-db": Deletes the database and logs a message.</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".streamDataRequest"><span class="type-signature">(static) </span>streamDataRequest<span class="signature">(filePath)</span><span class="type-signature"> &rarr; {EventEmitter|null}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>This method requests streaming data from the server for a given file path. It resets the <code>streamData</code> property to ensure that only one stream of data is handled at a time. If the client is eligible for the &quot;stream-data&quot; use case, it emits a &quot;stream-data&quot; event to the server with the client name, socket ID, and file path. The method returns an EventEmitter instance to handle the stream data events or <code>null</code> if the client is not eligible.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>filePath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The path to the file for which streaming data is requested.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line522">line 522</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>An EventEmitter instance for handling stream data events if the request is successful. Returns <code>null</code> if the client is not eligible for the &quot;stream-data&quot; use case.</p>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">EventEmitter</span>
+|
+
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const filePath = '/path/to/file';
+
+const streamHandler = client.streamDataRequest(filePath);
+
+if (streamHandler) {
+  streamHandler.on('data', (data) => {
+    console.log('Received stream data:', data);
+  });
+} else {
+  console.log('Client is not eligible for stream-data use case.');
+}</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".submitTaskResult"><span class="type-signature">(static) </span>submitTaskResult<span class="signature">(task, result)</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Submits the result of a task to the server.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>task</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The task object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>result</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The result of the task.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1105">line 1105</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+const task = { id: 1, description: 'Perform data analysis' };
+const result = { analysis: 'The data shows a positive trend' };
+client.submitTaskResult(task, result);</code></pre>
+
+
+
+            </div>
+        
+            <div class="subsection-item">
+                
+
+    
+
+    <h4 class="name" id=".updateSmartDataPriority"><span class="type-signature">(static) </span>updateSmartDataPriority<span class="signature">(frequency, resolution)</span><span class="type-signature"> &rarr; {void}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Updates the priority of smart data sharing based on the specified frequency and resolution.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>frequency</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The desired frequency of data updates.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resolution</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The desired resolution of the data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="hydrortcclient.js.html">hydrortcclient.js</a>, <a href="hydrortcclient.js.html#line1054">line 1054</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5 class="returns">Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">void</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const client = new HydroRTCClient();
+client.updateSmartDataPriority(1000, 10);</code></pre>
+
+
+
+            </div>
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Wed Sep 04 2024 18:58:15 GMT+0000 (Coordinated Universal Time) using the Toast theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
