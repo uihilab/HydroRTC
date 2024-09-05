@@ -568,7 +568,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method getPeers - Retrieves the list of peers for the current client
+ * @method getPeers
+ * @description Retrieves the list of peers for the current client
  * @memberof HydroRTCClient
  * @returns {Function} - Event emitter for the peer listener
  */
@@ -585,7 +586,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method getPeersID - Retrieves the peer ID for the specified remote peer
+ * @method getPeersID
+ * @description Retrieves the peer ID for the specified remote peer
  * @memberof HydroRTCClient
  * @param {String} remotePeerId - The ID of the remote peer
  * @returns {Function} - Event emitter for the peer listener
@@ -599,7 +601,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method listenRequests - Enables the client to receive connection requests from other peers
+ * @method listenRequests
+ * @description Enables the client to receive connection requests from other peers
  * @memberof HydroRTCClient
  * @returns {Function} - Event handler for the connection request
  */
@@ -610,7 +613,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method setConfiguration - Configures the client's use cases and data types for sending and receiving
+ * @method setConfiguration
+ * @description Configures the client's use cases and data types for sending and receiving
  * @memberof HydroRTCClient
  * @param {string[]} usecases - The use cases to be enabled for the client
  * @param {string[]} receiveDataTypes - The data types the client can receive
@@ -624,7 +628,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method getConfiguration - Retrieves the current configuration of the client
+ * @method getConfiguration
+ * @description Retrieves the current configuration of the client
  * @memberof HydroRTCClient
  * @returns {Object} - The current configuration of the client
  */
@@ -633,7 +638,8 @@ class HydroRTCClient {
   };
 
 /**
- * @method getAvailableUsecases - Retrieves the available use cases for the client
+ * @method getAvailableUsecases
+ * @description Retrieves the available use cases for the client
  * @memberof HydroRTCClient
  * @returns {string[]} - The available use cases
  */
@@ -642,7 +648,8 @@ class HydroRTCClient {
   };
 
 /**
- * @method getAvailableDataTypes - Retrieves the available data types for the client
+ * @method getAvailableDataTypes
+ * @description Retrieves the available data types for the client
  * @memberof HydroRTCClient
  * @returns {string[]} - The available data types
  */
@@ -653,7 +660,8 @@ class HydroRTCClient {
   // --- Collaborative Data Exchange Start ---
 
 /**
- * @method requestDataFromPeer - Requests data from a specified peer
+ * @method requestDataFromPeer
+ * @description Requests data from a specified peer
  * @memberof HydroRTCClient
  * @param {string} peerName - The name of the peer to request data from
  * @param {Promise} request - The data request to be sent to the peer
@@ -677,7 +685,8 @@ class HydroRTCClient {
 
   // connects client with given peer
 /**
- * @method connectPeer - Connect a client with a specific peer
+ * @method connectPeer 
+ * @description Connect a client with a specific peer
  * @memberof HydroRTCClient
  * @param {string} peerName - The name of the peer to connect to
  * @returns {Promise<void>} - A promise that resolves when the connection is established
@@ -687,7 +696,8 @@ class HydroRTCClient {
   }
 
 /**
- * @method sendDataToPeer - Send data to a connected peer
+ * @method sendDataToPeer
+ * @description Send data to a connected peer
  * @memberof HydroRTCClient
  * @param {Object} data - The data to be sent to the peer
  * @param {string} [usecase='message'] - The use case for the data being sent (default is 'message')
