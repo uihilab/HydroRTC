@@ -211,7 +211,8 @@ class HydroRTCServer {
   }
 
   /**
-   * @method serveFile - Reads and serves a specified file to the client's response
+   * @method serveFile
+   * @description Reads and serves a specified file to the client's response
    * @memberof HydroRTCServer
    * @param {Object} response - Response object to send data back to the client
    * @param {String} filename - Path of the file to be served
@@ -242,7 +243,8 @@ class HydroRTCServer {
   }
 
   /**
-   * @method joinServer - Joins a peer to the existing server and gets broadcasted to the exisiting peer list.
+   * @method joinServer
+   * @description Joins a peer to the existing server and gets broadcasted to the exisiting peer list.
    * @memberof HydroRTCServer
    * @param {Object} socket - Socket representing the peer's connection
    * @param {Object} peer - Information about the joining peer.
@@ -268,7 +270,8 @@ class HydroRTCServer {
   }
 
   /**
-   * @method validateUser - validates that a user is already registered on the live server.
+   * @method validateUser
+   * @description validates that a user is already registered on the live server.
    * @memberof HydroRTCServer
    * @param {Object} socket - current socket used by the user
    * @param {Object} data - peer data available
@@ -684,6 +687,7 @@ class HydroRTCServer {
 
   /**
    * @method setTasks
+   * @memberof HydroRTCServer
    * @param {Object} tasks
    */
 
@@ -693,6 +697,7 @@ class HydroRTCServer {
 
   /**
    * @method getAddress
+   * @memberof HydroRTCServer
    * @returns {String} - The address of a given host and port
    */
 

@@ -7,6 +7,7 @@ class Configuration {
 
     /**
      * @method setUsecases
+     * @memberof configuration
      * @param {Array} usecases - Usecases for the library instance 
      */  
     setUsecases(usecases) {
@@ -15,6 +16,7 @@ class Configuration {
   
     /**
      * @method setReceiveDataTypes
+     * @memberof configuration
      * @param {Array} receiveDataTypes - Setter for receiving data types
      */
     setReceiveDataTypes(receiveDataTypes) {
@@ -23,6 +25,7 @@ class Configuration {
 
     /**
      * @method setSendDataTypes
+     * @memberof configuration
      * @param {Array} sendDataTypes - Different data types that will be used throughout the library instance
      */
   

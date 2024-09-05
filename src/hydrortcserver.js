@@ -23,7 +23,7 @@ class HydroRTC {
 
     /**
      * Allows for tasks to be set into a specific users. See documentation for the types of tasks and/or distribtuon that can be done
-     * @param {Array} tasks - Array of tasks to be set into the 
+     * @param {Array} tasks - Array of tasks to be set into the . This is an auxiliary method that will be further improved.
      */  
     setTasks(tasks) {
       this.server.setTasks(tasks);
